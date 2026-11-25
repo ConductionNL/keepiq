@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use DateTimeZone;
+use InvalidArgumentException;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -65,21 +67,16 @@ class FederationRootService implements FederationRootServiceInterface {
 	 *
 	 * @param string $pem The PEM certificate
 	 *
-	 * @return string|null Null when the PEM holds no certificate
+	 * @return string|null Null unless the PEM is exactly one certificate, as CertificatePem reads it
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function fingerprint(string $pem): ?string {
-		if (preg_match('/-----BEGIN CERTIFICATE-----(.+?)-----END CERTIFICATE-----/s', $pem, $match) !== 1) {
+		try {
+			return (new CertificatePem(pem: $pem))->fingerprint();
+		} catch (InvalidArgumentException) {
 			return null;
 		}
-
-		$der = base64_decode(preg_replace('/\s+/', '', $match[1]) ?? '', true);
-		if ($der === false || $der === '') {
-			return null;
-		}
-
-		return hash('sha256', $der);
 	}//end fingerprint()
 
 	/**
@@ -96,6 +93,41 @@ class FederationRootService implements FederationRootServiceInterface {
 			return null;
 		}
 	}//end localRootFingerprint()
+
+	/**
+	 * The announcement of this instance's last root renewal: the new (current) root, the root it replaced, when it
+	 * was renewed, and the replaced root's signature over the new root's DER. Null for a root that was never renewed
+	 * or was renewed without a signature.
+	 *
+	 * @return array{previousRoot:string,newRoot:string,renewedAt:string,signature:string}|null
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
+	 */
+	public function localRootRenewal(): ?array {
+		try {
+			$root = $this->caMapper->findRoot();
+		} catch (DoesNotExistException) {
+			return null;
+		}
+
+		$signature = $root->getPredecessorSignature();
+		$renewedAt = $root->getCreatedAt();
+		if ($signature === null || $signature === '' || $renewedAt === null) {
+			return null;
+		}
+
+		$previous = $this->caMapper->findPredecessorOf(rootId: $root->getId());
+		if ($previous === null) {
+			return null;
+		}
+
+		return [
+			'previousRoot' => $previous->getCertificate(),
+			'newRoot' => $root->getCertificate(),
+			'renewedAt' => (clone $renewedAt)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z'),
+			'signature' => $signature,
+		];
+	}//end localRootRenewal()
 
 	/**
 	 * The CA chain above a user certificate: the active intermediate, then the root.

@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Овој партнер сè уште го објавува закачениот корен отпечаток, па нема што повторно да се закачи.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Клучот за пристап не беше избришан. Обидете се повторно подоцна.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Направете ја промената повторно на интернет, каде што можете да зачувате без нив.",
-        "Another organisation's root re-pinned": "Коренот на друга организација е повторно закачен"
+        "Another organisation's root re-pinned": "Коренот на друга организација е повторно закачен",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Овој партнер го обнови својот коренски сертификат, а неговиот претходен корен го потпиша новиот.",
+        "Renewed root fingerprint": "Обновен корен отпечаток",
+        "Accept renewed certificate": "Прифати го обновениот сертификат",
+        "A partner renewed its root certificate": "Партнер го обнови својот коренски сертификат",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s го обнови својот Keepiq коренски сертификат, а неговиот претходен корен го потпиша новиот. Прифатете го обновениот сертификат во поставките за партнери во рок од %2$d ден(а).",
+        "Renewed partner certificate not accepted yet": "Обновениот сертификат на партнерот сè уште не е прифатен",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Обновениот сертификат на %1$s може да се прифати уште %2$d ден(а). Потоа може повторно да се закачи само рачно, откако неговиот отпечаток ќе се спореди со администраторот на партнерот."
     },
     "plurals": null
 }

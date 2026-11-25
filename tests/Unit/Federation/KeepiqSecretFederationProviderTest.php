@@ -23,6 +23,8 @@ use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Service\FederatedDeclineReceiver;
 use OCA\Keepiq\Service\FederatedRemoteChangeService;
 use OCA\Keepiq\Service\FederatedShareReceiver;
+use OCA\Keepiq\Service\PartnerRootRenewalService;
+use OCA\Keepiq\Service\RootRenewalNoticeDelivery;
 use OCP\Federation\ICloudFederationShare;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -103,6 +105,44 @@ class KeepiqSecretFederationProviderTest extends TestCase {
 
 		$this->assertSame(['declined' => true], $this->provider()->notificationReceived('SHARE_DECLINED', 'p-1', ['a' => 1]));
 	}//end testADeclineGoesToTheDeclineReceiver()
+
+	/**
+	 * A root renewal notice goes to the renewal check, tied to no share: no share service is asked, and its
+	 * signature is expected from the listed partner it names.
+	 *
+	 * @return void
+	 */
+	public function testARootRenewalNoticeGoesToTheRenewalCheck(): void {
+		$renewals = $this->createMock(PartnerRootRenewalService::class);
+		$notice = ['sharedSecret' => RootRenewalNoticeDelivery::NOTICE_ID, 'sender' => 'keepiq@cloud.partner.example'];
+		$renewals->expects($this->once())->method('noticeReceived')->with($notice);
+		$renewals->method('noticeIdentity')->with($notice)->willReturn('keepiq@cloud.partner.example');
+		$this->remoteChanges->expects($this->never())->method('handle');
+		$this->remoteChanges->expects($this->never())->method('senderOf');
+		$this->declines->expects($this->never())->method('handle');
+		$this->declines->expects($this->never())->method('recipientOf');
+		$provider = new KeepiqSecretFederationProvider($this->receiver, $this->remoteChanges, $this->declines, $renewals);
+
+		$this->assertSame([], $provider->notificationReceived(RootRenewalNoticeDelivery::ROOT_RENEWED, RootRenewalNoticeDelivery::NOTICE_ID, $notice));
+		$this->assertSame('keepiq@cloud.partner.example', $provider->getFederationIdFromSharedSecret(RootRenewalNoticeDelivery::NOTICE_ID, $notice));
+	}//end testARootRenewalNoticeGoesToTheRenewalCheck()
+
+	/**
+	 * A share notification never reaches the renewal check, and a renewal notice's fixed id is no share secret.
+	 *
+	 * @return void
+	 */
+	public function testShareNotificationsDoNotReachTheRenewalCheck(): void {
+		$renewals = $this->createMock(PartnerRootRenewalService::class);
+		$renewals->expects($this->never())->method('noticeReceived');
+		$renewals->expects($this->never())->method('noticeIdentity');
+		$this->remoteChanges->expects($this->once())->method('handle')->willReturn([]);
+		$this->remoteChanges->method('senderOf')->willReturn('alice@cloud.partner.example');
+		$provider = new KeepiqSecretFederationProvider($this->receiver, $this->remoteChanges, $this->declines, $renewals);
+
+		$provider->notificationReceived('SHARE_UPDATED', 'fs-1', ['sharedSecret' => 'hash']);
+		$this->assertSame('alice@cloud.partner.example', $provider->getFederationIdFromSharedSecret('hash', ['providerId' => 'fs-1']));
+	}//end testShareNotificationsDoNotReachTheRenewalCheck()
 
 	/**
 	 * A restored copy resumes the share through the decline receiver.

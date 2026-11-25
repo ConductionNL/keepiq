@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "See partner avaldab endiselt kinnitatud juursõrmejälge, seega pole midagi uuesti kinnitada.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Pääsuvõtit ei kustutatud. Proovi hiljem uuesti.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Tee muudatus uuesti võrgus olles, kus saad salvestada ilma nendeta.",
-        "Another organisation's root re-pinned": "Teise organisatsiooni juur kinnitati uuesti"
+        "Another organisation's root re-pinned": "Teise organisatsiooni juur kinnitati uuesti",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "See partner uuendas oma juursertifikaati ja tema eelmine juur allkirjastas uue.",
+        "Renewed root fingerprint": "Uuendatud juursõrmejälg",
+        "Accept renewed certificate": "Nõustu uuendatud sertifikaadiga",
+        "A partner renewed its root certificate": "Partner uuendas oma juursertifikaati",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s uuendas oma Keepiqi juursertifikaati ja tema eelmine juur allkirjastas uue. Nõustu uuendatud sertifikaadiga partnerite seadetes %2$d päeva jooksul.",
+        "Renewed partner certificate not accepted yet": "Partneri uuendatud sertifikaadiga pole veel nõustutud",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Partneri %1$s uuendatud sertifikaadiga saab nõustuda veel %2$d päeva. Pärast seda saab selle uuesti kinnitada ainult käsitsi, kui selle sõrmejälge on võrreldud partneri administraatoriga."
     },
     "plurals": null
 }

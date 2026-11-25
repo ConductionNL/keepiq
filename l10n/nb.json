@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Denne partneren publiserer fortsatt det festede rotfingeravtrykket, så det er ingenting å feste på nytt.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Tilgangsnøkkelen ble ikke slettet. Prøv igjen senere.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Gjør endringen på nytt på nett, der du kan lagre uten dem.",
-        "Another organisation's root re-pinned": "Roten til en annen organisasjon er festet på nytt"
+        "Another organisation's root re-pinned": "Roten til en annen organisasjon er festet på nytt",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Denne partneren har fornyet rotsertifikatet sitt, og den forrige roten har signert den nye.",
+        "Renewed root fingerprint": "Fornyet rotfingeravtrykk",
+        "Accept renewed certificate": "Godta fornyet sertifikat",
+        "A partner renewed its root certificate": "En partner har fornyet rotsertifikatet sitt",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s har fornyet Keepiq-rotsertifikatet sitt, og den forrige roten har signert den nye. Godta det fornyede sertifikatet i partnerinnstillingene innen %2$d dag(er).",
+        "Renewed partner certificate not accepted yet": "Fornyet partnersertifikat er ikke godtatt ennå",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Det fornyede sertifikatet til %1$s kan godtas i %2$d dag(er) til. Etter det kan det bare festes på nytt manuelt, etter at fingeravtrykket er sammenlignet med partnerens administrator."
     },
     "plurals": null
 }

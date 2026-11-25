@@ -9012,7 +9012,7 @@
             "put": {
                 "operationId": "federation-partner-repin",
                 "summary": "Pin the root fingerprint the partner publishes now, after the administrator compared it again",
-                "description": "Pin the root fingerprint the partner publishes now, after the administrator compared it again. The answer is `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint.",
+                "description": "Pin the root fingerprint the partner publishes now, after the administrator compared it again. The answer is `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint. With `acceptRenewal`, the fingerprint is the offered renewal the administrator accepts: the offer must still be open and the partner's announcement is checked again before the same re-pin.",
                 "tags": [
                     "federation-partner"
                 ],
@@ -9024,6 +9024,9 @@
                                 "properties": {
                                     "fingerprint": {
                                         "type": "string"
+                                    },
+                                    "acceptRenewal": {
+                                        "type": "boolean"
                                     }
                                 }
                             }

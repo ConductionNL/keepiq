@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ce partenaire publie toujours l'empreinte racine épinglée, il n'y a donc rien à épingler à nouveau.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} La clé d'accès n'a pas été supprimée. Réessayez plus tard.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Refaites la modification en ligne, où vous pouvez enregistrer sans elles.",
-        "Another organisation's root re-pinned": "Racine d’une autre organisation épinglée à nouveau"
+        "Another organisation's root re-pinned": "Racine d’une autre organisation épinglée à nouveau",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ce partenaire a renouvelé son certificat racine, et son ancienne racine a signé la nouvelle.",
+        "Renewed root fingerprint": "Empreinte racine renouvelée",
+        "Accept renewed certificate": "Accepter le certificat renouvelé",
+        "A partner renewed its root certificate": "Un partenaire a renouvelé son certificat racine",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s a renouvelé son certificat racine Keepiq, et son ancienne racine a signé la nouvelle. Acceptez le certificat renouvelé dans les paramètres des partenaires dans un délai de %2$d jour(s).",
+        "Renewed partner certificate not accepted yet": "Certificat de partenaire renouvelé pas encore accepté",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Le certificat renouvelé de %1$s peut encore être accepté pendant %2$d jour(s). Ensuite, il ne pourra être épinglé à nouveau qu’à la main, après comparaison de son empreinte avec l’administrateur du partenaire."
     },
     "plurals": null
 }

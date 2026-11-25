@@ -103,4 +103,23 @@ class CACertificateMapperQueriesTest extends TestCase {
 		$this->assertGreaterThanOrEqual($before->getTimestamp(), $threshold->getTimestamp());
 		$this->assertLessThanOrEqual($after->getTimestamp(), $threshold->getTimestamp());
 	}//end testFindExpiringSoon()
+
+	/**
+	 * The predecessor of a root is the root whose successor it is, or null.
+	 *
+	 * @return void
+	 */
+	public function testFindPredecessorOf(): void {
+		$this->queueRows([['id' => 'r1', 'type' => 'root', 'successor_id' => 'r2']]);
+		$mapper = $this->mapper();
+
+		$this->assertSame('r1', $mapper->findPredecessorOf(rootId: 'r2')?->getId());
+		$this->assertSame(
+			['select(*)', 'from(keepiq_ca_certs)', 'where(eq(type, :p0))', 'andWhere(eq(successor_id, :p1))', 'setMaxResults(1)'],
+			$this->opsOf(0)
+		);
+		$this->assertSame([':p0' => 'root', ':p1' => 'r2'], $this->paramsOf(0));
+
+		$this->assertNull($mapper->findPredecessorOf(rootId: 'r1'));
+	}//end testFindPredecessorOf()
 }//end class

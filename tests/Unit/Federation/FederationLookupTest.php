@@ -396,6 +396,68 @@ class FederationLookupTest extends TestCase {
 		$this->assertTrue($this->controller([$this->partner('cloud.partner.example', true, false)])->status()->getData()['outbound']);
 	}
 
+	/**
+	 * A lookup answer that carries a root renewal hands the announcement and the partner to the renewal check;
+	 * the answer to the browser is the same as without it (partner-root-renewal-announcement D3, D7).
+	 */
+	public function testARenewalInTheAnswerStartsTheCheckAndChangesNothingForTheBrowser(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$renewals = $this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class);
+		$announcement = ['newRoot' => 'NEW-ROOT-PEM'];
+		$renewals->expects($this->once())->method('announcedInLookup')->with($partner, $announcement);
+		$ocm = $this->createMock(IOCMDiscoveryService::class);
+		$ocm->method('requestRemoteOcmEndpoint')->willReturn(
+			$this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT'], 'rootRenewal' => $announcement])
+		);
+		$config = $this->createMock(IConfig::class);
+		$mapper = $this->partnerMapper([$partner]);
+		$service = new FederatedCertificateService(
+			partners: new FederationPartnerService($mapper, $this->createMock(IClientService::class), $config),
+			root: new FederationRootService($this->caMapper()),
+			shareService: $this->createMock(ShareService::class),
+			cloudIdManager: $this->cloudIdManager(),
+			userManager: $this->createMock(IUserManager::class),
+			config: $config,
+			ocmDiscovery: $ocm,
+			logger: $this->createMock(LoggerInterface::class),
+			partnerMapper: $mapper,
+			renewals: $renewals,
+		);
+
+		$answer = $service->lookup('bob@cloud.partner.example', 'alice');
+
+		$this->assertSame(['cloudId', 'certificate', 'chain', 'partnerRootFingerprint', 'valueFields'], array_keys($answer));
+		$this->assertSame(str_repeat('ab', 32), $answer['partnerRootFingerprint']);
+	}
+
+	/**
+	 * A failed lookup starts no renewal check.
+	 */
+	public function testAFailedLookupStartsNoRenewalCheck(): void {
+		$partner = $this->partner('cloud.partner.example', true, false);
+		$renewals = $this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class);
+		$renewals->expects($this->never())->method('announcedInLookup');
+		$ocm = $this->createMock(IOCMDiscoveryService::class);
+		$ocm->method('requestRemoteOcmEndpoint')->willReturn($this->response(200, ['rootRenewal' => ['newRoot' => 'X']]));
+		$config = $this->createMock(IConfig::class);
+		$mapper = $this->partnerMapper([$partner]);
+		$service = new FederatedCertificateService(
+			partners: new FederationPartnerService($mapper, $this->createMock(IClientService::class), $config),
+			root: new FederationRootService($this->caMapper()),
+			shareService: $this->createMock(ShareService::class),
+			cloudIdManager: $this->cloudIdManager(),
+			userManager: $this->createMock(IUserManager::class),
+			config: $config,
+			ocmDiscovery: $ocm,
+			logger: $this->createMock(LoggerInterface::class),
+			partnerMapper: $mapper,
+			renewals: $renewals,
+		);
+
+		$this->expectException(RuntimeException::class);
+		$service->lookup('bob@cloud.partner.example', 'alice');
+	}
+
 	public function testAdvertisesTheKeepiqCapabilityOnlyWhileAPartnerExists(): void {
 		$config = $this->createMock(IConfig::class);
 		$withPartner = new FederationOcmDiscoveryListener(

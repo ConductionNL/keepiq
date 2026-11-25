@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ky partner ende publikon shenjën e gishtit të fiksuar të rrënjës, kështu që nuk ka asgjë për të fiksuar përsëri.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Çelësi i hyrjes nuk u fshi. Provoni përsëri më vonë.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Bëjeni sërish ndryshimin në linjë, ku mund ta ruani pa ata.",
-        "Another organisation's root re-pinned": "Rrënja e një organizate tjetër u fiksua përsëri"
+        "Another organisation's root re-pinned": "Rrënja e një organizate tjetër u fiksua përsëri",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ky partner rinovoi certifikatën e vet rrënjë, dhe rrënja e tij e mëparshme nënshkroi të renë.",
+        "Renewed root fingerprint": "Shenja e gishtit e rrënjës e rinovuar",
+        "Accept renewed certificate": "Prano certifikatën e rinovuar",
+        "A partner renewed its root certificate": "Një partner rinovoi certifikatën e vet rrënjë",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s rinovoi certifikatën e vet rrënjë të Keepiq, dhe rrënja e tij e mëparshme nënshkroi të renë. Pranojeni certifikatën e rinovuar te cilësimet e partnerëve brenda %2$d ditësh.",
+        "Renewed partner certificate not accepted yet": "Certifikata e rinovuar e partnerit nuk është pranuar ende",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Certifikata e rinovuar e %1$s mund të pranohet edhe për %2$d ditë. Pas kësaj, mund të fiksohet përsëri vetëm me dorë, pasi të krahasohet shenja e saj e gishtit me administratorin e partnerit."
     },
     "nplurals=2; plural=(n != 1);"
 )

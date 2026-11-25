@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\DiscoveryController;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Exception\PartnerUnreachableException;
 use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Http\Client\IClientService;
@@ -40,9 +41,9 @@ use Throwable;
 /**
  * Partner allowlist: add, pin, permissions, and lookups by host or id.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 13 against a threshold of 10.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 14 against a threshold of 10.
  *   Each is one allowlist operation or lookup; find() lets a share write read its own partner
- *   instead of loading every partner.
+ *   instead of loading every partner, and announcedRenewal() reads the document preview() reads.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
@@ -152,6 +153,22 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function preview(string $url): array {
+		return $this->announcedRenewal(url: $url)['preview'];
+	}//end preview()
+
+	/**
+	 * Read a partner's discovery document as preview() does, with the root renewal it announces, unchecked.
+	 *
+	 * @param string $url The partner address
+	 *
+	 * @return array{preview:array{baseUrl:string,host:string,rootFingerprint:string},rootRenewal:mixed}
+	 *
+	 * @throws PartnerUnreachableException When the document cannot be fetched
+	 * @throws InvalidArgumentException When the partner cannot federate
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+	 */
+	public function announcedRenewal(string $url): array {
 		$baseUrl = $this->normaliseBaseUrl(url: $url);
 		try {
 			$response = $this->clientService->newClient()->get(
@@ -160,14 +177,10 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 			);
 			$document = json_decode((string)$response->getBody(), true);
 		} catch (Throwable) {
-			throw new InvalidArgumentException('The partner could not be reached');
+			throw new PartnerUnreachableException(message: PartnerUnreachableException::MESSAGE);
 		}
 
-		$federation = null;
-		if (is_array($document) === true) {
-			$federation = ($document['federation'] ?? null);
-		}
-
+		$federation = (((array)$document)['federation'] ?? null);
 		$fingerprint = null;
 		if (is_array($federation) === true) {
 			$fingerprint = ($federation['rootFingerprint'] ?? null);
@@ -180,11 +193,14 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 		}
 
 		return [
-			'baseUrl' => $baseUrl,
-			'host' => (string)$this->hostOf(url: $baseUrl),
-			'rootFingerprint' => $fingerprint,
+			'preview' => [
+				'baseUrl' => $baseUrl,
+				'host' => (string)$this->hostOf(url: $baseUrl),
+				'rootFingerprint' => $fingerprint,
+			],
+			'rootRenewal' => ($federation['rootRenewal'] ?? null),
 		];
-	}//end preview()
+	}//end announcedRenewal()
 
 	/**
 	 * Add a partner. The fingerprint the administrator confirmed must still be
@@ -234,8 +250,8 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 
 	/**
 	 * Pin the root fingerprint a partner publishes now, as add() pins it: only when it is the fingerprint the
-	 * administrator confirmed. A fingerprint equal to the pin stores nothing. A stored re-pin is audited with the
-	 * administrator as the actor.
+	 * administrator confirmed. A fingerprint equal to the pin stores no new pin. A stored re-pin is audited with the
+	 * administrator as the actor. Either way, any offered root renewal is withdrawn.
 	 *
 	 * @param string $id The partner UUID
 	 * @param string $confirmedFingerprint The fingerprint the administrator compared
@@ -248,6 +264,7 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 *   fingerprint is not the one the administrator confirmed
 	 *
 	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function repin(string $id, string $confirmedFingerprint, string $adminId): array {
 		$partner = $this->partnerMapper->findById(id: $id);
@@ -262,15 +279,16 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 		}
 
 		$old = $partner->getRootFingerprint();
-		if (hash_equals($old, $preview['rootFingerprint']) === true) {
-			return ['partner' => $partner, 'changed' => false];
+		$changed = hash_equals($old, $preview['rootFingerprint']) === false;
+		$partner->setRootFingerprint($preview['rootFingerprint']);
+		$partner->withdrawRenewal();
+		// An unchanged row is not written: the mapper skips an update without changed fields.
+		$partner = $this->partnerMapper->update(entity: $partner);
+		if ($changed === true) {
+			$this->audit->repinned(partner: $partner, oldFingerprint: $old, adminId: $adminId);
 		}
 
-		$partner->setRootFingerprint($preview['rootFingerprint']);
-		$partner = $this->partnerMapper->update(entity: $partner);
-		$this->audit->repinned(partner: $partner, oldFingerprint: $old, adminId: $adminId);
-
-		return ['partner' => $partner, 'changed' => true];
+		return ['partner' => $partner, 'changed' => $changed];
 	}//end repin()
 
 	/**

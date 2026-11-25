@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Este parceiro ainda publica a impressão digital raiz fixada, por isso não há nada para fixar novamente.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} A chave de acesso não foi eliminada. Tente novamente mais tarde.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Faça a alteração novamente online, onde pode guardar sem eles.",
-        "Another organisation's root re-pinned": "Raiz de outra organização fixada novamente"
+        "Another organisation's root re-pinned": "Raiz de outra organização fixada novamente",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Este parceiro renovou o seu certificado raiz, e a raiz anterior assinou a nova.",
+        "Renewed root fingerprint": "Impressão digital raiz renovada",
+        "Accept renewed certificate": "Aceitar o certificado renovado",
+        "A partner renewed its root certificate": "Um parceiro renovou o seu certificado raiz",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s renovou o seu certificado raiz do Keepiq, e a raiz anterior assinou a nova. Aceite o certificado renovado nas definições de parceiros no prazo de %2$d dia(s).",
+        "Renewed partner certificate not accepted yet": "Certificado renovado do parceiro ainda não aceite",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "O certificado renovado de %1$s pode ser aceite durante mais %2$d dia(s). Depois disso, só pode ser fixado novamente à mão, após comparar a sua impressão digital com o administrador do parceiro."
     },
     "nplurals=2; plural=(n != 1);"
 )

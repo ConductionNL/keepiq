@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Þessi samstarfsaðili birtir enn festa rótarfingrafarið, svo það er ekkert að festa aftur.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Aðgangslyklinum var ekki eytt. Reyndu aftur síðar.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Gerðu breytinguna aftur á netinu, þar sem þú getur vistað án þeirra.",
-        "Another organisation's root re-pinned": "Rót annarrar stofnunar fest aftur"
+        "Another organisation's root re-pinned": "Rót annarrar stofnunar fest aftur",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Þessi samstarfsaðili endurnýjaði rótarvottorð sitt, og fyrri rót hans undirritaði þá nýju.",
+        "Renewed root fingerprint": "Endurnýjað rótarfingrafar",
+        "Accept renewed certificate": "Samþykkja endurnýjað vottorð",
+        "A partner renewed its root certificate": "Samstarfsaðili endurnýjaði rótarvottorð sitt",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s endurnýjaði Keepiq-rótarvottorð sitt, og fyrri rót hans undirritaði þá nýju. Samþykktu endurnýjaða vottorðið í stillingum samstarfsaðila innan %2$d dag(a).",
+        "Renewed partner certificate not accepted yet": "Endurnýjað vottorð samstarfsaðila ekki enn samþykkt",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Endurnýjaða vottorð %1$s er hægt að samþykkja í %2$d dag(a) í viðbót. Eftir það er aðeins hægt að festa það aftur handvirkt, eftir að fingrafar þess hefur verið borið saman við stjórnanda samstarfsaðilans."
     },
     "nplurals=2; plural=(n != 1);"
 )

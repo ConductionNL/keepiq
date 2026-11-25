@@ -44,6 +44,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setRevokedAt(?DateTime $revokedAt)
  * @method string|null getSuccessorId()
  * @method void setSuccessorId(?string $successorId)
+ * @method string|null getPredecessorSignature()
+ * @method void setPredecessorSignature(?string $predecessorSignature)
  */
 class CACertificate extends Entity implements JsonSerializable {
 
@@ -106,6 +108,13 @@ class CACertificate extends Entity implements JsonSerializable {
 	protected ?string $successorId = null;
 
 	/**
+	 * On a renewed root: the base64 RSA SHA-256 signature by the root it replaced over this root's DER.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $predecessorSignature = null;
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -127,6 +136,7 @@ class CACertificate extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'isActive', type: 'boolean');
 		$this->addType(fieldName: 'revokedAt', type: 'datetime');
 		$this->addType(fieldName: 'successorId', type: 'string');
+		$this->addType(fieldName: 'predecessorSignature', type: 'string');
 	}//end __construct()
 
 	/**

@@ -108,4 +108,41 @@ class FederationPartnerMapperQueriesTest extends TestCase {
 		$this->assertSame(expected: [], actual: $this->paramsOf(index: 0));
 		$this->assertSame(expected: 'query', actual: $this->ranOf(index: 0));
 	}//end testFindAllPartners()
+
+	/**
+	 * The partners with an offered root renewal, for the daily reminders.
+	 *
+	 * @return void
+	 */
+	public function testFindWithOfferedRenewal(): void {
+		$this->queueRows(rows: [['id' => 'r1', 'pending_root_fingerprint' => str_repeat('cd', 32)]]);
+
+		$rows = $this->mapper()->findWithOfferedRenewal();
+
+		$this->assertSame(expected: str_repeat('cd', 32), actual: $rows[0]->getPendingRootFingerprint());
+		$this->assertSame(
+			expected: ['select(*)', 'from(keepiq_federation_partners)', 'where(isNotNull(pending_root_fingerprint))'],
+			actual: $this->opsOf(index: 0)
+		);
+	}//end testFindWithOfferedRenewal()
+
+	/**
+	 * The partners whose renewal notice is waiting and due.
+	 *
+	 * @return void
+	 */
+	public function testFindDueRenewalNotices(): void {
+		$now = new \DateTime('2026-11-25 12:00:00');
+		$this->queueRows(rows: [['id' => 'r1']]);
+
+		$this->assertCount(expectedCount: 1, haystack: $this->mapper()->findDueRenewalNotices(now: $now));
+		$this->assertSame(
+			expected: [
+				'select(*)', 'from(keepiq_federation_partners)', 'where(isNotNull(renewal_notice_next_at))',
+				'andWhere(lte(renewal_notice_next_at, :p0))',
+			],
+			actual: $this->opsOf(index: 0)
+		);
+		$this->assertSame(expected: [':p0' => $now], actual: $this->paramsOf(index: 0));
+	}//end testFindDueRenewalNotices()
 }//end class

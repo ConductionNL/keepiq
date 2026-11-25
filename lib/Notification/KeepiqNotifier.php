@@ -45,9 +45,9 @@ use OCP\Notification\UnknownNotificationException;
  *   already split per subject group. The share-request and group-member
  *   approval actions (keepiq#747) pushed it to the threshold. Splitting the
  *   class would only move branches into a second class this one calls.
- * @SuppressWarnings(PHPMD.TooManyMethods) 26 against a threshold of 25, for
- *   the same reason: one small renderer per subject group, and privileged
- *   access added one.
+ * @SuppressWarnings(PHPMD.TooManyMethods) 27 against a threshold of 25, for
+ *   the same reason: one small renderer per subject group; privileged access
+ *   and the partner root renewal added one each.
  */
 class KeepiqNotifier implements INotifier {
 	/**
@@ -385,6 +385,9 @@ class KeepiqNotifier implements INotifier {
 				return true;
 			case 'ca_root_expiring':
 				return $this->renderRootExpiring(r: $r);
+			case 'partner_root_renewal':
+			case 'partner_root_renewal_reminder':
+				return $this->renderPartnerRootRenewal(r: $r);
 		}//end switch
 
 		return false;
@@ -650,6 +653,49 @@ class KeepiqNotifier implements INotifier {
 		$this->withAdminSectionLink(notification: $r->notification);
 		return true;
 	}//end renderRootExpiring()
+
+	/**
+	 * Render a partner's verified root renewal that waits for an administrator, or a reminder of it. Both link to the
+	 * partner in the federation admin settings.
+	 *
+	 * @param SubjectRendering $r The notification, its subject, parameters and translator
+	 *
+	 * @return bool Always true: the subject is recognised.
+	 */
+	private function renderPartnerRootRenewal(SubjectRendering $r): bool {
+		$partner = (string)($r->params['partner'] ?? '');
+		$daysLeft = (int)($r->params['days_left'] ?? 0);
+		if ($r->subject === 'partner_root_renewal') {
+			$r->notification->setParsedSubject((string)$r->l->t('A partner renewed its root certificate'));
+			$r->notification->setParsedMessage(
+				(string)$r->l->t(
+					// phpcs:ignore Generic.Files.LineLength.MaxExceeded -- one literal, so l10n extraction reads the whole string.
+					'%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).',
+					[$partner, $daysLeft]
+				)
+			);
+		}
+
+		if ($r->subject === 'partner_root_renewal_reminder') {
+			$r->notification->setParsedSubject((string)$r->l->t('Renewed partner certificate not accepted yet'));
+			$r->notification->setParsedMessage(
+				(string)$r->l->t(
+					// phpcs:ignore Generic.Files.LineLength.MaxExceeded -- one literal, so l10n extraction reads the whole string.
+					'The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner\'s administrator.',
+					[$partner, $daysLeft]
+				)
+			);
+		}
+
+		$partnerId = (string)($r->params['partner_id'] ?? '');
+		$fragment = '';
+		if ($partnerId !== '') {
+			$fragment = 'federation-partner-' . $partnerId;
+		}
+
+		$this->withAdminSectionLink(notification: $r->notification, fragment: $fragment);
+		return true;
+	}//end renderPartnerRootRenewal()
 
 	/**
 	 * Render an access to a decoy secret.
@@ -929,17 +975,21 @@ class KeepiqNotifier implements INotifier {
 	}//end withSecretLink()
 
 	/**
-	 * Attach a link to the Keepiq section of the Nextcloud admin settings.
+	 * Attach a link to the Keepiq section of the Nextcloud admin settings, at an element of it when given.
 	 *
 	 * @param INotification $notification The notification to mutate
+	 * @param string $fragment The id of the element to land on, or '' for the top
 	 *
 	 * @return void
 	 */
-	private function withAdminSectionLink(INotification $notification): void {
-		$notification->setLink(
-			$this->url->getAbsoluteURL(
-				$this->url->linkToRoute('settings.AdminSettings.index', ['section' => AppIdentity::APP_ID])
-			)
+	private function withAdminSectionLink(INotification $notification, string $fragment = ''): void {
+		$link = $this->url->getAbsoluteURL(
+			$this->url->linkToRoute('settings.AdminSettings.index', ['section' => AppIdentity::APP_ID])
 		);
+		if ($fragment !== '') {
+			$link .= '#' . rawurlencode($fragment);
+		}
+
+		$notification->setLink($link);
 	}//end withAdminSectionLink()
 }//end class

@@ -88,6 +88,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * @param FederationPartnerMapper $partnerMapper Records the value fields a partner advertises
 	 * @param IEventDispatcher|null $eventDispatcher Audits a change of those value fields
 	 * @param AuditEventFactory $auditEvents Builds the audit events
+	 * @param PartnerRootRenewalService|null $renewals Checks a root renewal a partner announces in its answer
 	 *
 	 * @return void
 	 *
@@ -107,6 +108,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 		private FederationPartnerMapper $partnerMapper,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?PartnerRootRenewalService $renewals = null,
 	) {
 	}//end __construct()
 
@@ -116,9 +118,10 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * @param string|null $signer The verified signer (OCMEndpointRequestEvent::getRemote()), null when unsigned
 	 * @param array<array-key,mixed> $payload The request payload, `{cloudId}`
 	 *
-	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,valueFields:string[]}|null
+	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,valueFields:string[],rootRenewal?:array<string,string>}|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
 	 */
 	public function answer(?string $signer, array $payload): ?array {
 		if ($this->partners->inboundPartnerForSigner(signer: $signer) === null) {
@@ -141,12 +144,19 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 			return null;
 		}
 
-		return [
+		$answer = [
 			'cloudId' => (string)$payload['cloudId'],
 			'certificate' => $certificate,
 			'chain' => $chain,
 			'valueFields' => FederatedValueFields::VALUE_FIELDS,
 		];
+		// After a root renewal, the announcement goes next to the chain, so a partner that missed the notice finds it.
+		$renewal = $this->root->localRootRenewal();
+		if ($renewal !== null) {
+			$answer['rootRenewal'] = $renewal;
+		}
+
+		return $answer;
 	}//end answer()
 
 	/**
@@ -176,7 +186,8 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * Ask an outbound partner for a recipient's certificate.
 	 *
 	 * The answer names the value fields beyond `key`, `login` and `additionalFields` the partner stores,
-	 * so the browser leaves out a `totp` or `passkeys` value it cannot hold.
+	 * so the browser leaves out a `totp` or `passkeys` value it cannot hold. A root renewal it announces next to the
+	 * chain starts the check of that renewal; the answer itself is never trusted for it.
 	 *
 	 * @param string $cloudId The recipient's cloud id, `bob@cloud.partner.example`
 	 * @param string $userId The owner asking; their cloud id goes along as `sender`
@@ -187,6 +198,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * @throws RuntimeException `federation_unavailable`, `partner_unreachable` or `bad_chain`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function lookup(string $cloudId, string $userId): array {
 		// The OCM call requestRemoteOcmEndpoint() arrived in Nextcloud 33 with the
@@ -222,6 +234,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 		}
 
 		$answer = $this->parseAnswer(status: $status, body: $body, partner: $partner->getBaseUrl());
+		$this->renewals?->announcedInLookup(partner: $partner, announcement: $body['rootRenewal'] ?? null);
 
 		return [
 			'cloudId' => $resolved->getId(),

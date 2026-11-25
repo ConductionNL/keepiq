@@ -75,7 +75,7 @@ class FederationOcmRequestListenerTest extends TestCase {
 	 *
 	 * @return FederationOcmRequestListener
 	 */
-	private function listener(array $partners, bool $caPresent = true): FederationOcmRequestListener {
+	private function listener(array $partners, bool $caPresent = true, ?\OCA\Keepiq\Db\CACertificateMapper $ca = null): FederationOcmRequestListener {
 		$config = $this->createMock(IConfig::class);
 		$config->method('getUserValue')->willReturnCallback(
 			fn (string $user, string $app, string $key, $default) => $this->optIns[$user] ?? $default
@@ -93,7 +93,7 @@ class FederationOcmRequestListenerTest extends TestCase {
 		$partnerMapper = $this->partnerMapper($partners);
 		$service = new FederatedCertificateService(
 			new FederationPartnerService($partnerMapper, $this->createMock(IClientService::class), $config),
-			new FederationRootService($this->caMapper($caPresent)),
+			new FederationRootService($ca ?? $this->caMapper($caPresent)),
 			$shares,
 			$this->cloudIdManager(),
 			$users,
@@ -160,6 +160,32 @@ class FederationOcmRequestListenerTest extends TestCase {
 			],
 			$data
 		);
+	}
+
+	/**
+	 * After a root renewal the answer carries the announcement next to the chain, so a partner that missed the
+	 * notice finds it in its next lookup (partner-root-renewal-announcement D1, D7).
+	 */
+	public function testAfterARootRenewalTheAnswerAnnouncesItNextToTheChain(): void {
+		$listener = $this->listener([$this->partner('cloud.city.example', false, true)], ca: $this->renewedCaMapper());
+
+		[$status, $data] = $this->answerOf($this->ask($listener, 'cloud.city.example', 'bob@cloud.here.example'));
+
+		$this->assertSame(Http::STATUS_OK, $status);
+		$this->assertSame(['cloudId', 'certificate', 'chain', 'valueFields', 'rootRenewal'], array_keys($data));
+		$this->assertSame([self::INTERMEDIATE_PEM, self::ROOT_PEM], $data['chain']);
+		$this->assertSame(self::RENEWAL, $data['rootRenewal']);
+	}
+
+	/**
+	 * A refused lookup carries no announcement either: it is the one unknown answer.
+	 */
+	public function testARefusedLookupCarriesNoAnnouncement(): void {
+		$listener = $this->listener([$this->partner('cloud.city.example', false, true)], ca: $this->renewedCaMapper());
+
+		[, $data] = $this->answerOf($this->ask($listener, 'cloud.stranger.example', 'bob@cloud.here.example'));
+
+		$this->assertStringNotContainsString('rootRenewal', (string)json_encode($data));
 	}
 
 	/**

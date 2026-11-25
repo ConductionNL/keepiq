@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ovaj partner i dalje objavljuje prikačeni korijenski otisak, pa nema ništa za ponovno prikačiti.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Pristupni ključ nije izbrisan. Pokušajte ponovo kasnije.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Napravite promjenu ponovo dok ste na mreži, gdje je možete sačuvati bez njih.",
-        "Another organisation's root re-pinned": "Korijen druge organizacije ponovo je prikačen"
+        "Another organisation's root re-pinned": "Korijen druge organizacije ponovo je prikačen",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ovaj partner je obnovio svoj korijenski certifikat, a njegov prethodni korijen je potpisao novi.",
+        "Renewed root fingerprint": "Obnovljeni korijenski otisak",
+        "Accept renewed certificate": "Prihvati obnovljeni certifikat",
+        "A partner renewed its root certificate": "Partner je obnovio svoj korijenski certifikat",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s je obnovio svoj Keepiq korijenski certifikat, a njegov prethodni korijen je potpisao novi. Prihvatite obnovljeni certifikat u postavkama partnera u roku od %2$d dan(a).",
+        "Renewed partner certificate not accepted yet": "Obnovljeni certifikat partnera još nije prihvaćen",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Obnovljeni certifikat partnera %1$s može se prihvatiti još %2$d dan(a). Nakon toga može se ponovo prikačiti samo ručno, nakon poređenja njegovog otiska s administratorom partnera."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

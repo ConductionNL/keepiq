@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Цей партнер досі публікує закріплений кореневий відбиток, тож закріплювати знову нічого.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Ключ доступу не було вилучено. Спробуйте ще раз пізніше.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Повторіть зміну онлайн, де можна зберегти без них.",
-        "Another organisation's root re-pinned": "Корінь іншої організації закріплено знову"
+        "Another organisation's root re-pinned": "Корінь іншої організації закріплено знову",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Цей партнер оновив свій кореневий сертифікат, а його попередній корінь підписав новий.",
+        "Renewed root fingerprint": "Оновлений кореневий відбиток",
+        "Accept renewed certificate": "Прийняти оновлений сертифікат",
+        "A partner renewed its root certificate": "Партнер оновив свій кореневий сертифікат",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s оновив свій кореневий сертифікат Keepiq, а його попередній корінь підписав новий. Прийміть оновлений сертифікат у налаштуваннях партнерів протягом %2$d дн.",
+        "Renewed partner certificate not accepted yet": "Оновлений сертифікат партнера ще не прийнято",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Оновлений сертифікат %1$s можна прийняти ще протягом %2$d дн. Після цього його можна буде закріпити знову лише вручну, звіривши його відбиток з адміністратором партнера."
     },
     "plurals": null
 }

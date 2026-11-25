@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ez a partner továbbra is a rögzített gyökér-ujjlenyomatot teszi közzé, így nincs mit újra rögzíteni.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} A hozzáférési kulcs nem lett törölve. Próbálja újra később.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Végezze el újra a módosítást online, ahol nélkülük is mentheti.",
-        "Another organisation's root re-pinned": "Egy másik szervezet gyökerének újbóli rögzítése"
+        "Another organisation's root re-pinned": "Egy másik szervezet gyökerének újbóli rögzítése",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ez a partner megújította a gyökértanúsítványát, és az előző gyökere aláírta az újat.",
+        "Renewed root fingerprint": "Megújított gyökér-ujjlenyomat",
+        "Accept renewed certificate": "Megújított tanúsítvány elfogadása",
+        "A partner renewed its root certificate": "Egy partner megújította a gyökértanúsítványát",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s megújította a Keepiq-gyökértanúsítványát, és az előző gyökere aláírta az újat. Fogadja el a megújított tanúsítványt a partnerbeállításokban %2$d napon belül.",
+        "Renewed partner certificate not accepted yet": "A partner megújított tanúsítványa még nincs elfogadva",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "%1$s megújított tanúsítványa még %2$d napig fogadható el. Ezután csak kézzel rögzíthető újra, miután az ujjlenyomatát összevetették a partner rendszergazdájával."
     },
     "plurals": null
 }

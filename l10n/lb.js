@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Dëse Partner verëffentlecht nach ëmmer de fixéierte Root-Fangerofdrock, also gëtt et näischt nees ze fixéieren.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} De Passkey gouf net geläscht. Probéiert et méi spéit nach eng Kéier.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Maacht d'Ännerung online nach eng Kéier; do kënnt Dir ouni si späicheren.",
-        "Another organisation's root re-pinned": "Root vun enger anerer Organisatioun nees fixéiert"
+        "Another organisation's root re-pinned": "Root vun enger anerer Organisatioun nees fixéiert",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Dëse Partner huet säi Root-Zertifikat erneiert, a säi viregt Root huet dat neit ënnerschriwwen.",
+        "Renewed root fingerprint": "Erneierte Root-Fangerofdrock",
+        "Accept renewed certificate": "Erneiert Zertifikat akzeptéieren",
+        "A partner renewed its root certificate": "E Partner huet säi Root-Zertifikat erneiert",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s huet säi Keepiq-Root-Zertifikat erneiert, a säi viregt Root huet dat neit ënnerschriwwen. Akzeptéiert dat erneiert Zertifikat an de Partner-Astellungen bannent %2$d Dag/Deeg.",
+        "Renewed partner certificate not accepted yet": "Erneiert Partnerzertifikat nach net akzeptéiert",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Dat erneiert Zertifikat vun %1$s kann nach %2$d Dag/Deeg akzeptéiert ginn. Duerno kann et nëmme nach mat der Hand nees fixéiert ginn, nodeems säi Fangerofdrock mam Administrateur vum Partner verglach gouf."
     },
     "nplurals=2; plural=(n != 1);"
 )

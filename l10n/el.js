@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Αυτός ο συνεργάτης εξακολουθεί να δημοσιεύει το καρφιτσωμένο αποτύπωμα ρίζας, οπότε δεν υπάρχει τίποτα για επανακαρφίτσωμα.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Το κλειδί πρόσβασης δεν διαγράφηκε. Δοκιμάστε ξανά αργότερα.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Κάντε ξανά την αλλαγή ενώ είστε συνδεδεμένοι, όπου μπορείτε να αποθηκεύσετε χωρίς αυτούς.",
-        "Another organisation's root re-pinned": "Επανακαρφίτσωμα ρίζας άλλου οργανισμού"
+        "Another organisation's root re-pinned": "Επανακαρφίτσωμα ρίζας άλλου οργανισμού",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Αυτός ο συνεργάτης ανανέωσε το πιστοποιητικό ρίζας του, και η προηγούμενη ρίζα του υπέγραψε τη νέα.",
+        "Renewed root fingerprint": "Ανανεωμένο αποτύπωμα ρίζας",
+        "Accept renewed certificate": "Αποδοχή ανανεωμένου πιστοποιητικού",
+        "A partner renewed its root certificate": "Ένας συνεργάτης ανανέωσε το πιστοποιητικό ρίζας του",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s: ανανέωσε το πιστοποιητικό ρίζας Keepiq του, και η προηγούμενη ρίζα του υπέγραψε τη νέα. Αποδεχτείτε το ανανεωμένο πιστοποιητικό στις ρυθμίσεις συνεργατών εντός %2$d ημέρας(ών).",
+        "Renewed partner certificate not accepted yet": "Το ανανεωμένο πιστοποιητικό συνεργάτη δεν έχει γίνει ακόμη αποδεκτό",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Το ανανεωμένο πιστοποιητικό του %1$s μπορεί να γίνει αποδεκτό για %2$d ακόμη ημέρα(ες). Μετά από αυτό, μπορεί να επανακαρφιτσωθεί μόνο χειροκίνητα, αφού συγκριθεί το αποτύπωμά του με τον διαχειριστή του συνεργάτη."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Dieser Partner veröffentlicht weiterhin den angehefteten Root-Fingerabdruck, daher gibt es nichts neu anzuheften.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Der Passkey wurde nicht gelöscht. Versuchen Sie es später erneut.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Nehmen Sie die Änderung online erneut vor; dort können Sie ohne sie speichern.",
-        "Another organisation's root re-pinned": "Root einer anderen Organisation neu angeheftet"
+        "Another organisation's root re-pinned": "Root einer anderen Organisation neu angeheftet",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Dieser Partner hat sein Stammzertifikat erneuert, und sein bisheriges Root hat das neue signiert.",
+        "Renewed root fingerprint": "Erneuerter Root-Fingerabdruck",
+        "Accept renewed certificate": "Erneuertes Zertifikat akzeptieren",
+        "A partner renewed its root certificate": "Ein Partner hat sein Stammzertifikat erneuert",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s hat sein Keepiq-Stammzertifikat erneuert, und sein bisheriges Root hat das neue signiert. Akzeptieren Sie das erneuerte Zertifikat innerhalb von %2$d Tag(en) in den Partnereinstellungen.",
+        "Renewed partner certificate not accepted yet": "Erneuertes Partnerzertifikat noch nicht akzeptiert",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Das erneuerte Zertifikat von %1$s kann noch %2$d Tag(e) akzeptiert werden. Danach kann es nur noch von Hand neu angeheftet werden, nachdem sein Fingerabdruck mit dem Administrator des Partners verglichen wurde."
     },
     "nplurals=2; plural=(n != 1);"
 )

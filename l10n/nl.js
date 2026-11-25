@@ -1993,7 +1993,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Deze partner publiceert nog steeds de vastgezette rootvingerafdruk, dus er valt niets opnieuw vast te zetten.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} De passkey is niet verwijderd. Probeer het later opnieuw.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Voer de wijziging online opnieuw uit; daar kun je opslaan zonder hen.",
-        "Another organisation's root re-pinned": "Root van een andere organisatie opnieuw vastgezet"
+        "Another organisation's root re-pinned": "Root van een andere organisatie opnieuw vastgezet",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Deze partner heeft zijn rootcertificaat vernieuwd, en zijn vorige root heeft het nieuwe ondertekend.",
+        "Renewed root fingerprint": "Vernieuwde rootvingerafdruk",
+        "Accept renewed certificate": "Vernieuwd certificaat accepteren",
+        "A partner renewed its root certificate": "Een partner heeft zijn rootcertificaat vernieuwd",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s heeft zijn Keepiq-rootcertificaat vernieuwd, en zijn vorige root heeft het nieuwe ondertekend. Accepteer het vernieuwde certificaat binnen %2$d dag(en) in de partnerinstellingen.",
+        "Renewed partner certificate not accepted yet": "Vernieuwd partnercertificaat nog niet geaccepteerd",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Het vernieuwde certificaat van %1$s kan nog %2$d dag(en) worden geaccepteerd. Daarna kan het alleen nog met de hand opnieuw worden vastgezet, na het vergelijken van de vingerafdruk met de beheerder van de partner."
     },
     "nplurals=2; plural=(n != 1);"
 )

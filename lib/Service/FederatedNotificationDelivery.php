@@ -65,7 +65,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 *
 	 * @var int
 	 */
-	private const FIRST_WAIT = 60;
+	public const FIRST_WAIT = 60;
 
 	/**
 	 * Constructor for FederatedNotificationDelivery.

@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ta partner še vedno objavlja pripeti korenski prstni odtis, zato ni ničesar za znova pripeti.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Ključ za dostop ni bil izbrisan. Poskusite znova pozneje.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Spremembo ponovite na spletu, kjer lahko shranite brez njih.",
-        "Another organisation's root re-pinned": "Koren druge organizacije znova pripet"
+        "Another organisation's root re-pinned": "Koren druge organizacije znova pripet",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ta partner je obnovil svoje korensko potrdilo, njegov prejšnji koren pa je podpisal novega.",
+        "Renewed root fingerprint": "Obnovljeni korenski prstni odtis",
+        "Accept renewed certificate": "Sprejmi obnovljeno potrdilo",
+        "A partner renewed its root certificate": "Partner je obnovil svoje korensko potrdilo",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s je obnovil svoje korensko potrdilo Keepiq, njegov prejšnji koren pa je podpisal novega. Sprejmite obnovljeno potrdilo v nastavitvah partnerjev v %2$d dneh.",
+        "Renewed partner certificate not accepted yet": "Obnovljeno potrdilo partnerja še ni sprejeto",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Obnovljeno potrdilo partnerja %1$s je mogoče sprejeti še %2$d dni. Nato ga je mogoče znova pripeti le ročno, po primerjavi njegovega prstnega odtisa s skrbnikom partnerja."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

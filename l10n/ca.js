@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Aquest soci encara publica l'empremta arrel fixada, així que no hi ha res a tornar a fixar.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} La clau d'accés no s'ha suprimit. Torneu-ho a provar més tard.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Torna a fer el canvi en línia, on pots desar sense ells.",
-        "Another organisation's root re-pinned": "S'ha tornat a fixar l'arrel d'una altra organització"
+        "Another organisation's root re-pinned": "S'ha tornat a fixar l'arrel d'una altra organització",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Aquest soci ha renovat el seu certificat arrel, i la seva arrel anterior ha signat la nova.",
+        "Renewed root fingerprint": "Empremta arrel renovada",
+        "Accept renewed certificate": "Accepta el certificat renovat",
+        "A partner renewed its root certificate": "Un soci ha renovat el seu certificat arrel",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s ha renovat el seu certificat arrel de Keepiq, i la seva arrel anterior ha signat la nova. Accepteu el certificat renovat a la configuració de socis en un termini de %2$d dia(es).",
+        "Renewed partner certificate not accepted yet": "Certificat de soci renovat encara no acceptat",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "El certificat renovat de %1$s es pot acceptar durant %2$d dia(es) més. Després, només es podrà tornar a fixar a mà, després de comparar-ne l'empremta amb l’administrador del soci."
     },
     "nplurals=2; plural=(n != 1);"
 )

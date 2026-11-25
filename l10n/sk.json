@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Tento partner stále zverejňuje pripnutý koreňový odtlačok, takže nie je čo znova pripnúť.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Prístupový kľúč sa neodstránil. Skúste to neskôr znova.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Urobte zmenu znova online, kde ju môžete uložiť bez nich.",
-        "Another organisation's root re-pinned": "Koreň inej organizácie znova pripnutý"
+        "Another organisation's root re-pinned": "Koreň inej organizácie znova pripnutý",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Tento partner obnovil svoj koreňový certifikát a jeho predchádzajúci koreň podpísal nový.",
+        "Renewed root fingerprint": "Obnovený koreňový odtlačok",
+        "Accept renewed certificate": "Prijať obnovený certifikát",
+        "A partner renewed its root certificate": "Partner obnovil svoj koreňový certifikát",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s obnovil svoj koreňový certifikát Keepiq a jeho predchádzajúci koreň podpísal nový. Prijmite obnovený certifikát v nastaveniach partnerov do %2$d dní.",
+        "Renewed partner certificate not accepted yet": "Obnovený certifikát partnera ešte nebol prijatý",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Obnovený certifikát %1$s možno prijať ešte %2$d dní. Potom ho možno znova pripnúť iba ručne, po porovnaní jeho odtlačku so správcom partnera."
     },
     "plurals": null
 }

@@ -247,7 +247,7 @@ class FederationPartnerTest extends TestCase {
 		$root = new FederationRootService($this->caMapper());
 
 		$this->assertSame(openssl_x509_fingerprint($pem, 'sha256'), $root->fingerprint($pem));
-		$this->assertSame(hash('sha256', 'root-der'), $root->localRootFingerprint());
+		$this->assertSame(self::ROOT_FINGERPRINT, $root->localRootFingerprint());
 		$this->assertSame([self::INTERMEDIATE_PEM, self::ROOT_PEM], $root->localChain());
 		$this->assertNull($root->fingerprint('not a certificate'));
 		$this->assertNull((new FederationRootService($this->caMapper(false)))->localRootFingerprint());
@@ -266,9 +266,57 @@ class FederationPartnerTest extends TestCase {
 		);
 
 		$this->assertSame(
-			['enabled' => true, 'rootFingerprint' => hash('sha256', 'root-der')],
+			['enabled' => true, 'rootFingerprint' => self::ROOT_FINGERPRINT],
 			$discovery->document()->getData()['federation']
 		);
+	}
+
+	/**
+	 * After a root renewal the discovery document announces it under `federation.rootRenewal`: both roots as PEM,
+	 * the renewal time in ISO 8601 UTC and the previous root's signature. A root never renewed announces nothing.
+	 *
+	 * @return void
+	 */
+	public function testTheDiscoveryDocumentAnnouncesARootRenewal(): void {
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('linkToRoute')->willReturn('/index.php/apps/keepiq/x');
+		$urls->method('getAbsoluteURL')->willReturnArgument(0);
+		$request = $this->createMock(IRequest::class);
+		$document = static fn (FederationRootService $root): array => (new DiscoveryController(
+			$request,
+			$urls,
+			null,
+			null,
+			$root,
+		))->document()->getData()['federation'];
+
+		$this->assertSame(
+			['enabled' => true, 'rootFingerprint' => self::ROOT_FINGERPRINT, 'rootRenewal' => self::RENEWAL],
+			$document(new FederationRootService($this->renewedCaMapper()))
+		);
+		$this->assertArrayNotHasKey('rootRenewal', $document(new FederationRootService($this->caMapper())));
+	}
+
+	/**
+	 * A root renewed before roots carried a signature, or whose predecessor row is gone, announces nothing.
+	 *
+	 * @return void
+	 */
+	public function testARenewalWithoutSignatureOrPredecessorIsNotAnnounced(): void {
+		$mapper = $this->renewedCaMapper();
+		$mapper->findRoot()->setPredecessorSignature(null);
+		$this->assertNull((new FederationRootService($mapper))->localRootRenewal());
+
+		$orphan = $this->createMock(\OCA\Keepiq\Db\CACertificateMapper::class);
+		$root = new \OCA\Keepiq\Db\CACertificate();
+		$root->setId('root-new');
+		$root->setCertificate(self::ROOT_PEM);
+		$root->setCreatedAt(new \DateTime());
+		$root->setPredecessorSignature('c2lnbmF0dXJl');
+		$orphan->method('findRoot')->willReturn($root);
+		$orphan->method('findPredecessorOf')->willReturn(null);
+		$this->assertNull((new FederationRootService($orphan))->localRootRenewal());
+		$this->assertNull((new FederationRootService($this->caMapper(false)))->localRootRenewal());
 	}
 
 	/** @var array<int,FederationPartner> Partner rows written through update() */
@@ -283,13 +331,20 @@ class FederationPartnerTest extends TestCase {
 	 * @return FederationPartnerService
 	 */
 	private function repinService(FederationPartner $stored, mixed $document): FederationPartnerService {
+		// As read from the table: no field changed yet.
+		$stored->resetUpdatedFields();
 		$mapper = $this->partnerMapper([$stored]);
 		$mapper->method('findById')->willReturnCallback(
 			static fn (string $id): FederationPartner => ($id === $stored->getId()) ? $stored : throw new DoesNotExistException('none')
 		);
+		// As QBMapper::update, a row without changed fields is not written.
 		$mapper->method('update')->willReturnCallback(
 			function (FederationPartner $partner): FederationPartner {
-				$this->updated[] = $partner;
+				if ($partner->getUpdatedFields() !== []) {
+					$this->updated[] = $partner;
+					$partner->resetUpdatedFields();
+				}
+
 				return $partner;
 			}
 		);
@@ -456,7 +511,14 @@ class FederationPartnerTest extends TestCase {
 		$partners->method('all')->willReturn([]);
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($this->createMock(IUser::class));
-		$controller = new FederationPartnerController($this->createMock(IRequest::class), $partners, $root, $session, $this->createMock(\OCA\Keepiq\Service\FederatedShareService::class));
+		$controller = new FederationPartnerController(
+			$this->createMock(IRequest::class),
+			$partners,
+			$root,
+			$session,
+			$this->createMock(\OCA\Keepiq\Service\FederatedShareService::class),
+			$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class)
+		);
 
 		$this->assertSame(Http::STATUS_CONFLICT, $controller->create('https://cloud.partner.example', str_repeat('cd', 32), true, true)->getStatus());
 		$this->assertSame(Http::STATUS_CONFLICT, $controller->preview('https://cloud.partner.example')->getStatus());
@@ -467,9 +529,57 @@ class FederationPartnerTest extends TestCase {
 		$row = $this->partner('cloud.partner.example', true, false);
 
 		$this->assertSame(
-			['id', 'baseUrl', 'host', 'rootFingerprint', 'allowOutbound', 'allowInbound', 'addedBy', 'addedAt', 'valueFields'],
+			['id', 'baseUrl', 'host', 'rootFingerprint', 'allowOutbound', 'allowInbound', 'addedBy', 'addedAt', 'valueFields', 'pendingRenewal'],
 			array_keys($row->jsonSerialize())
 		);
+		$this->assertNull($row->jsonSerialize()['pendingRenewal']);
 		$this->assertInstanceOf(FederationPartner::class, $row);
+	}
+
+	/**
+	 * An offered renewal serialises with its fingerprint and window while the window is open, and not after it,
+	 * and never with the renewal notice state of this instance's own renewals.
+	 *
+	 * @return void
+	 */
+	public function testAnOfferedRenewalSerialisesOnlyWhileItsWindowIsOpen(): void {
+		$row = $this->partner('cloud.partner.example', true, false);
+		$row->setRenewalNoticeAttempts(2);
+		$row->offerRenewal(str_repeat('cd', 32), new \DateTime('-1 day'), new \DateTime('+29 days'));
+
+		$offered = $row->jsonSerialize()['pendingRenewal'];
+		$this->assertSame(['fingerprint', 'verifiedAt', 'windowEndsAt'], array_keys($offered));
+		$this->assertSame(str_repeat('cd', 32), $offered['fingerprint']);
+		$this->assertArrayNotHasKey('renewalNoticeAttempts', $row->jsonSerialize());
+
+		$row->setPendingRootWindowEndsAt(new \DateTime('-1 second'));
+		$this->assertNull($row->jsonSerialize()['pendingRenewal']);
+	}
+
+	/**
+	 * Every re-pin withdraws the offered renewal, also one to the fingerprint already pinned; that one stores the
+	 * withdrawal only and writes no audit entry.
+	 *
+	 * @return void
+	 */
+	public function testEveryRepinWithdrawsTheOfferedRenewal(): void {
+		$stored = $this->partner('cloud.partner.example', true, false);
+		$pinned = $stored->getRootFingerprint();
+		$renewed = str_repeat('cd', 32);
+		$stored->offerRenewal($renewed, new \DateTime(), new \DateTime('+20 days'));
+
+		$result = $this->repinService($stored, $this->discovery($pinned))->repin($stored->getId(), $pinned, 'admin');
+		$this->assertFalse($result['changed']);
+		$this->assertSame($pinned, $stored->getRootFingerprint());
+		$this->assertNull($stored->getPendingRootFingerprint());
+		$this->assertSame([$stored], $this->updated);
+		$this->assertSame([], $this->audited);
+
+		$this->updated = [];
+		$stored->offerRenewal($renewed, new \DateTime(), new \DateTime('+20 days'));
+		$this->repinService($stored, $this->discovery($renewed))->repin($stored->getId(), $renewed, 'admin');
+		$this->assertNull($stored->getPendingRootFingerprint());
+		$this->assertNull($stored->getPendingRootWindowEndsAt());
+		$this->assertSame([$stored], $this->updated);
 	}
 }

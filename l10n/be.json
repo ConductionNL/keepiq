@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Гэты партнёр па-ранейшаму публікуе замацаваны каранёвы адбітак, таму замацоўваць зноў няма чаго.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Ключ доступу не быў выдалены. Паспрабуйце яшчэ раз пазней.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Зрабіце змену яшчэ раз онлайн, дзе можна захаваць без іх.",
-        "Another organisation's root re-pinned": "Корань іншай арганізацыі замацаваны зноў"
+        "Another organisation's root re-pinned": "Корань іншай арганізацыі замацаваны зноў",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Гэты партнёр абнавіў свой каранёвы сертыфікат, а яго папярэдні корань падпісаў новы.",
+        "Renewed root fingerprint": "Абноўлены каранёвы адбітак",
+        "Accept renewed certificate": "Прыняць абноўлены сертыфікат",
+        "A partner renewed its root certificate": "Партнёр абнавіў свой каранёвы сертыфікат",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s абнавіў свой каранёвы сертыфікат Keepiq, а яго папярэдні корань падпісаў новы. Прыміце абноўлены сертыфікат у наладах партнёраў на працягу %2$d дн.",
+        "Renewed partner certificate not accepted yet": "Абноўлены сертыфікат партнёра яшчэ не прыняты",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Абноўлены сертыфікат %1$s можна прыняць яшчэ на працягу %2$d дн. Пасля гэтага яго можна будзе замацаваць зноў толькі ўручную, звырыўшы яго адбітак з адміністратарам партнёра."
     },
     "plurals": null
 }

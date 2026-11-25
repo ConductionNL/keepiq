@@ -20,7 +20,7 @@ An instance whose root was never renewed publishes no announcement. A second ren
 
 ## D2. The notification
 
-After the renewal commits, the instance sends a signed OCM notification to each partner with inbound sharing on: those are the partners that look up its certificates (`answer` serves no one else) and so pinned its root. The notification has its own notification type and is tied to no share; it says only that this server announced a renewal, and carries no certificate. The receiver reads everything from the discovery document. Delivery is retried as `FederatedNotificationDelivery` retries share notifications.
+After the renewal commits, the instance sends a signed OCM notification to each partner with inbound sharing on: those are the partners that look up its certificates (`answer` serves no one else) and so pinned its root. The notification has its own notification type and is tied to no share; it says only that this server announced a renewal, and carries no certificate. The receiver reads everything from the discovery document. Right after the commit, a `RootRenewedEvent` queues one notice per partner on its row, due at once; `RetryFederatedNotificationsJob` sends them, so no notice is sent inside the administrator's renewal request. A failed one is retried as `FederatedNotificationDelivery` retries share notifications. A receiver that cannot read the discovery document yet refuses the notice, which Nextcloud answers with 400, so the sender retries it.
 
 ## D3. The receiving side verifies
 
@@ -33,21 +33,23 @@ The check starts on a renewal notification from a listed partner, outbound shari
 - the new fingerprint differs from the pin;
 - the renewal time is not in the future and less than 30 days ago.
 
-A notification from a host that is not a listed partner, and any other outcome, stores nothing and notifies no one; it is logged. A partner with outbound off still gets the offer, because its pin applies again once outbound is turned back on, and the manual re-pin also works for it. The notification and the announcement in a lookup answer only start the check; their content is never trusted.
+Each root is read once, strictly: exactly one `CERTIFICATE` block with only whitespace around it, holding exactly one certificate. Its fingerprint, its public key and its fields all come from that one DER (`CertificatePem`), so no check can read another certificate than the others; anything else is refused.
+
+A notification from a host that is not a listed partner, and any other outcome, stores nothing and notifies no one; it is logged. A failed check also withdraws a renewal already offered for that partner, unless the discovery document could not be fetched, which may pass. A partner with outbound off still gets the offer, because its pin applies again once outbound is turned back on, and the manual re-pin also works for it. The notification and the announcement in a lookup answer only start the check; their content is never trusted.
 
 ## D4. A pending renewal
 
-An accepted announcement is stored as the partner's pending renewal: the new fingerprint, when it was verified, and the end of its window, 30 days after the renewal time. Storage is new nullable columns on `keepiq_federation_partners` with a migration (`ISchemaWrapper`); the fingerprint is public and stored in plain text. A newer announcement replaces a pending one. Re-pinning the partner by any route clears it.
+An accepted announcement is stored as the partner's pending renewal: the new fingerprint, when it was verified, and the end of its window, 30 days after the renewal time. Storage is new nullable columns on `keepiq_federation_partners` with a migration (`ISchemaWrapper`); the fingerprint is public and stored in plain text. A newer announcement replaces a pending one. Re-pinning the partner by any route clears it, also a re-pin to the fingerprint already pinned.
 
 ## D5. Admins accept
 
 When a renewal becomes pending, admins are notified to accept the renewed certificate, and the notice links to the partner in the federation admin settings. Every member of the `admin` group gets a Nextcloud notification through `KeepiqNotifier`, as `CheckRootCertificateExpiry` notifies them of an expiring root; the reminders go the same way. The partner row shows the pending fingerprint next to the pinned one, says the previous root signed it, and offers "Accept renewed certificate".
 
-Accepting asks for the password and calls the re-pin route with the pending fingerprint, so the route's checks and audit entry apply unchanged. Before storing, the server reads the discovery document again and repeats D3, so an announcement that changed or disappeared since is refused. Inside the window no out-of-band comparison is asked for: the signature from the pinned root stands in for it.
+Accepting asks for the password and calls the re-pin route with the pending fingerprint, so the route's checks and audit entry apply unchanged. Before storing, the server reads the discovery document again and repeats D3, so an announcement that changed or disappeared since is refused. A newer valid announcement then replaces the offer, with a new notice to the admins; a failed check withdraws it; a document that could not be fetched leaves it. Inside the window no out-of-band comparison is asked for: the signature from the pinned root stands in for it.
 
 ## D6. The window and the reminders
 
-The window ends 30 days after the renewal time the partner publishes. A daily background job sends a reminder for each pending renewal not yet accepted, 7, 5, 3 and 1 day before its window ends, each once, as `CheckRootCertificateExpiry` sends each threshold once. When the window ends, the pending renewal is cleared, and the partner row only offers the manual re-pin with its out-of-band comparison.
+The window ends 30 days after the renewal time the partner publishes. An hourly background job sends a reminder for each pending renewal not yet accepted, 7, 5, 3 and 1 day before its window ends, each once, as `CheckRootCertificateExpiry` sends each threshold once; hourly, so cron drift cannot skip the 1-day reminder. The offer itself counts as the reminder its days left fall in. When the window ends, the pending renewal is cleared, and the partner row only offers the manual re-pin with its out-of-band comparison.
 
 ## D7. Missed notifications and older partners
 

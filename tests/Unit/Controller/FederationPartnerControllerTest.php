@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerRootRenewalService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -81,7 +82,15 @@ class FederationPartnerControllerTest extends TestCase {
 		$this->root = $this->createMock(FederationRootService::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->shares = $this->createMock(FederatedShareService::class);
+		$this->renewals = $this->createMock(PartnerRootRenewalService::class);
 	}//end setUp()
+
+	/**
+	 * The mocked partner root renewal service.
+	 *
+	 * @var PartnerRootRenewalService&MockObject
+	 */
+	private PartnerRootRenewalService&MockObject $renewals;
 
 	/**
 	 * The controller under test.
@@ -95,8 +104,36 @@ class FederationPartnerControllerTest extends TestCase {
 			root: $this->root,
 			userSession: $this->session,
 			federatedShares: $this->shares,
+			renewals: $this->renewals,
 		);
 	}//end controller()
+
+	/**
+	 * Accepting an offered renewal goes through the renewal service, which re-checks the announcement before the
+	 * re-pin; the plain re-pin is not called directly, and a refusal answers 400.
+	 *
+	 * @return void
+	 */
+	public function testAcceptingARenewalGoesThroughTheRenewalCheck(): void {
+		$admin = $this->createMock(IUser::class);
+		$admin->method('getUID')->willReturn('admin');
+		$this->session->method('getUser')->willReturn($admin);
+		$this->root->method('isSupported')->willReturn(true);
+		$this->partners->expects($this->never())->method('repin');
+		$this->renewals->expects($this->exactly(2))->method('accept')
+			->with('p-1', 'sha256:new', 'admin')
+			->willReturnOnConsecutiveCalls(
+				['partner' => $this->partner(['id' => 'p-1']), 'changed' => true],
+				$this->throwException(new InvalidArgumentException('The partner no longer announces this renewed certificate')),
+			);
+
+		$accepted = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:new', acceptRenewal: true);
+		$refused = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:new', acceptRenewal: true);
+
+		$this->assertSame(['partner' => ['id' => 'p-1'], 'changed' => true], $accepted->getData());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $refused->getStatus());
+		$this->assertSame(['message' => 'The partner no longer announces this renewed certificate'], $refused->getData());
+	}//end testAcceptingARenewalGoesThroughTheRenewalCheck()
 
 	/**
 	 * A partner that serializes to the given array.

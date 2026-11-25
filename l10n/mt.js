@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Dan is-sieħeb għadu jippubblika l-marka diġitali tal-għerq imwaħħla, għalhekk m'hemm xejn x'jerġa' jitwaħħal.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Il-passkey ma tħassarx. Erġa' pprova aktar tard.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
-        "Another organisation's root re-pinned": "L-għerq ta' organizzazzjoni oħra reġa' twaħħal"
+        "Another organisation's root re-pinned": "L-għerq ta' organizzazzjoni oħra reġa' twaħħal",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Dan is-sieħeb ġedded iċ-ċertifikat għerq tiegħu, u l-għerq preċedenti tiegħu ffirma l-ġdid.",
+        "Renewed root fingerprint": "Marka diġitali tal-għerq imġedda",
+        "Accept renewed certificate": "Aċċetta ċ-ċertifikat imġedded",
+        "A partner renewed its root certificate": "Sieħeb ġedded iċ-ċertifikat għerq tiegħu",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s ġedded iċ-ċertifikat għerq Keepiq tiegħu, u l-għerq preċedenti tiegħu ffirma l-ġdid. Aċċetta ċ-ċertifikat imġedded fl-issettjar tas-sħab fi żmien %2$d jum/ijiem.",
+        "Renewed partner certificate not accepted yet": "Iċ-ċertifikat imġedded tas-sieħeb għadu ma ġiex aċċettat",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Iċ-ċertifikat imġedded ta' %1$s jista' jiġi aċċettat għal %2$d jum/ijiem oħra. Wara dan, jista' jerġa' jitwaħħal biss bl-idejn, wara li l-marka diġitali tiegħu titqabbel mal-amministratur tas-sieħeb."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

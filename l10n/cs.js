@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Tento partner stále zveřejňuje připnutý kořenový otisk, takže není co znovu připnout.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Přístupový klíč nebyl smazán. Zkuste to později znovu.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Proveďte změnu znovu online, kde ji můžete uložit bez nich.",
-        "Another organisation's root re-pinned": "Kořen jiné organizace znovu připnut"
+        "Another organisation's root re-pinned": "Kořen jiné organizace znovu připnut",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Tento partner obnovil svůj kořenový certifikát a jeho předchozí kořen podepsal nový.",
+        "Renewed root fingerprint": "Obnovený kořenový otisk",
+        "Accept renewed certificate": "Přijmout obnovený certifikát",
+        "A partner renewed its root certificate": "Partner obnovil svůj kořenový certifikát",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s obnovil svůj kořenový certifikát Keepiq a jeho předchozí kořen podepsal nový. Přijměte obnovený certifikát v nastavení partnerů do %2$d dní.",
+        "Renewed partner certificate not accepted yet": "Obnovený certifikát partnera zatím nebyl přijat",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Obnovený certifikát %1$s lze přijmout ještě %2$d dní. Poté jej lze znovu připnout pouze ručně, po porovnání jeho otisku se správcem partnera."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

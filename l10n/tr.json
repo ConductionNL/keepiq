@@ -2039,7 +2039,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Bu ortak hâlâ sabitlenmiş kök parmak izini yayımlıyor, bu yüzden yeniden sabitlenecek bir şey yok.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Geçiş anahtarı silinmedi. Daha sonra tekrar deneyin.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Değişikliği çevrimiçiyken yeniden yapın; orada onlar olmadan kaydedebilirsiniz.",
-        "Another organisation's root re-pinned": "Başka bir kuruluşun kökü yeniden sabitlendi"
+        "Another organisation's root re-pinned": "Başka bir kuruluşun kökü yeniden sabitlendi",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Bu ortak kök sertifikasını yeniledi ve önceki kökü yenisini imzaladı.",
+        "Renewed root fingerprint": "Yenilenmiş kök parmak izi",
+        "Accept renewed certificate": "Yenilenmiş sertifikayı kabul et",
+        "A partner renewed its root certificate": "Bir ortak kök sertifikasını yeniledi",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s Keepiq kök sertifikasını yeniledi ve önceki kökü yenisini imzaladı. Yenilenmiş sertifikayı %2$d gün içinde ortak ayarlarından kabul edin.",
+        "Renewed partner certificate not accepted yet": "Ortağın yenilenmiş sertifikası henüz kabul edilmedi",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "%1$s ortağının yenilenmiş sertifikası %2$d gün daha kabul edilebilir. Bundan sonra yalnızca parmak izi ortağın yöneticisiyle karşılaştırıldıktan sonra elle yeniden sabitlenebilir."
     },
     "plurals": null
 }

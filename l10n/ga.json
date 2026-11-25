@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Tá an comhpháirtí seo fós ag foilsiú an mhéarloirg fréimhe pionnáilte, mar sin níl aon rud le pionnáil arís.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Níor scriosadh an eochair rochtana. Bain triail eile as níos déanaí.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Déan an t-athrú arís ar líne, áit ar féidir leat sábháil gan iad.",
-        "Another organisation's root re-pinned": "Pionnáladh fréamh eagraíochta eile arís"
+        "Another organisation's root re-pinned": "Pionnáladh fréamh eagraíochta eile arís",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Rinne an comhpháirtí seo a fhréamhdheimhniú a athnuachan, agus shínigh a fhréamh roimhe sin an ceann nua.",
+        "Renewed root fingerprint": "Méarlorg fréimhe athnuaite",
+        "Accept renewed certificate": "Glac leis an deimhniú athnuaite",
+        "A partner renewed its root certificate": "Rinne comhpháirtí a fhréamhdheimhniú a athnuachan",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "Rinne %1$s a fhréamhdheimhniú Keepiq a athnuachan, agus shínigh a fhréamh roimhe sin an ceann nua. Glac leis an deimhniú athnuaite i socruithe na gcomhpháirtithe laistigh de %2$d lá.",
+        "Renewed partner certificate not accepted yet": "Níor glacadh le deimhniú athnuaite an chomhpháirtí fós",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Is féidir glacadh le deimhniú athnuaite %1$s ar feadh %2$d lá eile. Ina dhiaidh sin, ní féidir é a phionnáil arís ach de láimh, tar éis a mhéarlorg a chur i gcomparáid le riarthóir an chomhpháirtí."
     },
     "plurals": null
 }

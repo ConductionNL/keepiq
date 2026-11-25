@@ -881,6 +881,52 @@ class KeepiqNotifierTest extends TestCase {
 	}//end testAppPendingLinksToAdminSection()
 
 	/**
+	 * partner_root_renewal: names the partner and the days left, and links to the partner in the federation admin
+	 * settings.
+	 *
+	 * @return void
+	 */
+	public function testPartnerRootRenewalLinksToThePartner(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'partner_root_renewal',
+			params: ['partner' => 'https://cloud.partner.example', 'partner_id' => 'p-1', 'days_left' => 29]
+		);
+
+		$this->assertSame(expected: 'A partner renewed its root certificate', actual: $recorded['parsedSubject']);
+		$this->assertSame(
+			expected: 'https://cloud.partner.example renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within 29 day(s).',
+			actual: $recorded['parsedMessage']
+		);
+		$this->assertSame(
+			expected: self::BASE_URL . '/index.php/settings/admin/' . Application::APP_ID . '#federation-partner-p-1',
+			actual: $recorded['link']
+		);
+	}//end testPartnerRootRenewalLinksToThePartner()
+
+	/**
+	 * partner_root_renewal_reminder: says how long the renewal can still be accepted, and links to the partner.
+	 *
+	 * @return void
+	 */
+	public function testPartnerRootRenewalReminderLinksToThePartner(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'partner_root_renewal_reminder',
+			params: ['partner' => 'https://cloud.partner.example', 'partner_id' => 'p-1', 'days_left' => 3]
+		);
+
+		$this->assertSame(expected: 'Renewed partner certificate not accepted yet', actual: $recorded['parsedSubject']);
+		$this->assertStringStartsWith(
+			prefix: 'The renewed certificate of https://cloud.partner.example can be accepted for 3 more day(s).',
+			string: (string)$recorded['parsedMessage']
+		);
+		$this->assertSame(
+			expected: self::BASE_URL . '/index.php/settings/admin/' . Application::APP_ID . '#federation-partner-p-1',
+			actual: $recorded['link']
+		);
+		$this->assertSame(expected: 1, actual: $recorded['linkCalls']);
+	}//end testPartnerRootRenewalReminderLinksToThePartner()
+
+	/**
 	 * app_pending: unnamed applications and registrars fall back to placeholders.
 	 *
 	 * @return void

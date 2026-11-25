@@ -92,6 +92,11 @@ interface NotificationServiceInterface {
 		// The CA root approaching expiry (keepiq#741): an operational admin
 		// alert like siem_dead_letter, never user-suppressible.
 		'ca_root_expiring' => null,
+		// A partner's announced root renewal passed every check and waits for
+		// an administrator (partner-root-renewal-announcement D5, D6): the
+		// offer and its reminders, never user-suppressible.
+		'partner_root_renewal' => null,
+		'partner_root_renewal_reminder' => null,
 		// Honey credentials (honey-credentials §D3): a muted tripwire
 		// is worthless — always pages, like app_pending.
 		'honey_access' => null,

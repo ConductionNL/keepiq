@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ovaj partner i dalje objavljuje prikvačeni korijenski otisak, pa nema ništa za ponovno prikvačiti.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Pristupni ključ nije izbrisan. Pokušajte ponovno kasnije.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Ponovite promjenu na mreži, gdje je možete spremiti bez njih.",
-        "Another organisation's root re-pinned": "Korijen druge organizacije ponovno je prikvačen"
+        "Another organisation's root re-pinned": "Korijen druge organizacije ponovno je prikvačen",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ovaj partner obnovio je svoj korijenski certifikat, a njegov prethodni korijen potpisao je novi.",
+        "Renewed root fingerprint": "Obnovljeni korijenski otisak",
+        "Accept renewed certificate": "Prihvati obnovljeni certifikat",
+        "A partner renewed its root certificate": "Partner je obnovio svoj korijenski certifikat",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s obnovio je svoj Keepiq korijenski certifikat, a njegov prethodni korijen potpisao je novi. Prihvatite obnovljeni certifikat u postavkama partnera u roku od %2$d dan(a).",
+        "Renewed partner certificate not accepted yet": "Obnovljeni certifikat partnera još nije prihvaćen",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Obnovljeni certifikat partnera %1$s može se prihvatiti još %2$d dan(a). Nakon toga može se ponovno prikvačiti samo ručno, nakon usporedbe njegova otiska s administratorom partnera."
     },
     "plurals": null
 }

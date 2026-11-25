@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Acest partener publică în continuare amprenta rădăcină fixată, deci nu este nimic de fixat din nou.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Cheia de acces nu a fost ștearsă. Încercați din nou mai târziu.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Refaceți modificarea online, unde puteți salva fără ei.",
-        "Another organisation's root re-pinned": "Rădăcina altei organizații a fost fixată din nou"
+        "Another organisation's root re-pinned": "Rădăcina altei organizații a fost fixată din nou",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Acest partener și-a reînnoit certificatul rădăcină, iar rădăcina sa anterioară a semnat-o pe cea nouă.",
+        "Renewed root fingerprint": "Amprentă rădăcină reînnoită",
+        "Accept renewed certificate": "Acceptați certificatul reînnoit",
+        "A partner renewed its root certificate": "Un partener și-a reînnoit certificatul rădăcină",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s și-a reînnoit certificatul rădăcină Keepiq, iar rădăcina sa anterioară a semnat-o pe cea nouă. Acceptați certificatul reînnoit în setările partenerilor în cel mult %2$d zi(le).",
+        "Renewed partner certificate not accepted yet": "Certificatul reînnoit al partenerului nu a fost încă acceptat",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Certificatul reînnoit al %1$s mai poate fi acceptat timp de %2$d zi(le). După aceea, poate fi fixat din nou doar manual, după compararea amprentei sale cu administratorul partenerului."
     },
     "plurals": null
 }

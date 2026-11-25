@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Šis partneris joprojām publicē piesprausto saknes pirkstu nospiedumu, tāpēc nav ko piespraust atkārtoti.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Piekļuves atslēga netika izdzēsta. Mēģiniet vēlreiz vēlāk.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Veiciet izmaiņas vēlreiz tiešsaistē, kur varat saglabāt bez viņiem.",
-        "Another organisation's root re-pinned": "Citas organizācijas sakne atkārtoti piesprausta"
+        "Another organisation's root re-pinned": "Citas organizācijas sakne atkārtoti piesprausta",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Šis partneris atjaunoja savu saknes sertifikātu, un tā iepriekšējā sakne parakstīja jauno.",
+        "Renewed root fingerprint": "Atjaunotais saknes pirkstu nospiedums",
+        "Accept renewed certificate": "Pieņemt atjaunoto sertifikātu",
+        "A partner renewed its root certificate": "Partneris atjaunoja savu saknes sertifikātu",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s atjaunoja savu Keepiq saknes sertifikātu, un tā iepriekšējā sakne parakstīja jauno. Pieņemiet atjaunoto sertifikātu partneru iestatījumos %2$d dienas(-u) laikā.",
+        "Renewed partner certificate not accepted yet": "Partnera atjaunotais sertifikāts vēl nav pieņemts",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Partnera %1$s atjaunoto sertifikātu var pieņemt vēl %2$d dienu(-as). Pēc tam to var atkārtoti piespraust tikai manuāli, salīdzinot tā pirkstu nospiedumu ar partnera administratoru."
     },
     "plurals": null
 }

@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Tämä kumppani julkaisee yhä kiinnitetyn juurisormenjäljen, joten uudelleen kiinnitettävää ei ole.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Pääsyavainta ei poistettu. Yritä myöhemmin uudelleen.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Tee muutos uudelleen verkossa, jossa voit tallentaa ilman heitä.",
-        "Another organisation's root re-pinned": "Toisen organisaation juuri kiinnitetty uudelleen"
+        "Another organisation's root re-pinned": "Toisen organisaation juuri kiinnitetty uudelleen",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Tämä kumppani uusi juurivarmenteensa, ja sen edellinen juuri allekirjoitti uuden.",
+        "Renewed root fingerprint": "Uusittu juurisormenjälki",
+        "Accept renewed certificate": "Hyväksy uusittu varmenne",
+        "A partner renewed its root certificate": "Kumppani uusi juurivarmenteensa",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s uusi Keepiq-juurivarmenteensa, ja sen edellinen juuri allekirjoitti uuden. Hyväksy uusittu varmenne kumppaniasetuksissa %2$d päivän kuluessa.",
+        "Renewed partner certificate not accepted yet": "Kumppanin uusittua varmennetta ei ole vielä hyväksytty",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Kumppanin %1$s uusitun varmenteen voi hyväksyä vielä %2$d päivän ajan. Sen jälkeen sen voi kiinnittää uudelleen vain käsin, kun sen sormenjälkeä on verrattu kumppanin ylläpitäjän kanssa."
     },
     "nplurals=2; plural=(n != 1);"
 )

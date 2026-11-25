@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Den här partnern publicerar fortfarande det fästa rotfingeravtrycket, så det finns inget att fästa igen.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Åtkomstnyckeln togs inte bort. Försök igen senare.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Gör om ändringen online, där du kan spara utan dem.",
-        "Another organisation's root re-pinned": "En annan organisations rot fäst igen"
+        "Another organisation's root re-pinned": "En annan organisations rot fäst igen",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Den här partnern har förnyat sitt rotcertifikat, och dess tidigare rot har signerat det nya.",
+        "Renewed root fingerprint": "Förnyat rotfingeravtryck",
+        "Accept renewed certificate": "Godkänn förnyat certifikat",
+        "A partner renewed its root certificate": "En partner har förnyat sitt rotcertifikat",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s har förnyat sitt Keepiq-rotcertifikat, och dess tidigare rot har signerat det nya. Godkänn det förnyade certifikatet i partnerinställningarna inom %2$d dag(ar).",
+        "Renewed partner certificate not accepted yet": "Förnyat partnercertifikat ännu inte godkänt",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Det förnyade certifikatet från %1$s kan godkännas i ytterligare %2$d dag(ar). Därefter kan det bara fästas igen manuellt, efter att dess fingeravtryck har jämförts med partnerns administratör."
     },
     "nplurals=2; plural=(n != 1);"
 )

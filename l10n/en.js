@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} The passkey was not deleted. Try again later.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Make the change again online, where you can save without them.",
-        "Another organisation's root re-pinned": "Another organisation's root re-pinned"
+        "Another organisation's root re-pinned": "Another organisation's root re-pinned",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "This partner renewed its root certificate, and its previous root signed the new one.",
+        "Renewed root fingerprint": "Renewed root fingerprint",
+        "Accept renewed certificate": "Accept renewed certificate",
+        "A partner renewed its root certificate": "A partner renewed its root certificate",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).",
+        "Renewed partner certificate not accepted yet": "Renewed partner certificate not accepted yet",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator."
     },
     "nplurals=2; plural=(n != 1);"
 )

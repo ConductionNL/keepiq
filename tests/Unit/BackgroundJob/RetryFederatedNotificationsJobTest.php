@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\BackgroundJob;
 
 use OCA\Keepiq\BackgroundJob\RetryFederatedNotificationsJob;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
+use OCA\Keepiq\Service\RootRenewalNoticeDelivery;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -128,4 +129,34 @@ class RetryFederatedNotificationsJobTest extends TestCase {
 
 		$this->runJob();
 	}//end testAFailingSweepIsLoggedNotThrown()
+
+	/**
+	 * The same run retries the root renewal notices to partners, also when the share sweep failed, and a failing
+	 * notice retry is logged, not thrown.
+	 *
+	 * @return void
+	 */
+	public function testTheRunAlsoRetriesRootRenewalNotices(): void {
+		$notices = $this->createMock(originalClassName: RootRenewalNoticeDelivery::class);
+		$exception = new RuntimeException('partner table gone');
+		$notices->expects($this->exactly(2))->method('retryDue')
+			->with($this->isInstanceOf(\DateTime::class))
+			->willReturnOnConsecutiveCalls(1, $this->throwException($exception));
+		$this->delivery->method('retryDue')->willThrowException(new RuntimeException('database gone'));
+		$this->job = new RetryFederatedNotificationsJob(
+			time: $this->createMock(originalClassName: ITimeFactory::class),
+			delivery: $this->delivery,
+			logger: $this->logger,
+			renewalNotices: $notices,
+		);
+		$errors = [];
+		$this->logger->method('error')->willReturnCallback(function (string $message) use (&$errors): void {
+			$errors[] = $message;
+		});
+
+		$this->runJob();
+		$this->runJob();
+
+		$this->assertContains('Keepiq: root renewal notice retry failed: partner table gone', $errors);
+	}//end testTheRunAlsoRetriesRootRenewalNotices()
 }//end class

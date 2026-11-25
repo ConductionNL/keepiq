@@ -2091,7 +2091,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ten partner nadal publikuje przypięty odcisk główny, więc nie ma czego przypinać ponownie.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Klucz dostępu nie został usunięty. Spróbuj ponownie później.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Wprowadź zmianę ponownie online, gdzie możesz zapisać bez nich.",
-        "Another organisation's root re-pinned": "Certyfikat główny innej organizacji przypięty ponownie"
+        "Another organisation's root re-pinned": "Certyfikat główny innej organizacji przypięty ponownie",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Ten partner odnowił swój certyfikat główny, a jego poprzedni certyfikat główny podpisał nowy.",
+        "Renewed root fingerprint": "Odnowiony odcisk główny",
+        "Accept renewed certificate": "Zaakceptuj odnowiony certyfikat",
+        "A partner renewed its root certificate": "Partner odnowił swój certyfikat główny",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s odnowił swój certyfikat główny Keepiq, a jego poprzedni certyfikat główny podpisał nowy. Zaakceptuj odnowiony certyfikat w ustawieniach partnerów w ciągu %2$d dn.",
+        "Renewed partner certificate not accepted yet": "Odnowiony certyfikat partnera nie został jeszcze zaakceptowany",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Odnowiony certyfikat %1$s można zaakceptować jeszcze przez %2$d dn. Potem można go ponownie przypiąć tylko ręcznie, po porównaniu jego odcisku z administratorem partnera."
     },
     "plurals": null
 }

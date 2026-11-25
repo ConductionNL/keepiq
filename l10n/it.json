@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Questo partner pubblica ancora l'impronta radice fissata, quindi non c'è nulla da fissare di nuovo.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} La passkey non è stata eliminata. Riprova più tardi.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Ripeti la modifica online, dove puoi salvare senza di loro.",
-        "Another organisation's root re-pinned": "Radice di un’altra organizzazione fissata di nuovo"
+        "Another organisation's root re-pinned": "Radice di un’altra organizzazione fissata di nuovo",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Questo partner ha rinnovato il proprio certificato radice, e la radice precedente ha firmato quella nuova.",
+        "Renewed root fingerprint": "Impronta radice rinnovata",
+        "Accept renewed certificate": "Accetta il certificato rinnovato",
+        "A partner renewed its root certificate": "Un partner ha rinnovato il proprio certificato radice",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s ha rinnovato il proprio certificato radice Keepiq, e la radice precedente ha firmato quella nuova. Accetta il certificato rinnovato nelle impostazioni dei partner entro %2$d giorno/i.",
+        "Renewed partner certificate not accepted yet": "Certificato rinnovato del partner non ancora accettato",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Il certificato rinnovato di %1$s può essere accettato ancora per %2$d giorno/i. Dopo, potrà essere fissato di nuovo solo a mano, dopo averne confrontato l’impronta con l’amministratore del partner."
     },
     "plurals": null
 }

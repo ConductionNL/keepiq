@@ -2065,7 +2065,14 @@
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Este socio sigue publicando la huella raíz fijada, así que no hay nada que volver a fijar.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} La clave de acceso no se ha eliminado. Inténtelo de nuevo más tarde.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Vuelve a hacer el cambio en línea, donde puedes guardar sin ellos.",
-        "Another organisation's root re-pinned": "Se ha vuelto a fijar la raíz de otra organización"
+        "Another organisation's root re-pinned": "Se ha vuelto a fijar la raíz de otra organización",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Este socio ha renovado su certificado raíz, y su raíz anterior ha firmado la nueva.",
+        "Renewed root fingerprint": "Huella raíz renovada",
+        "Accept renewed certificate": "Aceptar el certificado renovado",
+        "A partner renewed its root certificate": "Un socio ha renovado su certificado raíz",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s ha renovado su certificado raíz de Keepiq, y su raíz anterior ha firmado la nueva. Acepte el certificado renovado en la configuración de socios en un plazo de %2$d día(s).",
+        "Renewed partner certificate not accepted yet": "Certificado de socio renovado aún no aceptado",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "El certificado renovado de %1$s puede aceptarse durante %2$d día(s) más. Después, solo podrá volver a fijarse a mano tras comparar su huella con el administrador del socio."
     },
     "plurals": null
 }

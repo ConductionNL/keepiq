@@ -26,15 +26,17 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
 use OCA\Keepiq\Kernel\Contracts\FederatedNotificationDeliveryInterface;
+use OCA\Keepiq\Service\RootRenewalNoticeDelivery;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Retries failed federated share notifications.
+ * Retries failed federated share notifications, and sends and retries root renewal notices.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+ * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
  */
 class RetryFederatedNotificationsJob extends TimedJob {
 	/**
@@ -43,6 +45,7 @@ class RetryFederatedNotificationsJob extends TimedJob {
 	 * @param ITimeFactory $time The time factory
 	 * @param FederatedNotificationDeliveryInterface $delivery Delivers with backoff
 	 * @param LoggerInterface $logger The logger
+	 * @param RootRenewalNoticeDelivery|null $renewalNotices Sends and retries root renewal notices to partners
 	 *
 	 * @return void
 	 *
@@ -52,6 +55,7 @@ class RetryFederatedNotificationsJob extends TimedJob {
 		ITimeFactory $time,
 		private FederatedNotificationDeliveryInterface $delivery,
 		private LoggerInterface $logger,
+		private ?RootRenewalNoticeDelivery $renewalNotices = null,
 	) {
 		parent::__construct(time: $time);
 		$this->setInterval(seconds: 60);
@@ -77,6 +81,15 @@ class RetryFederatedNotificationsJob extends TimedJob {
 		} catch (Throwable $exception) {
 			$this->logger->error(
 				'Keepiq: federated notification retry failed: ' . $exception->getMessage(),
+				['exception' => $exception, 'app' => 'keepiq']
+			);
+		}
+
+		try {
+			$this->renewalNotices?->retryDue(now: new DateTime());
+		} catch (Throwable $exception) {
+			$this->logger->error(
+				'Keepiq: root renewal notice retry failed: ' . $exception->getMessage(),
 				['exception' => $exception, 'app' => 'keepiq']
 			);
 		}

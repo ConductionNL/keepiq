@@ -7,10 +7,12 @@
   partner's root fingerprint, and the administrator compares it with the
   partner's administrator before adding it. Each partner has two
   directions. Re-pin reads a listed partner's fingerprint again after it
-  renewed its root, for the same comparison. Every change asks for the
-  Nextcloud password again.
+  renewed its root, for the same comparison. A renewal the partner announced
+  and this server verified is shown on its row to accept without that
+  comparison. Every change asks for the Nextcloud password again.
 
   @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+  @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 -->
 <template>
 	<CnSettingsSection
@@ -49,11 +51,50 @@
 				<ul v-else class="federation-partners__list">
 					<li
 						v-for="partner in partners"
+						:id="'federation-partner-' + partner.id"
 						:key="partner.id"
 						class="federation-partners__row"
 						data-testid="federation-partner">
 						<strong>{{ partner.baseUrl }}</strong>
 						<code>{{ formatFingerprint(partner.rootFingerprint) }}</code>
+						<div
+							v-if="partner.pendingRenewal"
+							class="federation-partners__renewal"
+							data-testid="federation-renewal">
+							<NcNoteCard type="info">
+								{{
+									t(
+										'keepiq',
+										'This partner renewed its root certificate, and its previous root signed the new one.',
+									)
+								}}
+							</NcNoteCard>
+							<p>
+								<span>{{
+									t('keepiq', 'Pinned root fingerprint')
+								}}</span>
+								<code data-testid="federation-renewal-pinned">{{
+									formatFingerprint(partner.rootFingerprint)
+								}}</code>
+							</p>
+							<p>
+								<span>{{
+									t('keepiq', 'Renewed root fingerprint')
+								}}</span>
+								<code data-testid="federation-renewal-new">{{
+									formatFingerprint(
+										partner.pendingRenewal.fingerprint,
+									)
+								}}</code>
+							</p>
+							<NcButton
+								variant="primary"
+								:disabled="busy"
+								data-testid="federation-renewal-accept"
+								@click="acceptRenewal(partner)">
+								{{ t('keepiq', 'Accept renewed certificate') }}
+							</NcButton>
+						</div>
 						<NcCheckboxRadioSwitch
 							:modelValue="partner.allowOutbound"
 							type="switch"
@@ -257,6 +298,7 @@ export default {
 	 */
 	async created() {
 		await this.load()
+		this.$nextTick(() => this.revealLinkedPartner())
 	},
 
 	methods: {
@@ -412,6 +454,59 @@ export default {
 		},
 
 		/**
+		 * Accept the renewed root a partner announced and this server verified,
+		 * with the password confirmed first. The server checks the announcement
+		 * again and re-pins; a refusal shows why, and the partners are read
+		 * again since it may have replaced or withdrawn the offer.
+		 *
+		 * @param {object} partner The partner row with its `pendingRenewal`.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-an-administrator-accepts-a-verified-renewal
+		 */
+		async acceptRenewal(partner) {
+			const fingerprint = partner?.pendingRenewal?.fingerprint
+			if (!fingerprint) {
+				return
+			}
+			this.error = null
+			this.busy = true
+			try {
+				await confirmPasswordFirst()
+				await axios.put(
+					generateUrl(
+						BASE + '/' + encodeURIComponent(partner.id) + '/root',
+					),
+					{ fingerprint, acceptRenewal: true },
+				)
+				await this.load()
+			} catch (e) {
+				this.fail(e)
+				// A refusal may have replaced or withdrawn the offer, so show what the server has now.
+				if (e?.response) {
+					await this.load()
+				}
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Scroll to the partner a notification linked to (`#federation-partner-<id>`).
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+		 */
+		revealLinkedPartner() {
+			const hash = window.location?.hash || ''
+			if (!hash.startsWith('#federation-partner-')) {
+				return
+			}
+			document
+				.getElementById(decodeURIComponent(hash.slice(1)))
+				?.scrollIntoView?.()
+		},
+
+		/**
 		 * Close the re-pin comparison without pinning anything.
 		 *
 		 * @return {void}
@@ -493,7 +588,8 @@ export default {
 
 .federation-partners__own,
 .federation-partners__preview p,
-.federation-partners__repin p {
+.federation-partners__repin p,
+.federation-partners__renewal p {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -507,7 +603,8 @@ export default {
 
 .federation-partners__row,
 .federation-partners__preview,
-.federation-partners__repin {
+.federation-partners__repin,
+.federation-partners__renewal {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;

@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Šis partneris vis dar skelbia prisegtą šakninį kontrolinį kodą, todėl nėra ką prisegti iš naujo.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Prieigos raktas nebuvo ištrintas. Bandykite dar kartą vėliau.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Pakartokite pakeitimą prisijungę, kur galite išsaugoti be jų.",
-        "Another organisation's root re-pinned": "Kitos organizacijos šaknis prisegta iš naujo"
+        "Another organisation's root re-pinned": "Kitos organizacijos šaknis prisegta iš naujo",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Šis partneris atnaujino savo šakninį sertifikatą, o ankstesnė jo šaknis pasirašė naująją.",
+        "Renewed root fingerprint": "Atnaujintas šakninis kontrolinis kodas",
+        "Accept renewed certificate": "Priimti atnaujintą sertifikatą",
+        "A partner renewed its root certificate": "Partneris atnaujino savo šakninį sertifikatą",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s atnaujino savo Keepiq šakninį sertifikatą, o ankstesnė jo šaknis pasirašė naująją. Priimkite atnaujintą sertifikatą partnerių nustatymuose per %2$d d.",
+        "Renewed partner certificate not accepted yet": "Atnaujintas partnerio sertifikatas dar nepriimtas",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Atnaujintą %1$s sertifikatą dar galima priimti %2$d d. Po to jį bus galima prisegti iš naujo tik rankiniu būdu, palyginus jo kontrolinį kodą su partnerio administratoriumi."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

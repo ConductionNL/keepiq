@@ -30,6 +30,7 @@ use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
+use OCA\Keepiq\Service\PartnerRootRenewalService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -54,6 +55,7 @@ class FederationPartnerController extends Controller {
 	 * @param FederationRootServiceInterface $root The local root and version gate
 	 * @param IUserSession $userSession The user session
 	 * @param FederatedShareServiceInterface $federatedShares Suspends shares to a removed partner
+	 * @param PartnerRootRenewalService $renewals Accepts an offered root renewal
 	 *
 	 * @return void
 	 *
@@ -65,6 +67,7 @@ class FederationPartnerController extends Controller {
 		private FederationRootServiceInterface $root,
 		private IUserSession $userSession,
 		private FederatedShareServiceInterface $federatedShares,
+		private PartnerRootRenewalService $renewals,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -182,28 +185,32 @@ class FederationPartnerController extends Controller {
 
 	/**
 	 * Pin the root fingerprint the partner publishes now, after the administrator compared it again. The answer is
-	 * `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint.
+	 * `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint. With
+	 * `acceptRenewal`, the fingerprint is the offered renewal the administrator accepts: the offer must still be open
+	 * and the partner's announcement is checked again before the same re-pin.
 	 *
 	 * @param string $id The partner UUID
-	 * @param string $fingerprint The fingerprint the administrator compared
+	 * @param string $fingerprint The fingerprint the administrator compared, or the offered one they accept
+	 * @param bool|null $acceptRenewal Whether this accepts the offered renewal (absent is no)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-an-administrator-accepts-a-verified-renewal
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[PasswordConfirmationRequired]
-	public function repin(string $id, string $fingerprint = ''): JSONResponse {
+	public function repin(string $id, string $fingerprint = '', ?bool $acceptRenewal = null): JSONResponse {
 		if ($this->root->isSupported() === false) {
 			return $this->unsupported();
 		}
 
+		$adminId = (string)$this->userSession->getUser()?->getUID();
 		try {
-			$result = $this->partners->repin(
-				id: $id,
-				confirmedFingerprint: $fingerprint,
-				adminId: (string)$this->userSession->getUser()?->getUID(),
-			);
+			$result = match ($acceptRenewal === true) {
+				true => $this->renewals->accept(id: $id, fingerprint: $fingerprint, adminId: $adminId),
+				false => $this->partners->repin(id: $id, confirmedFingerprint: $fingerprint, adminId: $adminId),
+			};
 		} catch (DoesNotExistException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (InvalidArgumentException $exception) {

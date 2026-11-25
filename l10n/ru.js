@@ -1988,7 +1988,14 @@ OC.L10N.register(
         "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Этот партнёр по-прежнему публикует закреплённый корневой отпечаток, поэтому закреплять заново нечего.",
         "{reasons} The passkey was not deleted. Try again later.": "{reasons} Ключ доступа не был удалён. Повторите попытку позже.",
         "{reasons} Make the change again online, where you can save without them.": "{reasons} Повторите изменение в сети, где можно сохранить без них.",
-        "Another organisation's root re-pinned": "Корень другой организации закреплён заново"
+        "Another organisation's root re-pinned": "Корень другой организации закреплён заново",
+        "This partner renewed its root certificate, and its previous root signed the new one.": "Этот партнёр обновил свой корневой сертификат, а его предыдущий корень подписал новый.",
+        "Renewed root fingerprint": "Обновлённый корневой отпечаток",
+        "Accept renewed certificate": "Принять обновлённый сертификат",
+        "A partner renewed its root certificate": "Партнёр обновил свой корневой сертификат",
+        "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).": "%1$s обновил свой корневой сертификат Keepiq, а его предыдущий корень подписал новый. Примите обновлённый сертификат в настройках партнёров в течение %2$d дн.",
+        "Renewed partner certificate not accepted yet": "Обновлённый сертификат партнёра ещё не принят",
+        "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.": "Обновлённый сертификат %1$s можно принять ещё в течение %2$d дн. После этого его можно будет закрепить заново только вручную, сверив его отпечаток с администратором партнёра."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
