@@ -3,8 +3,15 @@ import { normalizeServerUrl, serverOrigins } from './normalize-server-url'
 
 describe('serverOrigins', () => {
 	it('is the origin without the install path', () => {
-		expect(serverOrigins('https://cloud.example.org/nextcloud')).toEqual(['https://cloud.example.org/*'])
-		expect(serverOrigins('http://localhost:8080')).toEqual(['http://localhost:8080/*'])
+		expect(serverOrigins('https://cloud.example.org/nextcloud', 'chrome')).toEqual(['https://cloud.example.org/*'])
+		expect(serverOrigins('http://localhost:8080', 'chrome')).toEqual(['http://localhost:8080/*'])
+		expect(serverOrigins('https://cloud.example.org:8443', 'safari')).toEqual(['https://cloud.example.org:8443/*'])
+	})
+
+	it('drops the port on Firefox, whose requests stay under CORS with a port in the pattern', () => {
+		expect(serverOrigins('http://localhost:8080', 'firefox')).toEqual(['http://localhost/*'])
+		expect(serverOrigins('https://cloud.example.org:8443/nextcloud', 'firefox')).toEqual(['https://cloud.example.org/*'])
+		expect(serverOrigins('https://cloud.example.org', 'firefox')).toEqual(['https://cloud.example.org/*'])
 	})
 })
 
