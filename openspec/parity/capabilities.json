@@ -9874,7 +9874,7 @@
       "id": "clients-24",
       "area": "clients",
       "name": "Generate a password or passphrase in the browser extension, and get one suggested in a sign-up field.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -9882,18 +9882,18 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Generator half built: browser-extension/entrypoints/popup/views/Generator.tsx (Password, Passphrase and Username sub-tabs over src/generator/, policy clamp in src/generator/policy.ts, history in GeneratorHistory.tsx) and the context menu Generate password and copy (src/menus.ts:101), per browser-extension/openspec/changes/ext-generator (19/20, only the manual walk left). Missing: no password is suggested in a sign-up field; ext-autofill lists that as out of scope and no browser-extension change specifies it (only openspec/specs/extension-generator for the earlier extension) Planned in openspec/changes/extension-sign-up-password-suggestion.",
+        "state": "built",
+        "evidence": "Generator tab: browser-extension/entrypoints/popup/views/Generator.tsx over src/generator/, policy clamp in src/generator/policy.ts, context menu in src/menus.ts. Sign-up suggestion: the newPassword inline list (entrypoints/inline-list/list.ts, src/autofill/fields.ts new-password roles, fill through src/autofill/execute.ts), checked in Chromium by browser-extension/e2e/password-suggest.spec.ts and walked live in Firefox 161 (25 Nov 2026)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "The extension generates passwords, passphrases and usernames in its Generator tab, but does not yet suggest one in a sign-up field.",
+        "reachedOn": "browser extension: Generator tab and the Use a strong password offer on new-password fields",
+        "note": "The extension generates passwords, passphrases and usernames in its Generator tab and suggests one in a sign-up or change-password field.",
         "change": "browser-extension/openspec/changes/ext-generator",
-        "readOn": "2026-10-30",
+        "readOn": "2026-11-25",
         "requirement": [
           "openspec/specs/extension-generator :: Generator tab in the popup",
           "openspec/specs/extension-generator :: Suggest a strong password in a sign-up field"
         ],
-        "plan": "openspec/changes/extension-sign-up-password-suggestion"
+        "plan": "openspec/changes/archive/2026-11-25-extension-sign-up-password-suggestion"
       },
       "rowSource": "own",
       "provider": "keepiq",
