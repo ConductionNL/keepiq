@@ -2,7 +2,7 @@
 
 /**
  * Contract tests for the ShareController endpoints that carry no wire proof:
- * `share#createBatch`, `share#sync`, `share#registerBatch`,
+ * `share#createBatch`, `share#registerBatch`,
  * `share#recipientCertificate` and `share#writeContext`.
  *
  * @category Test
@@ -134,74 +134,17 @@ class ShareControllerTest extends TestCase {
 	}//end testClientSuppliedIdShareCreateEndpointsAreRetired()
 
 	/**
-	 * POST /api/v1/secrets/{secretId}/sync must forward the per-recipient
-	 * blobs AND the optimistic-concurrency timestamp, and report the number
-	 * of rows the service actually wrote.
+	 * `PUT /secrets/{secretId}/sync` is retired: a value change of a shared
+	 * secret goes through share-save, which writes the row, every copy and
+	 * every partner share in one transaction.
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/tasks.md#3.3
 	 *
 	 * @return void
 	 */
-	public function testSyncForwardsTheUpdatesAndTheExpectedTimestamp(): void {
-		$updates = [
-			[
-				'targetUserId' => 'bob',
-				'encryptedKey' => 'CIPHERTEXT_BOB',
-			],
-		];
-
-		$this->shareService->expects($this->once())
-			->method('syncUpdate')
-			->with('secret-1', $updates, '2026-08-09T10:00:00+00:00', 'alice')
-			->willReturn(1);
-
-		$response = $this->controller('alice')->sync(
-			secretId: 'secret-1',
-			updates: $updates,
-			expectedUpdatedAt: '2026-08-09T10:00:00+00:00'
-		);
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(
-			['updated' => 1],
-			$response->getData(),
-			'sync() must report the write count the service returned'
-		);
-	}//end testSyncForwardsTheUpdatesAndTheExpectedTimestamp()
-
-	/**
-	 * A stale expected timestamp is a lost-update conflict: 409, never a
-	 * success envelope that would let the browser believe it pushed.
-	 *
-	 * @return void
-	 */
-	public function testSyncAnswers409WhenTheSourceMovedUnderTheCaller(): void {
-		$this->shareService->method('syncUpdate')
-			->willThrowException(new InvalidArgumentException('Secret changed since it was loaded'));
-
-		$response = $this->controller('alice')->sync(
-			secretId: 'secret-1',
-			updates: [],
-			expectedUpdatedAt: '2026-08-09T09:00:00+00:00'
-		);
-
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		$this->assertSame(['message' => 'Secret changed since it was loaded'], $response->getData());
-	}//end testSyncAnswers409WhenTheSourceMovedUnderTheCaller()
-
-	/**
-	 * A sync that reaches a copy whose share row the pending quarantine scan
-	 * cannot judge answers 409 with its own error code, as share-save does.
-	 *
-	 * @return void
-	 */
-	public function testSyncAnswersScanPendingWithItsOwnCode(): void {
-		$this->shareService->method('syncUpdate')
-			->willThrowException(new ShareScanPendingException('This secret waits for the share quarantine scan'));
-
-		$response = $this->controller('alice')->sync(secretId: 'secret-1', updates: []);
-
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		$this->assertSame('share_scan_pending', $response->getData()['error']);
-	}//end testSyncAnswersScanPendingWithItsOwnCode()
+	public function testTheSyncEndpointIsRetired(): void {
+		$this->assertFalse(method_exists(ShareController::class, 'sync'), 'share#sync must be retired');
+	}//end testTheSyncEndpointIsRetired()
 
 	/**
 	 * Revoking a quarantined share (GHSA-m5p9-6pw7-pf3g) is an explicit 409
@@ -283,20 +226,6 @@ class ShareControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 	}//end testARestrictionChangeOnAReadOnlyCopyAnswers403()
-
-	/**
-	 * An anonymous caller may not push blobs at other users' copies.
-	 *
-	 * @return void
-	 */
-	public function testSyncRejectsAnAnonymousCallerBeforeTheService(): void {
-		$this->shareService->expects($this->never())->method('syncUpdate');
-
-		$response = $this->controller(null)->sync(secretId: 'secret-1', updates: []);
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
-	}//end testSyncRejectsAnAnonymousCallerBeforeTheService()
 
 	/**
 	 * POST /api/v1/shares/register-batch must hand the service the session

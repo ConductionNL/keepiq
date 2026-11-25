@@ -233,91 +233,19 @@ class FederatedShareControllerTest extends TestCase {
 	}//end testIndexAnswers404ForASecretThatIsNotTheUsers()
 
 	/**
-	 * An update from an older client that sends neither totp nor passkeys
-	 * leaves both out of the ciphertext, so the service keeps the stored ones.
+	 * `PUT /federated-shares/{id}` is retired: a partner share's ciphertext
+	 * changes only through its owner's share-save, in the same transaction as
+	 * the owner's row. Revoke and suspend stay.
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/tasks.md#3.3
 	 *
 	 * @return void
 	 */
-	public function testUpdateLeavesOutTotpAndPasskeysThatWereNotSent(): void {
-		$this->request->method('getParams')->willReturn(['id' => 'fs-1', 'key' => 'K2']);
-		$this->shares->expects($this->once())
-			->method('update')
-			->with('fs-1', 'alice', 'FP', ['key' => 'K2', 'login' => null, 'additionalFields' => null])
-			->willReturn($this->share(['id' => 'fs-1', 'v' => 2]));
-
-		$response = $this->controller()->update(id: 'fs-1', certFingerprint: 'FP', key: 'K2');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['id' => 'fs-1', 'v' => 2], $response->getData());
-	}//end testUpdateLeavesOutTotpAndPasskeysThatWereNotSent()
-
-	/**
-	 * Totp and passkeys that were sent, even as null, are passed on so the service can clear them.
-	 *
-	 * @return void
-	 */
-	public function testUpdatePassesTotpAndPasskeysThatWereSentEvenAsNull(): void {
-		$this->request->method('getParams')->willReturn(['totp' => null, 'passkeys' => 'P']);
-		$this->shares->expects($this->once())
-			->method('update')
-			->with(
-				'fs-1',
-				'alice',
-				'FP',
-				['key' => 'K', 'login' => 'L', 'additionalFields' => null, 'totp' => null, 'passkeys' => 'P']
-			)
-			->willReturn($this->share(['id' => 'fs-1']));
-
-		$response = $this->controller()->update(id: 'fs-1', certFingerprint: 'FP', key: 'K', login: 'L', passkeys: 'P');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-	}//end testUpdatePassesTotpAndPasskeysThatWereSentEvenAsNull()
-
-	/**
-	 * An update the partner cannot hold answers 409 carrying the share id.
-	 *
-	 * @return void
-	 */
-	public function testUpdateAnswers409WithTheShareIdWhenThePartnerMustUpgrade(): void {
-		$this->request->method('getParams')->willReturn([]);
-		$exception = new PartnerUpgradeRequiredException(requiredVersion: '3.1.0');
-		$this->shares->method('update')->willThrowException($exception);
-
-		$response = $this->controller()->update(id: 'fs-7', key: 'K');
-
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		$this->assertSame(
-			[
-				'error' => 'partner_upgrade_required',
-				'message' => $exception->getMessage(),
-				'requiredVersion' => '3.1.0',
-				'shareId' => 'fs-7',
-			],
-			$response->getData()
-		);
-	}//end testUpdateAnswers409WithTheShareIdWhenThePartnerMustUpgrade()
-
-	/**
-	 * An invalid update answers 400 and a forbidden one 403.
-	 *
-	 * @return void
-	 */
-	public function testUpdateMapsInvalidAndForbiddenRefusals(): void {
-		$this->request->method('getParams')->willReturn([]);
-		$this->shares->method('update')->willThrowException(new InvalidArgumentException('invalid'));
-
-		$response = $this->controller()->update(id: 'fs-1', key: 'K');
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(['message' => 'invalid'], $response->getData());
-
-		$this->shares = $this->createMock(FederatedShareServiceInterface::class);
-		$this->shares->method('update')->willThrowException(new ForbiddenException('read_only'));
-
-		$response = $this->controller()->update(id: 'fs-1', key: 'K');
-
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-	}//end testUpdateMapsInvalidAndForbiddenRefusals()
+	public function testTheUpdateEndpointIsRetired(): void {
+		$this->assertFalse(method_exists(FederatedShareController::class, 'update'), 'federatedShare#update must be retired');
+		$this->assertTrue(method_exists(FederatedShareController::class, 'destroy'));
+		$this->assertTrue(method_exists(FederatedShareController::class, 'suspend'));
+	}//end testTheUpdateEndpointIsRetired()
 
 	/**
 	 * Revoking asks the service for the owner's share and echoes its id.

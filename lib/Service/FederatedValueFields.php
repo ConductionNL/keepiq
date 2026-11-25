@@ -148,48 +148,6 @@ class FederatedValueFields {
 	}//end assertMirrorsSource()
 
 	/**
-	 * Refuse an update of an existing partner share that does not mirror its source, as a new share is refused. A
-	 * field left out keeps the share's stored value under the certificate the share already had (next()), which this
-	 * rule does not judge; left out under a new certificate it is cleared, so it is held against the source.
-	 *
-	 * @param FederationPartner|null $partner The share's partner, null when it is gone
-	 * @param Secret $source The secret shared
-	 * @param FederatedShare $row The share as stored
-	 * @param array<string,mixed> $ciphertext The update's ciphertext
-	 * @param string $certFingerprint The normalised certificate fingerprint the update is encrypted for
-	 *
-	 * @return void
-	 *
-	 * @throws PartnerUpgradeRequiredException
-	 * @throws InvalidArgumentException `copy_fields_mismatch`
-	 *
-	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-left-out-field-is-kept-under-the-same-certificate-and-cleared-under-a-new-one
-	 */
-	public function assertUpdateMirrorsSource(
-		?FederationPartner $partner,
-		Secret $source,
-		FederatedShare $row,
-		array $ciphertext,
-		string $certFingerprint,
-	): void {
-		if ($partner === null) {
-			return;
-		}
-
-		$this->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
-		$keeps = $certFingerprint === $row->getRecipientCertFingerprint();
-		$held = [];
-		foreach (['totp' => $source->getTotp(), 'passkeys' => $source->getPasskeys()] as $field => $sourceValue) {
-			$held[$field] = $this->blob(value: $ciphertext[$field] ?? null);
-			if ($keeps === true && array_key_exists($field, $ciphertext) === false) {
-				$held[$field] = $this->blob(value: $sourceValue);
-			}
-		}
-
-		$this->assertMirrorsSource(partner: $partner, source: $source, ciphertext: $held);
-	}//end assertUpdateMirrorsSource()
-
-	/**
 	 * Refuse a write to an existing share that carries a value field its partner has not advertised and,
 	 * on a share-save, one that does not mirror the patch's `totp` and `passkeys` for a partner that stores them.
 	 * The partner is read only when the write or the patch carries one of those fields.
