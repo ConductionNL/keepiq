@@ -242,9 +242,9 @@ class FederatedShareControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheUpdateEndpointIsRetired(): void {
-		$this->assertFalse(method_exists(FederatedShareController::class, 'update'), 'federatedShare#update must be retired');
-		$this->assertTrue(method_exists(FederatedShareController::class, 'destroy'));
-		$this->assertTrue(method_exists(FederatedShareController::class, 'suspend'));
+		$this->assertFalse(condition: method_exists(FederatedShareController::class, 'update'), message: 'federatedShare#update must be retired');
+		$this->assertTrue(condition: method_exists(FederatedShareController::class, 'destroy'));
+		$this->assertTrue(condition: method_exists(FederatedShareController::class, 'suspend'));
 	}//end testTheUpdateEndpointIsRetired()
 
 	/**

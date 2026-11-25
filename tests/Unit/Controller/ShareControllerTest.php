@@ -143,7 +143,7 @@ class ShareControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheSyncEndpointIsRetired(): void {
-		$this->assertFalse(method_exists(ShareController::class, 'sync'), 'share#sync must be retired');
+		$this->assertFalse(condition: method_exists(ShareController::class, 'sync'), message: 'share#sync must be retired');
 	}//end testTheSyncEndpointIsRetired()
 
 	/**

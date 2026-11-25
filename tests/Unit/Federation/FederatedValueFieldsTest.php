@@ -422,15 +422,16 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->alice(valueFields: '["totp","passkeys"]');
 		$this->existingShare(totp: self::TOTP, passkeys: self::PASSKEYS);
 
-		$this->writeShare(strtoupper(self::FINGERPRINT), ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null]);
+		$this->writeShare(fingerprint: strtoupper(self::FINGERPRINT), ciphertext: ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null]);
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::PASSKEYS, $this->rows[self::SHARE_ID]->getPasskeys());
 
-		$this->writeShare(self::FINGERPRINT, ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null, 'passkeys' => null]);
+		$cleared = ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null, 'passkeys' => null];
+		$this->writeShare(fingerprint: self::FINGERPRINT, ciphertext: $cleared);
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertNull($this->rows[self::SHARE_ID]->getPasskeys());
 
-		$this->writeShare(self::NEW_FINGERPRINT, ['key' => 'KEY-FOR-NEW-CERT', 'login' => null, 'additionalFields' => null]);
+		$this->writeShare(fingerprint: self::NEW_FINGERPRINT, ciphertext: ['key' => 'KEY-FOR-NEW-CERT', 'login' => null, 'additionalFields' => null]);
 		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::NEW_FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
 	}
