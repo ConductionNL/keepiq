@@ -5,7 +5,7 @@
 At development `ce51807af`:
 
 - `FederationPartnerService::add` stores the partner's `rootFingerprint` once (`:224`); `update` only sets `allowOutbound` and `allowInbound`. `CertificateAuthorityService::renewRoot` makes a new root key and certificate, so a partner's renewal changes the SHA-256 of the root DER that the browser compares with the pin (`assertPinnedRoot`, `src/crypto/federatedCertificate.js:923`).
-- `FederationPartnerService::outboundPartnerForRemote` returns null both for an unknown host and for a partner with outbound off (`:339`). `FederatedCertificateService::lookup` (`:204`) and `FederatedShareService::create` (`:159`) turn that null into `not_a_partner`, answered with 403. `FederatedDeclineReceiver` (`:319`) and `FederatedShareService` (`:560`) also call it, for other purposes.
+- `FederationPartnerService::outboundPartnerForRemote` returns null both for an unknown host and for a partner with outbound off (`:339`). `FederatedCertificateService::lookup` (`:204`) and `FederatedShareService::create` (`:159`) turn that null into `not_a_partner`, which the lookup answers with 403 and share creation with 400. `FederatedDeclineReceiver` (`:319`) and `FederatedShareService` (`:560`) also call it, for other purposes.
 - The web app (`src/services/shareSave.js`, `partnerLookupFailure`) suspends on every `FederatedCertificateError`, including `untrusted_root` and `not_valid_now`, and on `unknown_recipient` 404, `not_a_partner` 403 and `bad_chain` 502. The extension (`browser-extension/src/vault/share-save.ts`) does the same, except that `not_valid_now` throws `partner_clock`.
 - On `partner_unreachable` both clients save nothing and offer to save without the partners named; saving without them suspends those shares in the same share-save.
 
@@ -26,7 +26,7 @@ A reason counts only with the status this server sends it with, as for the exist
 
 ## D2. A stop reuses the unreachable-partner flow
 
-`untrusted_root` and `outbound_disabled` join the partners collected as unreachable, each with its reason, so one save can name several partners for different reasons in one dialog. The dialog's text names the reason per partner: for `untrusted_root`, that the partner's certificate authority changed and an administrator has to confirm it; for `outbound_disabled`, that sharing to that organisation is turned off by an administrator. Saving without them suspends those shares as it does today, with the refusal's reason as the suspend reason, so the owner later sees why. `partner_unreachable` keeps its reason.
+`untrusted_root` and `outbound_disabled` join the partners collected as unreachable, each with its reason, so one save can name several partners for different reasons in one dialog. The dialog's text names the reason per partner: for `untrusted_root`, that the partner's certificate authority changed and an administrator has to confirm it; for `outbound_disabled`, that sharing to that organisation is turned off by an administrator. Saving without them suspends those shares as it does today, with the refusal's reason as the suspend reason in the `federated_share.suspended` audit entry. `partner_unreachable` keeps its reason.
 
 ## D3. `not_valid_now` in the web app
 
