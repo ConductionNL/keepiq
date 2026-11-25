@@ -3,7 +3,7 @@
  * on `test-site/signup.html` and `test-site/change-password.html`: the built extension, a real trusted click, the fill
  * of the new-password field and its confirmation.
  *
- * @spec openspec/changes/extension-sign-up-password-suggestion/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-25-extension-sign-up-password-suggestion/tasks.md#task-2.1
  */
 import { readFileSync } from 'node:fs'
 import { clickField, expect, holds, listFrame, listOpen, listText, test } from './fixtures'
@@ -47,7 +47,7 @@ test('sign up: one click fills both fields with the same generated password', as
 	await pickOffer(page, filled)
 	const [password, confirm] = await pair(page, 'password', 'password_confirm')
 	expect(password).toBe(confirm)
-	expect(password.length).toBeGreaterThanOrEqual(12)
+	expect(password!.length).toBeGreaterThanOrEqual(12)
 	// The email and username fields are not touched.
 	expect(await page.locator('input[name=email]').inputValue()).toBe('')
 	expect(await page.locator('input[name=username]').inputValue()).toBe('')
