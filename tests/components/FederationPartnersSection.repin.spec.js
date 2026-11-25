@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Re-pinning a listed partner's root (keepiq#1283): the published
- * fingerprint is read again and shown next to the pinned one; it is pinned
- * only after the administrator compared it and confirmed their password, and
- * a partner that still publishes the pinned root offers no confirm.
+ * fingerprint is read again and shown next to the pinned one, with a warning
+ * that it replaces the root trusted for the partner; it is pinned only after
+ * the administrator confirmed it out of band and confirmed their password,
+ * and a partner that still publishes the pinned root offers no confirm. Focus
+ * moves into the comparison and back to the row, and the result is announced.
  *
  * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
@@ -13,7 +15,7 @@
 import axios from '@nextcloud/axios'
 import { confirmPassword } from '@nextcloud/password-confirmation'
 import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import FederationPartnersSection from '../../src/components/settings/FederationPartnersSection.vue'
 
 vi.mock('@nextcloud/password-confirmation', () => ({
@@ -73,11 +75,30 @@ async function openRepin(published) {
 			rootFingerprint: published,
 		},
 	})
-	const wrapper = mount(FederationPartnersSection, { global: { stubs } })
+	const wrapper = mount(FederationPartnersSection, {
+		attachTo: document.body,
+		global: { stubs },
+	})
 	await flush()
 	await wrapper.find('[data-testid="federation-repin"]').trigger('click')
 	await flush()
 	return { wrapper, post, get }
+}
+
+/**
+ * @param {object} wrapper The mounted section.
+ * @return {Element} The row's "Re-pin root" button.
+ */
+function repinButton(wrapper) {
+	return wrapper.find('[data-testid="federation-repin"]').element
+}
+
+/**
+ * @param {object} wrapper The mounted section.
+ * @return {string} What the status region announces.
+ */
+function announced(wrapper) {
+	return wrapper.find('[role="status"]').text()
 }
 
 /**
@@ -106,6 +127,164 @@ describe('re-pinning a partner root', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
 		confirmPassword.mockReset()
+	})
+
+	afterEach(() => {
+		document.body.innerHTML = ''
+	})
+
+	it('warns that pinning replaces the root trusted for the partner and asks for an out-of-band confirmation', async () => {
+		const { wrapper } = await openRepin(RENEWED)
+		const preview = wrapper.find('[data-testid="federation-repin-preview"]')
+
+		expect(wrapper.find('[data-testid="federation-repin-warning"]').text()).toBe(
+			"This replaces the root this server trusts for https://cloud.partner.example. From now on, secrets shared with this partner are encrypted to keys under the new root. Pin it only after the partner's administrator read you the new fingerprint by phone or in person.",
+		)
+		expect(preview.text()).toContain('Pinned now')
+		expect(preview.text()).toContain('New, published by the partner')
+		expect(
+			wrapper.find('[data-testid="federation-repin-compared"]').text(),
+		).toBe(
+			"The partner's administrator confirmed this new fingerprint to me out of band",
+		)
+	})
+
+	it('shows no warning when there is nothing to re-pin', async () => {
+		const { wrapper } = await openRepin(PINNED)
+
+		expect(
+			wrapper.find('[data-testid="federation-repin-warning"]').exists(),
+		).toBe(false)
+	})
+
+	it('adds a partner without the re-pin warning or its confirmation text', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { supported: true, partners: [] },
+		})
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: {
+				baseUrl: 'https://cloud.other.example',
+				host: 'cloud.other.example',
+				rootFingerprint: RENEWED,
+			},
+		})
+		const wrapper = mount(FederationPartnersSection, { global: { stubs } })
+		await flush()
+		await wrapper
+			.find('[data-testid="federation-url"]')
+			.setValue('https://cloud.other.example')
+		await wrapper.find('[data-testid="federation-check"]').trigger('click')
+		await flush()
+
+		const preview = wrapper.find('[data-testid="federation-preview"]')
+		expect(preview.exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="federation-repin-warning"]').exists(),
+		).toBe(false)
+		expect(preview.text()).not.toContain('This replaces the root')
+		expect(wrapper.find('[data-testid="federation-compared"]').text()).toBe(
+			"I compared this fingerprint with the partner's administrator",
+		)
+	})
+
+	it('moves focus into the comparison once the preview resolves', async () => {
+		const { wrapper } = await openRepin(RENEWED)
+
+		const preview = wrapper.find('[data-testid="federation-repin-preview"]')
+		expect(preview.attributes('role')).toBe('group')
+		expect(
+			document.getElementById(preview.attributes('aria-labelledby')),
+		).not.toBe(null)
+		expect(preview.element.contains(document.activeElement)).toBe(true)
+	})
+
+	it('announces that there is nothing to re-pin', async () => {
+		const { wrapper } = await openRepin(PINNED)
+
+		expect(announced(wrapper)).toBe(
+			'This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.',
+		)
+	})
+
+	it('announces a re-pin and returns focus to the row', async () => {
+		const { wrapper } = await openRepin(RENEWED)
+		vi.spyOn(axios, 'put').mockResolvedValue({
+			data: {
+				partner: { ...PARTNER, rootFingerprint: RENEWED },
+				changed: true,
+			},
+		})
+
+		await compareAndConfirm(wrapper)
+
+		expect(announced(wrapper)).toBe(
+			'Root re-pinned for https://cloud.partner.example',
+		)
+		expect(document.activeElement).toBe(repinButton(wrapper))
+	})
+
+	it('returns focus to the row on Cancel', async () => {
+		const { wrapper } = await openRepin(RENEWED)
+
+		await wrapper
+			.find('[data-testid="federation-repin-cancel"]')
+			.trigger('click')
+		await flush()
+
+		expect(comparing(wrapper)).toBe(false)
+		expect(document.activeElement).toBe(repinButton(wrapper))
+	})
+
+	it('reads the published root again after a refusal, to be compared anew, with Cancel off while it reads', async () => {
+		const refusal = 'The partner root fingerprint is not the one you confirmed'
+		const OTHER = 'ee'.repeat(32)
+		const { wrapper, post } = await openRepin(RENEWED)
+		vi.spyOn(axios, 'put').mockRejectedValue({
+			response: { status: 400, data: { message: refusal } },
+		})
+		let answer
+		post.mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = resolve
+			}),
+		)
+
+		await compareAndConfirm(wrapper)
+
+		expect(post).toHaveBeenCalledTimes(2)
+		expect(comparing(wrapper)).toBe(true)
+		expect(
+			wrapper
+				.find('[data-testid="federation-repin-cancel"]')
+				.attributes('disabled'),
+		).toBeDefined()
+
+		answer({ data: { rootFingerprint: OTHER } })
+		await flush()
+
+		expect(wrapper.vm.error).toBe(refusal)
+		expect(
+			wrapper.find('[data-testid="federation-repin-published"]').text(),
+		).toMatch(/^EE:EE:/)
+		expect(
+			wrapper.find('[data-testid="federation-repin-compared"] input').element
+				.checked,
+		).toBe(false)
+		expect(
+			wrapper
+				.find('[data-testid="federation-repin-confirm"]')
+				.attributes('disabled'),
+		).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="federation-repin-cancel"]')
+				.attributes('disabled'),
+		).toBeUndefined()
+		expect(
+			wrapper
+				.find('[data-testid="federation-repin-preview"]')
+				.element.contains(document.activeElement),
+		).toBe(true)
 	})
 
 	it('shows the renewed fingerprint next to the pinned one and pins it only after the comparison and the password', async () => {

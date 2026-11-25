@@ -893,7 +893,7 @@ describe('replay', () => {
 				certificate: CHAIN.bobOtherRoot,
 				chain: [CHAIN.intermediateB, CHAIN.rootB],
 			},
-			'The certificate authority of these partner organisations changed',
+			'The certificate of these partner organisations no longer matches the one pinned here',
 		],
 		[
 			'outbound_disabled',

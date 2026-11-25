@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Nič ni bilo shranjeno: partnerska organizacija, s katero je ta element deljen, ni dosegljiva ({cloudIds}). Poskusite znova pozneje ali shranite brez njih, s čimer se deljenje tega elementa z njimi začasno ustavi, dokler ga z njimi znova ne delite."
   partnerPaused: "Nič ni bilo shranjeno. {reasons} Poskusite znova pozneje ali shranite brez njih, s čimer se deljenje tega elementa z njimi začasno ustavi, dokler ga z njimi znova ne delite."
   partnerPausedUnreachable: "Te partnerske organizacije niso dosegljive: {cloudIds}."
-  partnerPausedRootChanged: "Overitelj potrdil teh partnerskih organizacij se je spremenil in skrbnik vašega Keepiq mora to potrditi: {cloudIds}."
+  partnerPausedRootChanged: "Potrdilo teh partnerskih organizacij se ne ujema več s tistim, ki je pripeto v vašem Keepiq. To lahko pomeni, da so ga obnovili; skrbnik vašega Keepiq mora to preveriti z njimi, preden se deljenje nadaljuje: {cloudIds}."
   partnerPausedSharingOff: "Skrbnik je izklopil deljenje s temi partnerskimi organizacijami: {cloudIds}."
   partnerUpgradeRequired: "Nič ni bilo shranjeno: Keepiq pri {cloudIds} je prestar za prejem ključa avtentikatorja. Odstranite ključ ali jih prosite, naj posodobijo Keepiq."
   partnerUpgradeRequiredUnnamed: "Nič ni bilo shranjeno: partnerska organizacija, s katero je ta element deljen, uporablja Keepiq, ki je prestar za prejem ključa avtentikatorja. Odstranite ključ ali jih prosite, naj posodobijo Keepiq."

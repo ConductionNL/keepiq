@@ -302,7 +302,7 @@ describe('deleting a passkey', () => {
 		],
 		[
 			'untrusted_root',
-			'The certificate authority of these partner organisations changed, and an administrator here has to confirm it: bob@partner.',
+			'The certificate of these partner organisations no longer matches the one pinned here. This can mean they renewed it; an administrator here has to check it with them before sharing resumes: bob@partner.',
 		],
 		[
 			'outbound_disabled',

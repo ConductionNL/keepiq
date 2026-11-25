@@ -24,6 +24,9 @@
 			)
 		">
 		<div class="federation-partners" data-testid="federation-partners-section">
+			<p class="hidden-visually" role="status" data-testid="federation-status">
+				{{ statusMessage }}
+			</p>
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
@@ -88,6 +91,13 @@
 								}}</code>
 							</p>
 							<NcButton
+								:ref="
+									(button) =>
+										rememberButton(
+											'accept:' + partner.id,
+											button,
+										)
+								"
 								variant="primary"
 								:disabled="busy"
 								data-testid="federation-renewal-accept"
@@ -112,6 +122,10 @@
 							{{ t('keepiq', 'This partner may share to users here') }}
 						</NcCheckboxRadioSwitch>
 						<NcButton
+							:ref="
+								(button) =>
+									rememberButton('repin:' + partner.id, button)
+							"
 							variant="tertiary"
 							:disabled="busy"
 							data-testid="federation-repin"
@@ -127,18 +141,37 @@
 						<div
 							v-if="repin && repin.partner.id === partner.id"
 							class="federation-partners__repin"
+							role="group"
+							aria-labelledby="federation-repin-heading"
 							data-testid="federation-repin-preview">
+							<h3
+								id="federation-repin-heading"
+								ref="repinHeading"
+								class="federation-partners__repin-heading"
+								tabindex="-1">
+								{{ t('keepiq', 'Re-pin root') }}
+							</h3>
+							<NcNoteCard
+								v-if="!repinUnchanged"
+								type="warning"
+								data-testid="federation-repin-warning">
+								{{
+									t(
+										'keepiq',
+										"This replaces the root this server trusts for {partner}. From now on, secrets shared with this partner are encrypted to keys under the new root. Pin it only after the partner's administrator read you the new fingerprint by phone or in person.",
+										{ partner: repin.partner.baseUrl },
+									)
+								}}
+							</NcNoteCard>
 							<p>
-								<span>{{
-									t('keepiq', 'Pinned root fingerprint')
-								}}</span>
+								<span>{{ t('keepiq', 'Pinned now') }}</span>
 								<code data-testid="federation-repin-pinned">{{
 									formatFingerprint(repin.partner.rootFingerprint)
 								}}</code>
 							</p>
 							<p>
 								<span>{{
-									t('keepiq', 'Published root fingerprint')
+									t('keepiq', 'New, published by the partner')
 								}}</span>
 								<code data-testid="federation-repin-published">{{
 									formatFingerprint(repin.published)
@@ -162,7 +195,7 @@
 									{{
 										t(
 											'keepiq',
-											"I compared this fingerprint with the partner's administrator",
+											"The partner's administrator confirmed this new fingerprint to me out of band",
 										)
 									}}
 								</NcCheckboxRadioSwitch>
@@ -178,6 +211,7 @@
 							</template>
 							<NcButton
 								variant="tertiary"
+								:disabled="busy"
 								data-testid="federation-repin-cancel"
 								@click="cancelRepin">
 								{{ t('keepiq', 'Cancel') }}
@@ -241,6 +275,7 @@
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
@@ -278,6 +313,8 @@ export default {
 			/** @type {{partner: object, published: string}|null} The partner being re-pinned and the fingerprint it publishes now. */
 			repin: null,
 			repinCompared: false,
+			/** The re-pin result a screen reader announces. */
+			statusMessage: '',
 		}
 	},
 
@@ -297,11 +334,15 @@ export default {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	async created() {
+		/** @type {Map<string, object>} The row buttons focus returns to, by `repin:` or `accept:` and partner id. */
+		this.buttons = new Map()
 		await this.load()
 		this.$nextTick(() => this.revealLinkedPartner())
 	},
 
 	methods: {
+		t,
+
 		/**
 		 * @param {string} hex A lowercase hex SHA-256.
 		 * @return {string} Upper case, colon separated, as people read it aloud.
@@ -404,24 +445,51 @@ export default {
 		async checkRepin(partner) {
 			this.error = null
 			this.repin = null
+			await this.readRepin(partner)
+		},
+
+		/**
+		 * Read the root fingerprint a partner publishes now into the
+		 * comparison, which has to be ticked again, and move focus into it. A
+		 * failed read closes the comparison and returns focus to the row.
+		 *
+		 * @param {object} partner The partner row.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-administrator-re-pins-a-renewed-partner-root
+		 */
+		async readRepin(partner) {
 			this.repinCompared = false
+			this.statusMessage = ''
 			this.busy = true
 			try {
 				const { data } = await axios.post(generateUrl(BASE + '/preview'), {
 					url: partner.baseUrl,
 				})
 				this.repin = { partner, published: data?.rootFingerprint ?? '' }
+				if (this.repinUnchanged) {
+					this.statusMessage = t(
+						'keepiq',
+						'This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.',
+					)
+				}
 			} catch (e) {
 				this.fail(e)
+				this.repin = null
 			} finally {
 				this.busy = false
+			}
+			if (this.repin) {
+				await this.focusRepinPanel()
+			} else {
+				await this.focusButton('repin:' + partner.id)
 			}
 		},
 
 		/**
 		 * Pin the published fingerprint the administrator compared, with the
 		 * password confirmed first. The server reads it again and refuses one
-		 * that changed since.
+		 * that changed since; after a refusal the fingerprint is read again,
+		 * so the administrator compares what the partner publishes now.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-the-published-root-changed-after-the-preview
@@ -430,26 +498,35 @@ export default {
 			if (!this.repin || !this.repinCompared || this.repinUnchanged) {
 				return
 			}
+			const partner = this.repin.partner
 			this.error = null
+			this.statusMessage = ''
 			this.busy = true
+			let refused = false
 			try {
 				await confirmPasswordFirst()
 				await axios.put(
 					generateUrl(
-						BASE
-							+ '/'
-							+ encodeURIComponent(this.repin.partner.id)
-							+ '/root',
+						BASE + '/' + encodeURIComponent(partner.id) + '/root',
 					),
 					{ fingerprint: this.repin.published },
 				)
 				this.repin = null
 				this.repinCompared = false
+				this.statusMessage = t('keepiq', 'Root re-pinned for {partner}', {
+					partner: partner.baseUrl,
+				})
 				await this.load()
 			} catch (e) {
 				this.fail(e)
+				refused = e?.response?.status === 400
 			} finally {
 				this.busy = false
+			}
+			if (refused) {
+				await this.readRepin(partner)
+			} else if (!this.repin) {
+				await this.focusButton('repin:' + partner.id)
 			}
 		},
 
@@ -469,6 +546,7 @@ export default {
 				return
 			}
 			this.error = null
+			this.statusMessage = ''
 			this.busy = true
 			try {
 				await confirmPasswordFirst()
@@ -478,6 +556,9 @@ export default {
 					),
 					{ fingerprint, acceptRenewal: true },
 				)
+				this.statusMessage = t('keepiq', 'Root re-pinned for {partner}', {
+					partner: partner.baseUrl,
+				})
 				await this.load()
 			} catch (e) {
 				this.fail(e)
@@ -488,6 +569,8 @@ export default {
 			} finally {
 				this.busy = false
 			}
+			// The button was disabled while busy; an offer that is gone leaves its row's "Re-pin root".
+			await this.focusButton('accept:' + partner.id, 'repin:' + partner.id)
 		},
 
 		/**
@@ -512,9 +595,52 @@ export default {
 		 * @return {void}
 		 * @spec exclude Closes a panel only.
 		 */
-		cancelRepin() {
+		async cancelRepin() {
+			const partnerId = this.repin?.partner.id
 			this.repin = null
 			this.repinCompared = false
+			await this.focusButton('repin:' + partnerId)
+		},
+
+		/**
+		 * Keep a row's button, to return focus to it.
+		 *
+		 * @param {string} key `repin:` or `accept:` and the partner id.
+		 * @param {object|null} button The button, or null once it is gone.
+		 * @return {void}
+		 * @spec exclude Focus handling only.
+		 */
+		rememberButton(key, button) {
+			if (button) {
+				this.buttons.set(key, button)
+			} else {
+				this.buttons.delete(key)
+			}
+		},
+
+		/**
+		 * Once rendered, move focus to the first of these row buttons that is
+		 * still there.
+		 *
+		 * @param {...string} keys `repin:` or `accept:` and the partner id.
+		 * @return {Promise<void>}
+		 * @spec exclude Focus handling only.
+		 */
+		async focusButton(...keys) {
+			await this.$nextTick()
+			const button = keys.map((key) => this.buttons.get(key)).find(Boolean)
+			;(button?.$el ?? button)?.focus?.()
+		},
+
+		/**
+		 * Move focus to the heading of the re-pin comparison once it is rendered.
+		 *
+		 * @return {Promise<void>}
+		 * @spec exclude Focus handling only.
+		 */
+		async focusRepinPanel() {
+			await this.$nextTick()
+			;[this.$refs.repinHeading].flat()[0]?.focus?.()
 		},
 
 		/**
@@ -611,6 +737,12 @@ export default {
 	padding: 8px;
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large, 8px);
+}
+
+.federation-partners__repin-heading {
+	margin: 0;
+	font-size: var(--default-font-size, 15px);
+	font-weight: bold;
 }
 
 .federation-partners__add {

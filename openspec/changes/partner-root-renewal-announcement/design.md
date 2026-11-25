@@ -10,7 +10,7 @@ At development `ce51807af`, with `partner-share-temporary-refusals` applied:
 - Incoming OCM notifications reach `KeepiqSecretFederationProvider::notificationReceived`. Every one is addressed to a share.
 - `CheckRootCertificateExpiry` notifies the members of the `admin` group through Nextcloud notifications when this instance's own root nears expiry.
 
-The backend lead decided the flow: an announced renewal, a short notification, a check of the old root's signature, an admin who always accepts, a 30-day window from the renewal with reminders, and the manual re-pin for older partners. The announcement travels through all three channels: the discovery document, the certificate lookup answer and the notification.
+The flow: an announced renewal, a short notification, a check of the old root's signature, an admin who always accepts, a 30-day window from the renewal with reminders, and the manual re-pin for older partners. The announcement travels through all three channels: the discovery document, the certificate lookup answer and the notification.
 
 ## D1. The renewing side signs and publishes
 

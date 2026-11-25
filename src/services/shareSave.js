@@ -988,7 +988,7 @@ const PAUSED_SENTENCES = new Map([
 		(partners) =>
 			t(
 				'keepiq',
-				'The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.',
+				'The certificate of these partner organisations no longer matches the one pinned here. This can mean they renewed it; an administrator here has to check it with them before sharing resumes: {partners}.',
 				{ partners },
 			),
 	],

@@ -279,7 +279,7 @@ describe('the sync panel', () => {
 		await wrapper.find('[data-testid="offline-sync-retry-e5"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e5')
 		const renewed = wrapper.find('[data-testid="offline-sync-reason-e6"]').text()
-		expect(renewed).toContain('certificate authority')
+		expect(renewed).toContain('no longer matches the one pinned here')
 		expect(renewed).toContain('carol@partner')
 		await wrapper.find('[data-testid="offline-sync-retry-e6"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e6')

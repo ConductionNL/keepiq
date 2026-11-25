@@ -10,7 +10,7 @@ A partner's root fingerprint is pinned when the partner is added. When a Keepiq 
 
 This change lets the renewing instance announce the renewal, so the receiving instance can check it and ask its admins to accept it, before or soon after the first save stops.
 
-Issue: #1283. This is the second of two changes for it; the first is `partner-share-temporary-refusals`. The backend lead decided the flow on the issue's question page. The notice's recipients, the signature format and which partners may announce were settled afterwards, on PR #1966.
+Issue: #1283. This is the second of two changes for it; the first is `partner-share-temporary-refusals`. Delivered together with the first change in PR #1966.
 
 ## What Changes
 

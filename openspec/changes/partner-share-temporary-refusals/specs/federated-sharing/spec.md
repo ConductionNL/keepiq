@@ -2,7 +2,7 @@
 
 ### Requirement: Administrators approve and pin partner instances
 
-The system MUST let an administrator, after Nextcloud password confirmation, add a partner instance by URL, MUST read and show the partner's Keepiq root certificate fingerprint from its discovery document for confirmation, and MUST store the pinned fingerprint with separate outbound and inbound permissions. The system MUST let an administrator re-pin a partner the same way: after Nextcloud password confirmation, it MUST read the partner's discovery document again, MUST show the published fingerprint next to the pinned one for confirmation, and MUST store it only when it is still the one the administrator confirmed and the partner's host has not changed. With no partner, the system MUST NOT offer, send or accept any federated share. On a Nextcloud version below 33 the section MUST explain that federation needs Nextcloud 33 and MUST keep federation off.
+The system MUST let an administrator, after Nextcloud password confirmation, add a partner instance by URL, MUST read and show the partner's Keepiq root certificate fingerprint from its discovery document for confirmation, and MUST store the pinned fingerprint with separate outbound and inbound permissions. The system MUST let an administrator re-pin a partner the same way: after Nextcloud password confirmation, it MUST read the partner's discovery document again, MUST show the published fingerprint next to the pinned one with a warning that it replaces the root this server trusts for that partner, MUST ask the administrator to confirm that the partner's administrator confirmed the new fingerprint out of band, and MUST store it only when it is still the one the administrator confirmed and the partner's host has not changed. Reading a discovery document MUST NOT follow a redirect; a redirect MUST be refused as a partner that could not be reached. With no partner, the system MUST NOT offer, send or accept any federated share. On a Nextcloud version below 33 the section MUST explain that federation needs Nextcloud 33 and MUST keep federation off.
 
 #### Scenario: Administrator adds a partner
 
@@ -63,7 +63,8 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice's secret passes to Dave, through Alice's delegation when her account is deleted or through team offboarding
-- **THEN** Bob's share MUST be Dave's, so Dave can revoke or suspend it; an owner share-save of the secret writes it, a save through Dave's own copy does not
+- **THEN** Bob's share MUST be Dave's, so Dave can revoke or suspend it
+- **AND** Dave's next share-save of the secret MUST write Bob's share, whether Dave saves the source or his own copy of it
 - **AND** Bob's server MUST keep pulling the share
 
 #### Scenario: A removed partner suspends the share
@@ -89,7 +90,7 @@ When the partner certificate lookup for an active partner share answers that the
 
 - **GIVEN** a secret shared with Bob on `cloud.partner.example`, whose administrator renewed its Keepiq root after it was pinned here
 - **WHEN** Alice saves a new password, in the web app or in the browser extension
-- **THEN** nothing MUST be saved, Bob's share MUST stay active, and Alice MUST be told that the partner's certificate authority changed and an administrator has to confirm it
+- **THEN** nothing MUST be saved, Bob's share MUST stay active, and Alice MUST be told that the partner's certificate no longer matches the one pinned here, that this can mean the partner renewed it, and that an administrator has to check it with the partner
 - **AND** when an administrator has re-pinned the partner, Alice's next save MUST go through with Bob's share updated
 
 #### Scenario: Sharing to Bob's partner is turned off

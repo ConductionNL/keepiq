@@ -7,7 +7,7 @@
 - [x] 1.3 Add `PUT /api/v1/federation/partners/{id}/root` with `#[PasswordConfirmationRequired]`: re-read the discovery document, refuse on a changed host or a fingerprint other than the confirmed one, answer "nothing changed" without storing when it equals the pin, otherwise store it. Verify: unit tests for each of those outcomes, and that the permissions are kept.
 - [x] 1.4 Write an audit log entry for a stored re-pin through `AuditService::record`, with the partner, the old and new fingerprint and the admin; none for a refused re-pin or one that changed nothing. Verify: unit tests for the entry and for its absence.
 - [x] 1.5 Keep `not_a_partner` on share creation at 400; only `outbound_disabled` answers 403 there. Verify: `FederatedShareControllerTest` and `FederatedShareSendTest` per case.
-- [x] 1.6 Raise `config.platform.php` in `composer.json` to a version the locked psalm 7 accepts and refresh the lock's hash, so `composer install` works on CI; update `twig/twig` past its advisories, since CI audits the lock whenever it changes. Verify: `composer validate`, `composer audit --locked`, `composer install` from the lock, and `vendor/bin/psalm` runs.
+- [x] 1.6 Leave `composer.json` and `composer.lock` as development has them: psalm's own install is #1949's fix, which lands first. Verify: `git diff origin/development -- composer.json composer.lock` is empty.
 
 ## 2. Web app
 
@@ -30,4 +30,4 @@
 ## 4. Wrap-up
 
 - [x] 4.1 Run `composer check:strict`, `npm run lint`, `npm run test`, and `npm run lint` and `npm run test` in `browser-extension/`. Verify: all pass, except lint on `.claude/worktrees/` and the two phpmd findings that also fail on development.
-- [ ] 4.2 After `sharing-atomic-share-save` is archived, archive this change and merge its delta into `openspec/specs/federated-sharing/spec.md`. Verify: `openspec validate`.
+- [ ] 4.2 After `sharing-atomic-share-save` and `sharing-share-save-missed-partner-shares` are archived, archive this change and merge its deltas into `openspec/specs/`. Verify: `openspec validate`, and the merged "Owner updates reach the remote copy and revocation removes it" holds both `for a reason other than an untrusted root` and `whether Dave saves the source or his own copy`.

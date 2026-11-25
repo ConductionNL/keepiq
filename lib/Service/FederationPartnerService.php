@@ -171,20 +171,26 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	public function announcedRenewal(string $url): array {
 		$baseUrl = $this->normaliseBaseUrl(url: $url);
 		try {
+			// A redirect is not followed, so the document is only ever read from the partner's own address.
 			$response = $this->clientService->newClient()->get(
 				$baseUrl . '/index.php/apps/keepiq' . DiscoveryController::CANONICAL_DISCOVERY_PATH,
-				['timeout' => self::DISCOVERY_TIMEOUT, 'headers' => ['Accept' => 'application/json']]
+				[
+					'timeout' => self::DISCOVERY_TIMEOUT,
+					'headers' => ['Accept' => 'application/json'],
+					'allow_redirects' => false,
+				]
 			);
+			if ($response->getStatusCode() >= 300) {
+				throw new PartnerUnreachableException(message: PartnerUnreachableException::MESSAGE);
+			}
+
 			$document = json_decode((string)$response->getBody(), true);
 		} catch (Throwable) {
 			throw new PartnerUnreachableException(message: PartnerUnreachableException::MESSAGE);
 		}
 
 		$federation = (((array)$document)['federation'] ?? null);
-		$fingerprint = null;
-		if (is_array($federation) === true) {
-			$fingerprint = ($federation['rootFingerprint'] ?? null);
-		}
+		$fingerprint = ((array)$federation + ['rootFingerprint' => null])['rootFingerprint'];
 
 		if (is_array($federation) === false || ($federation['enabled'] ?? false) !== true
 			|| is_string($fingerprint) === false || preg_match('/^[0-9a-f]{64}$/', $fingerprint) !== 1

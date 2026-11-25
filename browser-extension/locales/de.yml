@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieser Eintrag geteilt ist, ist nicht erreichbar ({cloudIds}). Versuche es später erneut oder speichere ohne sie. Dann wird das Teilen dieses Eintrags mit ihr pausiert, bis du ihn erneut mit ihr teilst."
   partnerPaused: "Es wurde nichts gespeichert. {reasons} Versuche es später erneut oder speichere ohne sie. Dann wird das Teilen dieses Eintrags mit ihnen pausiert, bis du ihn erneut mit ihnen teilst."
   partnerPausedUnreachable: "Diese Partnerorganisationen sind nicht erreichbar: {cloudIds}."
-  partnerPausedRootChanged: "Die Zertifizierungsstelle dieser Partnerorganisationen hat sich geändert, und eine Administratorin oder ein Administrator deines Keepiq muss das bestätigen: {cloudIds}."
+  partnerPausedRootChanged: "Das Zertifikat dieser Partnerorganisationen stimmt nicht mehr mit dem in deinem Keepiq angehefteten überein. Das kann bedeuten, dass sie es erneuert haben; eine Administratorin oder ein Administrator deines Keepiq muss das mit ihnen prüfen, bevor das Teilen wieder aufgenommen wird: {cloudIds}."
   partnerPausedSharingOff: "Eine Administratorin oder ein Administrator hat das Teilen mit diesen Partnerorganisationen ausgeschaltet: {cloudIds}."
   partnerUpgradeRequired: "Es wurde nichts gespeichert: Das Keepiq von {cloudIds} ist zu alt, um einen Authentifizierungsschlüssel zu empfangen. Entferne den Schlüssel oder bitte sie, Keepiq zu aktualisieren."
   partnerUpgradeRequiredUnnamed: "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieser Eintrag geteilt ist, nutzt ein Keepiq, das zu alt ist, um einen Authentifizierungsschlüssel zu empfangen. Entferne den Schlüssel oder bitte sie, Keepiq zu aktualisieren."

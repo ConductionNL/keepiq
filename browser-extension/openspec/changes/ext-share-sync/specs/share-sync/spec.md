@@ -163,7 +163,7 @@ A partner share whose certificate fails verification for any reason but `not_val
 - **GIVEN** the lookup for Bob returns a chain that ends at a root other than the pinned one
 - **WHEN** Alice saves a new password
 - **THEN** no ciphertext MUST be sent for Bob, nothing MUST be saved, and the save MUST fail with `partner_unreachable` naming Bob's share with reason `untrusted_root`
-- **AND** the form MUST say that Bob's organisation renewed its certificate authority and offer Save without them
+- **AND** the form MUST say that the certificate of Bob's organisation no longer matches the one pinned here, that this can mean they renewed it, and that an administrator has to check it with them, and offer Save without them
 - **AND** when Alice saves without Bob, his share MUST be listed under `suspend` with reason `untrusted_root` and the save MUST go through
 
 #### Scenario: The partner serves the wrong chain

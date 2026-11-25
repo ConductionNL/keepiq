@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "No se ha guardado nada: no se puede conectar con una organización asociada con la que se comparte este elemento ({cloudIds}). Inténtalo más tarde o guarda sin ellas; así se pausa el uso compartido de este elemento con ellas hasta que vuelvas a compartirlo."
   partnerPaused: "No se ha guardado nada. {reasons} Inténtalo más tarde o guarda sin ellas; así se pausa el uso compartido de este elemento con ellas hasta que vuelvas a compartirlo."
   partnerPausedUnreachable: "No se puede conectar con estas organizaciones asociadas: {cloudIds}."
-  partnerPausedRootChanged: "La autoridad de certificación de estas organizaciones asociadas ha cambiado y un administrador de tu Keepiq tiene que confirmarlo: {cloudIds}."
+  partnerPausedRootChanged: "El certificado de estas organizaciones asociadas ya no coincide con el que está fijado en tu Keepiq. Esto puede significar que lo han renovado; un administrador de tu Keepiq tiene que comprobarlo con ellas antes de que se reanude el uso compartido: {cloudIds}."
   partnerPausedSharingOff: "Un administrador ha desactivado el uso compartido con estas organizaciones asociadas: {cloudIds}."
   partnerUpgradeRequired: "No se ha guardado nada: el Keepiq de {cloudIds} es demasiado antiguo para recibir una clave de autenticación. Quita la clave o pídeles que actualicen Keepiq."
   partnerUpgradeRequiredUnnamed: "No se ha guardado nada: una organización asociada con la que se comparte este elemento usa un Keepiq demasiado antiguo para recibir una clave de autenticación. Quita la clave o pídele que actualice Keepiq."

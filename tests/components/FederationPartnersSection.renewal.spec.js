@@ -152,6 +152,12 @@ describe('an announced partner root renewal', () => {
 		expect(get).toHaveBeenCalledTimes(2)
 		expect(offered(wrapper)).toBe(false)
 		expect(wrapper.vm.error).toBe(null)
+		expect(wrapper.find('[role="status"]').text()).toBe(
+			'Root re-pinned for https://cloud.partner.example',
+		)
+		expect(document.activeElement).toBe(
+			wrapper.find('[data-testid="federation-repin"]').element,
+		)
 	})
 
 	it('shows why a refused acceptance was refused and the offer the server has now', async () => {
@@ -189,6 +195,10 @@ describe('an announced partner root renewal', () => {
 
 		expect(wrapper.vm.error).toBe(refusal)
 		expect(offered(wrapper)).toBe(true)
+		expect(wrapper.find('[role="status"]').text()).toBe('')
+		expect(document.activeElement).toBe(
+			wrapper.find('[data-testid="federation-renewal-accept"]').element,
+		)
 	})
 
 	it('sends nothing when the password is not confirmed', async () => {

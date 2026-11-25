@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Inget sparades: en partnerorganisation som det här objektet delas med kan inte nås ({cloudIds}). Försök igen senare, eller spara utan dem, vilket pausar delningen av objektet med dem tills du delar det med dem igen."
   partnerPaused: "Inget sparades. {reasons} Försök igen senare, eller spara utan dem, vilket pausar delningen av objektet med dem tills du delar det med dem igen."
   partnerPausedUnreachable: "Dessa partnerorganisationer kan inte nås: {cloudIds}."
-  partnerPausedRootChanged: "Certifikatutfärdaren för dessa partnerorganisationer har ändrats, och en administratör för din Keepiq måste bekräfta det: {cloudIds}."
+  partnerPausedRootChanged: "Certifikatet för dessa partnerorganisationer stämmer inte längre med det som är fäst i din Keepiq. Det kan betyda att de har förnyat det; en administratör för din Keepiq måste kontrollera det med dem innan delningen återupptas: {cloudIds}."
   partnerPausedSharingOff: "En administratör har stängt av delning med dessa partnerorganisationer: {cloudIds}."
   partnerUpgradeRequired: "Inget sparades: Keepiq hos {cloudIds} är för gammalt för att ta emot en autentiseringsnyckel. Ta bort nyckeln, eller be dem uppdatera Keepiq."
   partnerUpgradeRequiredUnnamed: "Inget sparades: en partnerorganisation som det här objektet delas med kör ett Keepiq som är för gammalt för att ta emot en autentiseringsnyckel. Ta bort nyckeln, eller be dem uppdatera Keepiq."

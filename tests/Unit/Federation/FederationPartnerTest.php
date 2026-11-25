@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
+use OCA\Keepiq\Exception\PartnerUnreachableException;
 use OCA\Keepiq\Service\FederationPartnerAuditTrail;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
@@ -73,6 +74,12 @@ class FederationPartnerTest extends TestCase {
 	/** @var array<int,string> URLs the fake HTTP client was asked for */
 	private array $fetched = [];
 
+	/** @var array<int,array<string,mixed>> The request options of each fetch */
+	private array $fetchOptions = [];
+
+	/** @var int The status the partner's discovery answers with */
+	private int $discoveryStatus = 200;
+
 	/**
 	 * A partner service whose HTTP client answers with this discovery document.
 	 *
@@ -91,9 +98,11 @@ class FederationPartnerTest extends TestCase {
 	): FederationPartnerService {
 		$response = $this->createMock(IResponse::class);
 		$response->method('getBody')->willReturn(json_encode($document));
+		$response->method('getStatusCode')->willReturnCallback(fn (): int => $this->discoveryStatus);
 		$client = $this->createMock(IClient::class);
-		$client->method('get')->willReturnCallback(function (string $url) use ($response): IResponse {
+		$client->method('get')->willReturnCallback(function (string $url, array $options) use ($response): IResponse {
 			$this->fetched[] = $url;
+			$this->fetchOptions[] = $options;
 			return $response;
 		});
 		$clients = $this->createMock(IClientService::class);
@@ -195,6 +204,22 @@ class FederationPartnerTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service($document)->preview('https://cloud.partner.example');
+	}
+
+	public function testTheDiscoveryFetchFollowsNoRedirect(): void {
+		$this->service($this->discovery(str_repeat('cd', 32)))->preview('https://cloud.partner.example');
+
+		$this->assertCount(1, $this->fetchOptions);
+		$this->assertFalse($this->fetchOptions[0]['allow_redirects']);
+	}
+
+	public function testAddRefusesARedirectedDiscoveryAsUnreachable(): void {
+		$this->discoveryStatus = 302;
+		$this->expectException(PartnerUnreachableException::class);
+		$this->expectExceptionMessage(PartnerUnreachableException::MESSAGE);
+
+		$this->service($this->discovery(str_repeat('cd', 32)))
+			->add('https://cloud.partner.example', str_repeat('cd', 32), true, true, 'admin');
 	}
 
 	/**
@@ -436,9 +461,10 @@ class FederationPartnerTest extends TestCase {
 	}
 
 	/**
-	 * Re-pins that are refused, each with the partner's document now and the fingerprint the admin confirmed.
+	 * Re-pins that are refused, each with the partner's document now, the fingerprint the admin confirmed and, where it
+	 * is not 200, the status the discovery answers with.
 	 *
-	 * @return array<string,array{0:string,1:mixed,2:string,3:string}>
+	 * @return array<string,array{0:string,1:mixed,2:string,3:string,4?:int}>
 	 */
 	public static function refusedRepins(): array {
 		$pinned = str_repeat('ab', 32);
@@ -452,6 +478,7 @@ class FederationPartnerTest extends TestCase {
 			'stored address and pinned host disagree' => ['https://cloud.elsewhere.example', $federation($renewed), $renewed, 'does not match its pinned host'],
 			'federation turned off' => ['https://cloud.partner.example', ['federation' => ['enabled' => false, 'rootFingerprint' => $renewed]], $renewed, 'does not offer Keepiq federation'],
 			'no discovery document' => ['https://cloud.partner.example', '<html>', $renewed, 'does not offer Keepiq federation'],
+			'discovery redirected' => ['https://cloud.partner.example', $federation($renewed), $renewed, 'could not be reached', 302],
 		];
 	}
 
@@ -462,8 +489,16 @@ class FederationPartnerTest extends TestCase {
 	 * @param mixed $document The partner's discovery document now
 	 * @param string $confirmed The fingerprint the administrator confirmed
 	 * @param string $refusal Part of the refusal's message
+	 * @param int $status The status the discovery answers with
 	 */
-	public function testARefusedRepinKeepsThePin(string $baseUrl, mixed $document, string $confirmed, string $refusal): void {
+	public function testARefusedRepinKeepsThePin(
+		string $baseUrl,
+		mixed $document,
+		string $confirmed,
+		string $refusal,
+		int $status = 200,
+	): void {
+		$this->discoveryStatus = $status;
 		$stored = $this->partner('cloud.partner.example', true, true);
 		$stored->setBaseUrl($baseUrl);
 		$pinned = $stored->getRootFingerprint();

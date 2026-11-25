@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Nic se neuložilo: partnerská organizace, se kterou je tato položka sdílena, je nedostupná ({cloudIds}). Zkuste to později, nebo uložte bez nich, čímž se sdílení této položky s nimi pozastaví, dokud ji s nimi znovu nenasdílíte."
   partnerPaused: "Nic se neuložilo. {reasons} Zkuste to později, nebo uložte bez nich, čímž se sdílení této položky s nimi pozastaví, dokud ji s nimi znovu nenasdílíte."
   partnerPausedUnreachable: "Tyto partnerské organizace jsou nedostupné: {cloudIds}."
-  partnerPausedRootChanged: "Certifikační autorita těchto partnerských organizací se změnila a správce vašeho Keepiq to musí potvrdit: {cloudIds}."
+  partnerPausedRootChanged: "Certifikát těchto partnerských organizací už neodpovídá tomu, který je připnutý ve vašem Keepiq. Může to znamenat, že ho obnovily; správce vašeho Keepiq to s nimi musí ověřit, než se sdílení obnoví: {cloudIds}."
   partnerPausedSharingOff: "Správce vypnul sdílení s těmito partnerskými organizacemi: {cloudIds}."
   partnerUpgradeRequired: "Nic se neuložilo: Keepiq u {cloudIds} je příliš starý na přijetí klíče autentizátoru. Odeberte klíč, nebo je požádejte o aktualizaci Keepiq."
   partnerUpgradeRequiredUnnamed: "Nic se neuložilo: partnerská organizace, se kterou je tato položka sdílena, používá příliš starý Keepiq na přijetí klíče autentizátoru. Odeberte klíč, nebo ji požádejte o aktualizaci Keepiq."

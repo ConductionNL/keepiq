@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Non è stato salvato nulla: una o più organizzazioni partner con cui è condiviso questo elemento non sono raggiungibili ({cloudIds}). Riprova più tardi oppure salva senza di loro: la condivisione di questo elemento con loro resterà sospesa finché non lo condividerai di nuovo."
   partnerPaused: "Non è stato salvato nulla. {reasons} Riprova più tardi oppure salva senza di loro: la condivisione di questo elemento con loro resterà sospesa finché non lo condividerai di nuovo."
   partnerPausedUnreachable: "Queste organizzazioni partner non sono raggiungibili: {cloudIds}."
-  partnerPausedRootChanged: "L’autorità di certificazione di queste organizzazioni partner è cambiata e un amministratore del tuo Keepiq deve confermarlo: {cloudIds}."
+  partnerPausedRootChanged: "Il certificato di queste organizzazioni partner non corrisponde più a quello fissato nel tuo Keepiq. Può significare che l’hanno rinnovato; un amministratore del tuo Keepiq deve verificarlo con loro prima che la condivisione riprenda: {cloudIds}."
   partnerPausedSharingOff: "Un amministratore ha disattivato la condivisione con queste organizzazioni partner: {cloudIds}."
   partnerUpgradeRequired: "Non è stato salvato nulla: il Keepiq di {cloudIds} è troppo vecchio per ricevere una chiave di autenticazione. Rimuovi la chiave oppure chiedi loro di aggiornare Keepiq."
   partnerUpgradeRequiredUnnamed: "Non è stato salvato nulla: un’organizzazione partner con cui è condiviso questo elemento usa un Keepiq troppo vecchio per ricevere una chiave di autenticazione. Rimuovi la chiave oppure chiedi di aggiornare Keepiq."

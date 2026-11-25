@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Ništa nije spremljeno: partnerska organizacija s kojom se dijeli ova stavka nije dostupna ({cloudIds}). Pokušajte ponovno kasnije ili spremite bez njih, čime se dijeljenje ove stavke s njima pauzira dok je ponovno ne podijelite s njima."
   partnerPaused: "Ništa nije spremljeno. {reasons} Pokušajte ponovno kasnije ili spremite bez njih, čime se dijeljenje ove stavke s njima pauzira dok je ponovno ne podijelite s njima."
   partnerPausedUnreachable: "Ove partnerske organizacije nisu dostupne: {cloudIds}."
-  partnerPausedRootChanged: "Izdavatelj certifikata ovih partnerskih organizacija se promijenio i administrator vašeg Keepiqa to mora potvrditi: {cloudIds}."
+  partnerPausedRootChanged: "Certifikat ovih partnerskih organizacija više se ne podudara s onim koji je prikvačen u vašem Keepiqu. To može značiti da su ga obnovili; administrator vašeg Keepiqa to mora provjeriti s njima prije nego što se dijeljenje nastavi: {cloudIds}."
   partnerPausedSharingOff: "Administrator je isključio dijeljenje s ovim partnerskim organizacijama: {cloudIds}."
   partnerUpgradeRequired: "Ništa nije spremljeno: Keepiq na strani {cloudIds} prestar je za primanje ključa autentifikatora. Uklonite ključ ili ih zamolite da ažuriraju Keepiq."
   partnerUpgradeRequiredUnnamed: "Ništa nije spremljeno: partnerska organizacija s kojom se dijeli ova stavka koristi Keepiq koji je prestar za primanje ključa autentifikatora. Uklonite ključ ili ih zamolite da ažuriraju Keepiq."

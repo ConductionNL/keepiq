@@ -273,7 +273,7 @@ writeErrors:
   partnerUnreachable: "Midagi ei salvestatud: partnerorganisatsioon, kellega see kirje on jagatud, pole kättesaadav ({cloudIds}). Proovi hiljem uuesti või salvesta ilma nendeta, mis peatab selle kirje jagamise nendega, kuni jagad seda nendega uuesti."
   partnerPaused: "Midagi ei salvestatud. {reasons} Proovi hiljem uuesti või salvesta ilma nendeta, mis peatab selle kirje jagamise nendega, kuni jagad seda nendega uuesti."
   partnerPausedUnreachable: "Need partnerorganisatsioonid pole kättesaadavad: {cloudIds}."
-  partnerPausedRootChanged: "Nende partnerorganisatsioonide sertifitseerimiskeskus on muutunud ja sinu Keepiqi administraator peab selle kinnitama: {cloudIds}."
+  partnerPausedRootChanged: "Nende partnerorganisatsioonide sertifikaat ei vasta enam sinu Keepiqis kinnitatud sertifikaadile. See võib tähendada, et nad uuendasid seda; sinu Keepiqi administraator peab seda enne jagamise jätkumist nendega kontrollima: {cloudIds}."
   partnerPausedSharingOff: "Administraator on nende partnerorganisatsioonidega jagamise välja lülitanud: {cloudIds}."
   partnerUpgradeRequired: "Midagi ei salvestatud: saajate {cloudIds} Keepiq on autentimisvõtme vastuvõtmiseks liiga vana. Eemalda võti või palu neil Keepiq uuendada."
   partnerUpgradeRequiredUnnamed: "Midagi ei salvestatud: partnerorganisatsiooni, kellega see kirje on jagatud, Keepiq on autentimisvõtme vastuvõtmiseks liiga vana. Eemalda võti või palu neil Keepiq uuendada."
