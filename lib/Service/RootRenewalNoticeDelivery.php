@@ -29,11 +29,7 @@ use DateTime;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCP\Federation\ICloudFederationFactory;
-use OCP\Federation\ICloudFederationProviderManager;
-use OCP\Federation\ICloudIdManager;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Renewal notices to partners, with retries.
@@ -60,9 +56,7 @@ class RootRenewalNoticeDelivery {
 	 * Constructor for RootRenewalNoticeDelivery.
 	 *
 	 * @param FederationPartnerMapper $partnerMapper The partners and the notice state on their rows
-	 * @param ICloudFederationProviderManager $providerManager OCM delivery
-	 * @param ICloudFederationFactory $factory OCM notification objects
-	 * @param ICloudIdManager $cloudIdManager This server's own OCM address
+	 * @param RootRenewalNoticeSender $sender Sends one notice
 	 * @param FederationRootService $root The version gate
 	 * @param LoggerInterface $logger Logs a notice given up
 	 *
@@ -72,9 +66,7 @@ class RootRenewalNoticeDelivery {
 	 */
 	public function __construct(
 		private FederationPartnerMapper $partnerMapper,
-		private ICloudFederationProviderManager $providerManager,
-		private ICloudFederationFactory $factory,
-		private ICloudIdManager $cloudIdManager,
+		private RootRenewalNoticeSender $sender,
 		private FederationRootService $root,
 		private LoggerInterface $logger,
 	) {
@@ -147,7 +139,7 @@ class RootRenewalNoticeDelivery {
 	 * @return bool Whether it was delivered
 	 */
 	private function attempt(FederationPartner $partner, DateTime $now): bool {
-		if ($this->send(partner: $partner) === true) {
+		if ($this->sender->send(baseUrl: $partner->getBaseUrl()) === true) {
 			$this->clear(partner: $partner);
 			return true;
 		}
@@ -194,34 +186,4 @@ class RootRenewalNoticeDelivery {
 		$partner->setRenewalNoticeNextAt(null);
 		$this->partnerMapper->update(entity: $partner);
 	}//end clear()
-
-	/**
-	 * Send the notice: its own type, this server as sender, no share and no certificate.
-	 *
-	 * @param FederationPartner $partner The partner
-	 *
-	 * @return bool Whether the partner took it
-	 */
-	private function send(FederationPartner $partner): bool {
-		try {
-			$notification = $this->factory->getCloudFederationNotification();
-			$notification->setMessage(
-				self::ROOT_RENEWED,
-				FederatedShareService::RESOURCE_TYPE,
-				self::NOTICE_ID,
-				[
-					'sharedSecret' => self::NOTICE_ID,
-					'providerId' => self::NOTICE_ID,
-					// Names this server, so the partner's Nextcloud knows whose signature to expect.
-					'sender' => $this->cloudIdManager->getCloudId(AppIdentity::APP_ID, null)->getId(),
-					'message' => self::ROOT_RENEWED,
-				]
-			);
-			$response = $this->providerManager->sendCloudNotification($partner->getBaseUrl(), $notification);
-		} catch (Throwable) {
-			return false;
-		}
-
-		return $response->getStatusCode() === 201;
-	}//end send()
 }//end class

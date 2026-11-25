@@ -24,11 +24,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
 
 /**
@@ -41,6 +41,7 @@ class FederationRootService implements FederationRootServiceInterface {
 	 * Constructor for FederationRootService.
 	 *
 	 * @param CACertificateMapper $caMapper The CA certificate mapper
+	 * @param ITimeFactory $time The clock, for the end of a renewal's announcement
 	 *
 	 * @return void
 	 *
@@ -48,6 +49,7 @@ class FederationRootService implements FederationRootServiceInterface {
 	 */
 	public function __construct(
 		private CACertificateMapper $caMapper,
+		private ITimeFactory $time,
 	) {
 	}//end __construct()
 
@@ -97,7 +99,8 @@ class FederationRootService implements FederationRootServiceInterface {
 	/**
 	 * The announcement of this instance's last root renewal: the new (current) root, the root it replaced, when it
 	 * was renewed, and the replaced root's signature over the new root's DER. Null for a root that was never renewed
-	 * or was renewed without a signature.
+	 * or was renewed without a signature, and once 30 days have passed since the renewal, when no partner can accept
+	 * it any more.
 	 *
 	 * @return array{previousRoot:string,newRoot:string,renewedAt:string,signature:string}|null
 	 *
@@ -116,6 +119,11 @@ class FederationRootService implements FederationRootServiceInterface {
 			return null;
 		}
 
+		$times = new RootRenewalTime();
+		if ($times->windowEnd(renewedAt: $renewedAt) <= $this->time->getDateTime()) {
+			return null;
+		}
+
 		$previous = $this->caMapper->findPredecessorOf(rootId: $root->getId());
 		if ($previous === null) {
 			return null;
@@ -124,7 +132,7 @@ class FederationRootService implements FederationRootServiceInterface {
 		return [
 			'previousRoot' => $previous->getCertificate(),
 			'newRoot' => $root->getCertificate(),
-			'renewedAt' => (clone $renewedAt)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z'),
+			'renewedAt' => $times->format(renewedAt: $renewedAt),
 			'signature' => $signature,
 		];
 	}//end localRootRenewal()

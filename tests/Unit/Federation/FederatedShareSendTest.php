@@ -154,7 +154,7 @@ class FederatedShareSendTest extends TestCase {
 			shareMapper: $mapper,
 			secretMapper: $secrets,
 			partners: new FederationPartnerService($this->partnerMapper($partners), $this->createMock(IClientService::class), $config),
-			root: new FederationRootService($this->caMapper()),
+			root: $this->rootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: new FederatedShareMessenger(
 				providerManager: $this->ocm,

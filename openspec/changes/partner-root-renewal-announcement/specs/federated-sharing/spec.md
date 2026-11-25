@@ -2,7 +2,7 @@
 
 ### Requirement: A renewed root is announced to partners
 
-When an instance renews its Keepiq root, it MUST sign the new root's DER with the previous root's key (RSA with SHA-256) in the same transaction, MUST publish in its discovery document the new root, the previous root, the time of the renewal and that signature, MUST add the same announcement to its certificate lookup answers next to the chain, and MUST send every partner with inbound sharing on a signed OCM notification of its own type, tied to no share, that carries only the fact that this server announced a renewal. The notification MUST be retried when it fails, as share notifications are. An instance whose root was never renewed MUST publish no announcement.
+When an instance renews its Keepiq root, it MUST sign the new root's DER with the previous root's key (RSA with SHA-256) in the same transaction, MUST publish in its discovery document the new root, the previous root, the time of the renewal and that signature, MUST add the same announcement to its certificate lookup answers next to the chain, and MUST send every partner with inbound sharing on a signed OCM notification of its own type, tied to no share, that carries only the fact that this server announced a renewal. The notification MUST be retried when it fails, as share notifications are. The announcement MUST be published until 30 days after the renewal; from then on the discovery document and the lookup answers MUST NOT carry it. An instance whose root was never renewed MUST publish no announcement.
 
 #### Scenario: The partner renews its root
 

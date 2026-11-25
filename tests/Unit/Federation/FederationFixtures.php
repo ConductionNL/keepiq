@@ -25,7 +25,9 @@ use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Service\FederationRootService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Federation\ICloudId;
 use OCP\Federation\ICloudIdManager;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
@@ -156,6 +158,23 @@ trait FederationFixtures {
 		$mapper->method('findActiveIntermediate')->willReturn($intermediate);
 
 		return $mapper;
+	}
+
+	/**
+	 * The local root service over a CA mapper, with a clock at `$now`: by default five days after the renewal of
+	 * renewedCaMapper(), so that renewal is still announced.
+	 *
+	 * @param CACertificateMapper $caMapper The CA mapper
+	 * @param string $now The clock's time
+	 *
+	 * @return FederationRootService
+	 */
+	private function rootService(CACertificateMapper $caMapper, string $now = '2026-11-25T10:00:00Z'): FederationRootService {
+		/** @var TestCase $this */
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('getDateTime')->willReturnCallback(static fn (): \DateTime => new \DateTime($now));
+
+		return new FederationRootService($caMapper, $time);
 	}
 
 	/**

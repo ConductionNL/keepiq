@@ -33,10 +33,8 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
-use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -44,9 +42,6 @@ use RuntimeException;
 
 /**
  * Manages the private Certificate Authority (root + intermediate).
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 13 against a maximum of 12: the CA facade's table, key crypto,
- *   issuance and status, plus RootRenewalRecorder, which holds everything a renewed root adds for partners.
  */
 class CertificateAuthorityService implements CertificateAuthorityServiceInterface {
 	private const ROOT_LIFETIME_DAYS = 7300;
@@ -80,18 +75,16 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	 * Constructor for CertificateAuthorityService.
 	 *
 	 * @param CACertificateMapper $caCertificateMapper The CA certificate mapper
-	 * @param IAppConfig $appConfig The app config interface
 	 * @param ICrypto $crypto The crypto service
 	 * @param LoggerInterface $logger The logger interface
 	 * @param CertificateIssuanceService $issuanceService The leaf-certificate issuer
-	 * @param CertificateAuthorityStatusService $statusService The CA health/counts reporter
+	 * @param CertificateAuthorityStatusService $statusService The CA health/counts reporter, and the health flag
 	 * @param RootRenewalRecorder $renewals Signs a renewed root with the root it replaces, stores and announces it
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private CACertificateMapper $caCertificateMapper,
-		private IAppConfig $appConfig,
 		private ICrypto $crypto,
 		private LoggerInterface $logger,
 		private CertificateIssuanceService $issuanceService,
@@ -152,7 +145,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 			$this->logger->info('Keepiq: CA already bootstrapped, skipping');
 			// Healthy state — make sure ca_status reflects it in case a prior
 			// partial-state install left it unset or degraded.
-			$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+			$this->statusService->markHealthy();
 		} catch (DoesNotExistException) {
 			// Partial state: root exists but intermediate does not.
 			// Recover by issuing only the missing intermediate against the existing root.
@@ -161,7 +154,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 			);
 			$recovered = $this->recoverIntermediate(root: $root);
 			$this->logger->info('Keepiq: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
-			$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+			$this->statusService->markHealthy();
 			$this->logger->info('Keepiq: CA partial-state recovery complete');
 		}//end try
 	}//end ensureIntermediate()
@@ -187,7 +180,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 		// Generate and sign the intermediate certificate.
 		$this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
-		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+		$this->statusService->markHealthy();
 		$this->logger->info('Keepiq: CA bootstrap complete');
 	}//end bootstrapFresh()
 
@@ -570,7 +563,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	 * @codeCoverageIgnore
 	 */
 	private function setDegraded(): void {
-		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'degraded');
+		$this->statusService->markDegraded();
 		$this->logger->error('Keepiq: CA bootstrap failed, entering degraded state');
 	}//end setDegraded()
 }//end class

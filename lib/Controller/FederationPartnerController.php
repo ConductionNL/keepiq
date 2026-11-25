@@ -27,10 +27,9 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
-use OCA\Keepiq\Service\PartnerRootRenewalService;
+use OCA\Keepiq\Service\FederationPartnerChanges;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -54,8 +53,7 @@ class FederationPartnerController extends Controller {
 	 * @param FederationPartnerServiceInterface $partners The partner allowlist
 	 * @param FederationRootServiceInterface $root The local root and version gate
 	 * @param IUserSession $userSession The user session
-	 * @param FederatedShareServiceInterface $federatedShares Suspends shares to a removed partner
-	 * @param PartnerRootRenewalService $renewals Accepts an offered root renewal
+	 * @param FederationPartnerChanges $changes Removes a partner with its shares, and re-pins or accepts a renewal
 	 *
 	 * @return void
 	 *
@@ -66,8 +64,7 @@ class FederationPartnerController extends Controller {
 		private FederationPartnerServiceInterface $partners,
 		private FederationRootServiceInterface $root,
 		private IUserSession $userSession,
-		private FederatedShareServiceInterface $federatedShares,
-		private PartnerRootRenewalService $renewals,
+		private FederationPartnerChanges $changes,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -207,10 +204,7 @@ class FederationPartnerController extends Controller {
 
 		$adminId = (string)$this->userSession->getUser()?->getUID();
 		try {
-			$result = match ($acceptRenewal === true) {
-				true => $this->renewals->accept(id: $id, fingerprint: $fingerprint, adminId: $adminId),
-				false => $this->partners->repin(id: $id, confirmedFingerprint: $fingerprint, adminId: $adminId),
-			};
+			$result = $this->changes->repin(id: $id, fingerprint: $fingerprint, acceptRenewal: $acceptRenewal === true, adminId: $adminId);
 		} catch (DoesNotExistException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (InvalidArgumentException $exception) {
@@ -235,14 +229,10 @@ class FederationPartnerController extends Controller {
 	#[PasswordConfirmationRequired]
 	public function destroy(string $id): JSONResponse {
 		try {
-			$this->partners->remove(id: $id);
+			$this->changes->remove(id: $id);
 		} catch (DoesNotExistException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
-
-		// Shares to that organisation stop being served, and their owners
-		// see them suspended (sharing-federated-recipients task 4.2).
-		$this->federatedShares->suspendForPartner(partnerId: $id);
 
 		return new JSONResponse(data: ['removed' => $id]);
 	}//end destroy()

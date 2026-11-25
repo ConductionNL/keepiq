@@ -23,7 +23,7 @@ namespace OCA\Keepiq\Tests\Unit\BackgroundJob;
 
 use DateTime;
 use OCA\Keepiq\BackgroundJob\PartnerRootRenewalRemindersJob;
-use OCA\Keepiq\Service\PartnerRootRenewalService;
+use OCA\Keepiq\Service\PartnerRootRenewalOffers;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -31,7 +31,7 @@ use ReflectionMethod;
 use RuntimeException;
 
 /**
- * The hourly job hands its clock's time to the renewal service and keeps a failure inside the job.
+ * The hourly job hands its clock's time to the renewal offers and keeps a failure inside the job.
  *
  * @covers \OCA\Keepiq\BackgroundJob\PartnerRootRenewalRemindersJob
  */
@@ -46,7 +46,7 @@ class PartnerRootRenewalRemindersJobTest extends TestCase {
 		$now = new DateTime('2026-12-18T09:00:00Z');
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('getDateTime')->willReturn($now);
-		$renewals = $this->createMock(PartnerRootRenewalService::class);
+		$renewals = $this->createMock(PartnerRootRenewalOffers::class);
 		$renewals->expects($this->once())->method('remindAndExpire')->with($now);
 		$job = new PartnerRootRenewalRemindersJob($time, $renewals, $this->createMock(LoggerInterface::class));
 
@@ -63,10 +63,10 @@ class PartnerRootRenewalRemindersJobTest extends TestCase {
 	public function testAFailingPassIsLoggedNotThrown(): void {
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('getDateTime')->willReturn(new DateTime());
-		$renewals = $this->createMock(PartnerRootRenewalService::class);
+		$renewals = $this->createMock(PartnerRootRenewalOffers::class);
 		$renewals->method('remindAndExpire')->willThrowException(new RuntimeException('database gone'));
 		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())->method('error')->with($this->stringContains('database gone'));
+		$logger->expects($this->once())->method('error')->with('Keepiq: partner root renewal reminders failed: database gone');
 		$job = new PartnerRootRenewalRemindersJob($time, $renewals, $logger);
 
 		(new ReflectionMethod($job, 'run'))->invoke($job, null);

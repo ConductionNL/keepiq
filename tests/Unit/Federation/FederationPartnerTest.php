@@ -244,13 +244,13 @@ class FederationPartnerTest extends TestCase {
 		$csr = openssl_csr_new(['commonName' => 'Keepiq Root'], $key, ['digest_alg' => 'sha256']);
 		openssl_x509_export(openssl_csr_sign($csr, null, $key, 1, ['digest_alg' => 'sha256']), $pem);
 
-		$root = new FederationRootService($this->caMapper());
+		$root = $this->rootService($this->caMapper());
 
 		$this->assertSame(openssl_x509_fingerprint($pem, 'sha256'), $root->fingerprint($pem));
 		$this->assertSame(self::ROOT_FINGERPRINT, $root->localRootFingerprint());
 		$this->assertSame([self::INTERMEDIATE_PEM, self::ROOT_PEM], $root->localChain());
 		$this->assertNull($root->fingerprint('not a certificate'));
-		$this->assertNull((new FederationRootService($this->caMapper(false)))->localRootFingerprint());
+		$this->assertNull(($this->rootService($this->caMapper(false)))->localRootFingerprint());
 	}
 
 	public function testTheDiscoveryDocumentPublishesTheRootFingerprint(): void {
@@ -262,7 +262,7 @@ class FederationPartnerTest extends TestCase {
 			$urls,
 			null,
 			null,
-			new FederationRootService($this->caMapper()),
+			$this->rootService($this->caMapper()),
 		);
 
 		$this->assertSame(
@@ -292,9 +292,36 @@ class FederationPartnerTest extends TestCase {
 
 		$this->assertSame(
 			['enabled' => true, 'rootFingerprint' => self::ROOT_FINGERPRINT, 'rootRenewal' => self::RENEWAL],
-			$document(new FederationRootService($this->renewedCaMapper()))
+			$document($this->rootService($this->renewedCaMapper()))
 		);
-		$this->assertArrayNotHasKey('rootRenewal', $document(new FederationRootService($this->caMapper())));
+		$this->assertArrayNotHasKey('rootRenewal', $document($this->rootService($this->caMapper())));
+	}
+
+	/**
+	 * The announcement is published until 30 days after the renewal: in its last second it is there, from the 30th
+	 * day on the discovery document carries only the fingerprint.
+	 *
+	 * @return void
+	 */
+	public function testTheDiscoveryDocumentStopsAnnouncingTheRenewalThirtyDaysAfterIt(): void {
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('linkToRoute')->willReturn('/index.php/apps/keepiq/x');
+		$urls->method('getAbsoluteURL')->willReturnArgument(0);
+		$request = $this->createMock(IRequest::class);
+		$document = static fn (FederationRootService $root): array => (new DiscoveryController(
+			$request,
+			$urls,
+			null,
+			null,
+			$root,
+		))->document()->getData()['federation'];
+
+		$this->assertSame(self::RENEWAL, $this->rootService($this->renewedCaMapper(), '2026-12-20T09:59:59Z')->localRootRenewal());
+		$this->assertNull($this->rootService($this->renewedCaMapper(), '2026-12-20T10:00:00Z')->localRootRenewal());
+		$this->assertSame(
+			['enabled' => true, 'rootFingerprint' => self::ROOT_FINGERPRINT],
+			$document($this->rootService($this->renewedCaMapper(), '2026-12-20T10:00:00Z'))
+		);
 	}
 
 	/**
@@ -305,7 +332,7 @@ class FederationPartnerTest extends TestCase {
 	public function testARenewalWithoutSignatureOrPredecessorIsNotAnnounced(): void {
 		$mapper = $this->renewedCaMapper();
 		$mapper->findRoot()->setPredecessorSignature(null);
-		$this->assertNull((new FederationRootService($mapper))->localRootRenewal());
+		$this->assertNull(($this->rootService($mapper))->localRootRenewal());
 
 		$orphan = $this->createMock(\OCA\Keepiq\Db\CACertificateMapper::class);
 		$root = new \OCA\Keepiq\Db\CACertificate();
@@ -315,8 +342,8 @@ class FederationPartnerTest extends TestCase {
 		$root->setPredecessorSignature('c2lnbmF0dXJl');
 		$orphan->method('findRoot')->willReturn($root);
 		$orphan->method('findPredecessorOf')->willReturn(null);
-		$this->assertNull((new FederationRootService($orphan))->localRootRenewal());
-		$this->assertNull((new FederationRootService($this->caMapper(false)))->localRootRenewal());
+		$this->assertNull(($this->rootService($orphan))->localRootRenewal());
+		$this->assertNull(($this->rootService($this->caMapper(false)))->localRootRenewal());
 	}
 
 	/** @var array<int,FederationPartner> Partner rows written through update() */
@@ -516,8 +543,7 @@ class FederationPartnerTest extends TestCase {
 			$partners,
 			$root,
 			$session,
-			$this->createMock(\OCA\Keepiq\Service\FederatedShareService::class),
-			$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class)
+			$this->createMock(\OCA\Keepiq\Service\FederationPartnerChanges::class)
 		);
 
 		$this->assertSame(Http::STATUS_CONFLICT, $controller->create('https://cloud.partner.example', str_repeat('cd', 32), true, true)->getStatus());

@@ -39,6 +39,7 @@ use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
 use OCA\Keepiq\Service\PartnerCertificateBatchService;
+use OCA\Keepiq\Service\FederationPartnerAuditTrail;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\ShareService;
@@ -112,7 +113,7 @@ class FederationLookupTest extends TestCase {
 		);
 		$service = new FederatedCertificateService(
 			new FederationPartnerService($this->partnerTable, $this->createMock(IClientService::class), $config),
-			new FederationRootService($this->caMapper()),
+			$this->rootService($this->caMapper()),
 			$this->createMock(ShareService::class),
 			$this->cloudIdManager(),
 			$this->createMock(IUserManager::class),
@@ -120,7 +121,7 @@ class FederationLookupTest extends TestCase {
 			$this->ocm,
 			$this->logger,
 			$this->partnerTable,
-			$dispatcher,
+			new FederationPartnerAuditTrail($dispatcher),
 		);
 		$session = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
@@ -413,7 +414,7 @@ class FederationLookupTest extends TestCase {
 		$mapper = $this->partnerMapper([$partner]);
 		$service = new FederatedCertificateService(
 			partners: new FederationPartnerService($mapper, $this->createMock(IClientService::class), $config),
-			root: new FederationRootService($this->caMapper()),
+			root: $this->rootService($this->caMapper()),
 			shareService: $this->createMock(ShareService::class),
 			cloudIdManager: $this->cloudIdManager(),
 			userManager: $this->createMock(IUserManager::class),
@@ -443,7 +444,7 @@ class FederationLookupTest extends TestCase {
 		$mapper = $this->partnerMapper([$partner]);
 		$service = new FederatedCertificateService(
 			partners: new FederationPartnerService($mapper, $this->createMock(IClientService::class), $config),
-			root: new FederationRootService($this->caMapper()),
+			root: $this->rootService($this->caMapper()),
 			shareService: $this->createMock(ShareService::class),
 			cloudIdManager: $this->cloudIdManager(),
 			userManager: $this->createMock(IUserManager::class),

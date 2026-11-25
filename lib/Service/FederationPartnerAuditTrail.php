@@ -3,7 +3,8 @@
 /**
  * Keepiq Federation Partner Audit Trail
  *
- * Audit entries for changes an administrator makes to a federation partner.
+ * Audit entries for changes an administrator makes to a federation partner, and for a change in the value fields a
+ * partner advertises.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -75,4 +76,26 @@ class FederationPartnerAuditTrail {
 			)
 		);
 	}//end repinned()
+
+	/**
+	 * Record a change in the value fields a partner advertised in its lookup answer, by field name, with no actor.
+	 *
+	 * @param FederationPartner $partner The partner
+	 * @param list<string> $from The fields it advertised before
+	 * @param list<string> $to The fields it advertises now
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	public function valueFieldsChanged(FederationPartner $partner, array $from, array $to): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forSystem(
+				eventType: AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED,
+				objectType: 'federation_partner',
+				objectId: $partner->getId(),
+				metadata: ['partnerId' => $partner->getId(), 'from' => $from, 'to' => $to],
+			)
+		);
+	}//end valueFieldsChanged()
 }//end class

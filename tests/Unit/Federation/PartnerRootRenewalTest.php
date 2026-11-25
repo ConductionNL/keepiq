@@ -38,8 +38,9 @@ use OCA\Keepiq\Exception\PartnerUnreachableException;
 use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
 use OCA\Keepiq\Service\FederationPartnerAuditTrail;
 use OCA\Keepiq\Service\FederationPartnerService;
-use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerRootRenewalNoticeSigner;
 use OCA\Keepiq\Service\PartnerRootRenewalNotifier;
+use OCA\Keepiq\Service\PartnerRootRenewalOffers;
 use OCA\Keepiq\Service\PartnerRootRenewalService;
 use OCA\Keepiq\Service\PartnerRootRenewalVerifier;
 use OCA\Keepiq\Service\RootRenewalNoticeDelivery;
@@ -101,6 +102,12 @@ class PartnerRootRenewalTest extends TestCase {
 	/** The partner service the renewal service under test re-pins through. */
 	private FederationPartnerService $partnerService;
 
+	/** The offers of the renewal service under test, which also run the hourly pass. */
+	private PartnerRootRenewalOffers $offers;
+
+	/** @var FederationPartner|null The row as stored now, when it changed since the service read it */
+	private ?FederationPartner $stored = null;
+
 	/**
 	 * A listed partner that pinned the previous root, and a clock at now.
 	 *
@@ -112,7 +119,8 @@ class PartnerRootRenewalTest extends TestCase {
 			$this->markTestSkipped('Signed OCM requests need Nextcloud 33 or later.');
 		}
 
-		$this->now = new DateTime();
+		// A minute ahead, so a root a test generates later is already valid on this clock.
+		$this->now = (new DateTime())->modify('+1 minute');
 		$this->partner = $this->partner(self::HOST, true, true);
 		$this->partner->setRootFingerprint(self::fingerprintOf(self::root('previous')['pem']));
 	}//end setUp()
@@ -144,7 +152,7 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$mapper = $this->partnerMapper([$this->partner]);
 		$mapper->method('findById')->willReturnCallback(
-			fn (string $id): FederationPartner => ($id === $this->partner->getId()) ? $this->partner : throw new DoesNotExistException('none')
+			fn (string $id): FederationPartner => ($id === $this->partner->getId()) ? ($this->stored ?? $this->partner) : throw new DoesNotExistException('none')
 		);
 		$mapper->method('update')->willReturnCallback(function (FederationPartner $partner): FederationPartner {
 			$this->updated[] = $partner;
@@ -198,15 +206,17 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$partners = new FederationPartnerService($mapper, $clients, $config, new FederationPartnerAuditTrail($dispatcher));
 		$this->partnerService = $partners;
+		$this->offers = new PartnerRootRenewalOffers(
+			partnerMapper: $mapper,
+			verifier: new PartnerRootRenewalVerifier($partners, $this->rootService($this->caMapper()), $time),
+			admins: new PartnerRootRenewalNotifier($notifications, $groups, $logger),
+			time: $time,
+		);
 
 		return new PartnerRootRenewalService(
+			notices: new PartnerRootRenewalNoticeSigner($partners, $mapper, $ocm, $this->cloudIdManager()),
+			offers: $this->offers,
 			partners: $partners,
-			partnerMapper: $mapper,
-			verifier: new PartnerRootRenewalVerifier($partners, new FederationRootService($this->caMapper()), $time),
-			admins: new PartnerRootRenewalNotifier($notifications, $groups, $logger),
-			ocmDiscovery: $ocm,
-			cloudIdManager: $this->cloudIdManager(),
-			time: $time,
 			logger: $logger,
 		);
 	}//end service()
@@ -291,8 +301,8 @@ class PartnerRootRenewalTest extends TestCase {
 		$params = ['partner' => 'https://' . self::HOST, 'partner_id' => $this->partner->getId(), 'days_left' => 29];
 		$this->assertSame(
 			[
-				[PartnerRootRenewalService::SUBJECT_OFFERED, 'admin', $params],
-				[PartnerRootRenewalService::SUBJECT_OFFERED, 'second-admin', $params],
+				[PartnerRootRenewalOffers::SUBJECT_OFFERED, 'admin', $params],
+				[PartnerRootRenewalOffers::SUBJECT_OFFERED, 'second-admin', $params],
 			],
 			$this->notified
 		);
@@ -378,6 +388,55 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$this->assertSame([], $this->notified);
 		$this->assertSame([], $this->updated);
+	}
+
+	/**
+	 * An administrator re-pins the partner to the new root by hand while a lookup checks the announcement: the check
+	 * verified against the old pin, so the row, read again, gets no offer equal to its pin and no one is notified.
+	 *
+	 * @return void
+	 */
+	public function testACheckRacingAManualRepinStoresNothingAndNotifiesNoOne(): void {
+		$newFingerprint = self::fingerprintOf(self::root('new')['pem']);
+		$valid = $this->validDocument();
+		$this->document = function () use ($valid, $newFingerprint): array {
+			$this->stored = clone $this->partner;
+			$this->stored->setRootFingerprint($newFingerprint);
+			return $valid;
+		};
+
+		$this->service()->announcedInLookup($this->partner, ['newRoot' => self::root('new')['pem']]);
+
+		$this->assertSame(1, $this->fetches);
+		$this->assertNull($this->stored?->getPendingRootFingerprint());
+		$this->assertSame($newFingerprint, $this->stored?->getRootFingerprint());
+		$this->assertSame([], $this->updated);
+		$this->assertSame([], $this->notified);
+	}
+
+	/**
+	 * A notice and a lookup check the same announcement at the same time: the one that stores second finds the same
+	 * offer on the row, read again, and notifies no one a second time.
+	 *
+	 * @return void
+	 */
+	public function testACheckFindingTheSameOfferStoredMeanwhileNotifiesNoOneAgain(): void {
+		$newFingerprint = self::fingerprintOf(self::root('new')['pem']);
+		$renewedAt = $this->at('-1 day');
+		$valid = $this->discoveryOf('new', self::announcement('previous', 'new', $renewedAt));
+		$this->document = function () use ($valid, $newFingerprint, $renewedAt): array {
+			$this->stored = clone $this->partner;
+			$this->stored->offerRenewal($newFingerprint, new DateTime(), (new DateTime($renewedAt))->modify('+30 days'));
+			return $valid;
+		};
+
+		$this->service()->noticeReceived($this->notice());
+
+		$this->assertSame(1, $this->fetches);
+		$this->assertSame($newFingerprint, $this->stored?->getPendingRootFingerprint());
+		$this->assertNull($this->partner->getPendingRootFingerprint());
+		$this->assertSame([], $this->updated);
+		$this->assertSame([], $this->notified);
 	}
 
 	/**
@@ -811,7 +870,7 @@ class PartnerRootRenewalTest extends TestCase {
 		$this->assertSame('The partner no longer announces this renewed certificate', $exception->getMessage());
 		$this->assertSame($pinned, $this->partner->getRootFingerprint());
 		$this->assertSame(self::fingerprintOf(self::root('another')['pem']), $this->partner->getPendingRootFingerprint());
-		$this->assertSame([PartnerRootRenewalService::SUBJECT_OFFERED, PartnerRootRenewalService::SUBJECT_OFFERED], array_column($this->notified, 0));
+		$this->assertSame([PartnerRootRenewalOffers::SUBJECT_OFFERED, PartnerRootRenewalOffers::SUBJECT_OFFERED], array_column($this->notified, 0));
 		$this->assertSame([], $this->audited);
 	}
 
@@ -879,22 +938,21 @@ class PartnerRootRenewalTest extends TestCase {
 	}
 
 	/**
-	 * Run the daily pass at `$daysBeforeEnd` days before the window ends and return the reminders it sent.
+	 * Run the hourly pass at `$daysBeforeEnd` days before the window ends and return the reminders it sent.
 	 *
-	 * @param PartnerRootRenewalService $service The service
 	 * @param DateTime $endsAt The end of the window
 	 * @param float $daysBeforeEnd How long before the end the pass runs
 	 *
 	 * @return list<int> The `days_left` of every reminder, one per admin
 	 */
-	private function passAt(PartnerRootRenewalService $service, DateTime $endsAt, float $daysBeforeEnd): array {
+	private function passAt(DateTime $endsAt, float $daysBeforeEnd): array {
 		$this->notified = [];
 		$now = (clone $endsAt)->modify('-' . (int)round($daysBeforeEnd * 86400) . ' seconds');
-		$service->remindAndExpire($now);
+		$this->offers->remindAndExpire($now);
 
 		return array_map(
 			static function (array $call): int {
-				TestCase::assertSame(PartnerRootRenewalService::SUBJECT_REMINDER, $call[0]);
+				TestCase::assertSame(PartnerRootRenewalOffers::SUBJECT_REMINDER, $call[0]);
 				return $call[2]['days_left'];
 			},
 			$this->notified
@@ -902,55 +960,54 @@ class PartnerRootRenewalTest extends TestCase {
 	}
 
 	public function testRemindersGoOutSevenFiveThreeAndOneDayBeforeTheEndOnceEach(): void {
-		$service = $this->offered();
+		$this->offered();
 		$endsAt = $this->partner->getPendingRootWindowEndsAt();
 		$this->assertNotNull($endsAt);
 
-		$this->assertSame([], $this->passAt($service, $endsAt, 8));
-		$this->assertSame([7, 7], $this->passAt($service, $endsAt, 7));
-		$this->assertSame([], $this->passAt($service, $endsAt, 6.5));
-		$this->assertSame([], $this->passAt($service, $endsAt, 6));
-		$this->assertSame([5, 5], $this->passAt($service, $endsAt, 5));
-		$this->assertSame([], $this->passAt($service, $endsAt, 4));
-		$this->assertSame([3, 3], $this->passAt($service, $endsAt, 3));
-		$this->assertSame([], $this->passAt($service, $endsAt, 2));
-		$this->assertSame([1, 1], $this->passAt($service, $endsAt, 1));
-		$this->assertSame([], $this->passAt($service, $endsAt, 0.5));
+		$this->assertSame([], $this->passAt($endsAt, 8));
+		$this->assertSame([7, 7], $this->passAt($endsAt, 7));
+		$this->assertSame([], $this->passAt($endsAt, 6.5));
+		$this->assertSame([], $this->passAt($endsAt, 6));
+		$this->assertSame([5, 5], $this->passAt($endsAt, 5));
+		$this->assertSame([], $this->passAt($endsAt, 4));
+		$this->assertSame([3, 3], $this->passAt($endsAt, 3));
+		$this->assertSame([], $this->passAt($endsAt, 2));
+		$this->assertSame([1, 1], $this->passAt($endsAt, 1));
+		$this->assertSame([], $this->passAt($endsAt, 0.5));
 		$this->assertSame(self::fingerprintOf(self::root('new')['pem']), $this->partner->getPendingRootFingerprint());
 	}
 
 	public function testAPassAfterMissedDaysSendsOnlyTheReminderDueNow(): void {
-		$service = $this->offered();
+		$this->offered();
 		$endsAt = $this->partner->getPendingRootWindowEndsAt();
 		$this->assertNotNull($endsAt);
 
-		$this->assertSame([3, 3], $this->passAt($service, $endsAt, 3));
-		$this->assertSame([], $this->passAt($service, $endsAt, 5));
-		$this->assertSame([1, 1], $this->passAt($service, $endsAt, 1));
+		$this->assertSame([3, 3], $this->passAt($endsAt, 3));
+		$this->assertSame([], $this->passAt($endsAt, 5));
+		$this->assertSame([1, 1], $this->passAt($endsAt, 1));
 	}
 
 	public function testAHourlyPassJustAfterOneThatRanShortlyBeforeTheOneDayMarkSendsTheOneDayReminder(): void {
-		$service = $this->offered();
+		$this->offered();
 		$endsAt = $this->partner->getPendingRootWindowEndsAt();
 		$this->assertNotNull($endsAt);
-		$this->passAt($service, $endsAt, 3);
+		$this->passAt($endsAt, 3);
 
 		// A minute before one day is left, two days round up: the 3-day reminder, already sent.
-		$this->assertSame([], $this->passAt($service, $endsAt, 1 + 60 / 86400));
-		$this->assertSame([1, 1], $this->passAt($service, $endsAt, 1 + 60 / 86400 - 1 / 24));
+		$this->assertSame([], $this->passAt($endsAt, 1 + 60 / 86400));
+		$this->assertSame([1, 1], $this->passAt($endsAt, 1 + 60 / 86400 - 1 / 24));
 	}
 
 	public function testAnOfferWithSixDaysLeftCountsAsTheSevenDayReminder(): void {
 		$this->document = $this->discoveryOf('new', self::announcement('previous', 'new', $this->at('-24 days')));
-		$service = $this->service();
-		$service->noticeReceived($this->notice());
+		$this->service()->noticeReceived($this->notice());
 		$this->assertSame([6, 6], array_column(array_column($this->notified, 2), 'days_left'));
 		$this->assertSame(7, $this->partner->getPendingRootReminded());
 		$endsAt = $this->partner->getPendingRootWindowEndsAt();
 		$this->assertNotNull($endsAt);
 
-		$this->assertSame([], $this->passAt($service, $endsAt, 6));
-		$this->assertSame([5, 5], $this->passAt($service, $endsAt, 5));
+		$this->assertSame([], $this->passAt($endsAt, 6));
+		$this->assertSame([5, 5], $this->passAt($endsAt, 5));
 	}
 
 	public function testAnOfferWithMoreThanSevenDaysLeftLeavesEveryReminderToCome(): void {
@@ -960,11 +1017,11 @@ class PartnerRootRenewalTest extends TestCase {
 	}
 
 	public function testTheOfferIsWithdrawnWhenTheThirtyDaysEnd(): void {
-		$service = $this->offered();
+		$this->offered();
 		$endsAt = $this->partner->getPendingRootWindowEndsAt();
 		$this->assertNotNull($endsAt);
 
-		$this->assertSame([], $this->passAt($service, $endsAt, 0));
+		$this->assertSame([], $this->passAt($endsAt, 0));
 
 		$this->assertNull($this->partner->getPendingRootFingerprint());
 		$this->assertNull($this->partner->getPendingRootWindowEndsAt());

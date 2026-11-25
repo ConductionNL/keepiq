@@ -149,7 +149,6 @@ class CertificateAuthorityServiceTest extends TestCase {
 	private function serviceSigningWith(RootRenewalSignature $signatures): CertificateAuthorityService {
 		return new CertificateAuthorityService(
 			caCertificateMapper: $this->caCertMapper,
-			appConfig: $this->appConfig,
 			crypto: $this->crypto,
 			logger: $this->logger,
 			issuanceService: $this->issuance,

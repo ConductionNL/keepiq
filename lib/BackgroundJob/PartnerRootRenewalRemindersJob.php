@@ -19,11 +19,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\Service\PartnerRootRenewalService;
+use OCA\Keepiq\Service\PartnerRootRenewalOffers;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Hourly: remind the administrators of offered partner root renewals 7, 5, 3 and 1 day before they end, and withdraw
@@ -31,12 +29,12 @@ use Throwable;
  *
  * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-offered-renewal-expires-after-30-days-with-reminders
  */
-class PartnerRootRenewalRemindersJob extends TimedJob {
+class PartnerRootRenewalRemindersJob extends HourlyJob {
 	/**
 	 * Constructor for PartnerRootRenewalRemindersJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param PartnerRootRenewalService $renewals Reminds and withdraws
+	 * @param PartnerRootRenewalOffers $offers Reminds and withdraws
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -45,32 +43,20 @@ class PartnerRootRenewalRemindersJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private PartnerRootRenewalService $renewals,
-		private LoggerInterface $logger,
+		private PartnerRootRenewalOffers $offers,
+		LoggerInterface $logger,
 	) {
-		parent::__construct(time: $time);
-		$this->setInterval(seconds: 3600);
+		parent::__construct(time: $time, logger: $logger, failure: 'Keepiq: partner root renewal reminders failed: ');
 	}//end __construct()
 
 	/**
 	 * Remind and withdraw what is due.
 	 *
-	 * @param mixed $argument Unused job argument
-	 *
 	 * @return void
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by TimedJob.
 	 *
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-no-one-accepts-in-time
 	 */
-	protected function run($argument): void {
-		try {
-			$this->renewals->remindAndExpire(now: $this->time->getDateTime());
-		} catch (Throwable $exception) {
-			$this->logger->error(
-				'Keepiq: partner root renewal reminders failed: ' . $exception->getMessage(),
-				['exception' => $exception, 'app' => 'keepiq']
-			);
-		}
-	}//end run()
+	protected function runHourly(): void {
+		$this->offers->remindAndExpire(now: $this->time->getDateTime());
+	}//end runHourly()
 }//end class

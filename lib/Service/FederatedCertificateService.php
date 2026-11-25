@@ -36,11 +36,8 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
-use OCA\Keepiq\Event\Audit\AuditEventFactory;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
 use OCP\IUserManager;
@@ -86,8 +83,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * @param IOCMDiscoveryService $ocmDiscovery Signed OCM requests to partners
 	 * @param LoggerInterface $logger Warnings about a partner's answer
 	 * @param FederationPartnerMapper $partnerMapper Records the value fields a partner advertises
-	 * @param IEventDispatcher|null $eventDispatcher Audits a change of those value fields
-	 * @param AuditEventFactory $auditEvents Builds the audit events
+	 * @param FederationPartnerAuditTrail $audit Audits a change of those value fields
 	 * @param PartnerRootRenewalService|null $renewals Checks a root renewal a partner announces in its answer
 	 *
 	 * @return void
@@ -106,8 +102,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 		private IOCMDiscoveryService $ocmDiscovery,
 		private LoggerInterface $logger,
 		private FederationPartnerMapper $partnerMapper,
-		private ?IEventDispatcher $eventDispatcher = null,
-		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private FederationPartnerAuditTrail $audit = new FederationPartnerAuditTrail(),
 		private ?PartnerRootRenewalService $renewals = null,
 	) {
 	}//end __construct()
@@ -283,14 +278,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 			);
 		}
 
-		$this->eventDispatcher?->dispatchTyped(
-			$this->auditEvents->forSystem(
-				eventType: AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED,
-				objectType: 'federation_partner',
-				objectId: $partner->getId(),
-				metadata: ['partnerId' => $partner->getId(), 'from' => $was, 'to' => $fields],
-			)
-		);
+		$this->audit->valueFieldsChanged(partner: $partner, from: $was, to: $fields);
 
 		return $fields;
 	}//end recordValueFields()

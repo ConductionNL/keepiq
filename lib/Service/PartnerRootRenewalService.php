@@ -25,50 +25,21 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederationPartner;
-use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Exception\PartnerUnreachableException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\Federation\ICloudIdManager;
-use OCP\OCM\IOCMDiscoveryService;
 use OCP\Share\Exceptions\ShareNotFound;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Starts the checks, offers, reminds about and accepts partner root renewals.
+ * Starts the checks of partner root renewals, and accepts them.
  *
  * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One step of D3 to D6 each: the partner table, the notice's OCM
- *   signature and sender, the check, the clock, the re-pin and the admin notifications.
  */
 class PartnerRootRenewalService {
-	/**
-	 * Days before the window ends on which administrators are reminded, each once.
-	 *
-	 * @var int[]
-	 */
-	public const REMINDER_DAYS = [7, 5, 3, 1];
-
-	/**
-	 * The notification subject of a newly offered renewal.
-	 *
-	 * @var string
-	 */
-	public const SUBJECT_OFFERED = 'partner_root_renewal';
-
-	/**
-	 * The notification subject of a reminder.
-	 *
-	 * @var string
-	 */
-	public const SUBJECT_REMINDER = 'partner_root_renewal_reminder';
-
 	/**
 	 * Partners checked in this process, so a batch of lookups starts one check per partner.
 	 *
@@ -79,13 +50,9 @@ class PartnerRootRenewalService {
 	/**
 	 * Constructor for PartnerRootRenewalService.
 	 *
-	 * @param FederationPartnerService $partners Re-pins, and names hosts as OCM signers do
-	 * @param FederationPartnerMapper $partnerMapper The partner table
-	 * @param PartnerRootRenewalVerifier $verifier Runs every check on the partner's announcement
-	 * @param PartnerRootRenewalNotifier $admins Notifies the administrators
-	 * @param IOCMDiscoveryService $ocmDiscovery Verifies a notice's signature
-	 * @param ICloudIdManager $cloudIdManager Reads the sender a notice names
-	 * @param ITimeFactory $time The clock
+	 * @param PartnerRootRenewalNoticeSigner $notices Names and authenticates the partner a notice comes from
+	 * @param PartnerRootRenewalOffers $offers Checks, stores and withdraws the offered renewal
+	 * @param FederationPartnerService $partners Re-pins an accepted renewal
 	 * @param LoggerInterface $logger Logs every notice ignored and every check that fails
 	 *
 	 * @return void
@@ -93,13 +60,9 @@ class PartnerRootRenewalService {
 	 * @spec exclude Constructor wiring only; no behaviour.
 	 */
 	public function __construct(
+		private PartnerRootRenewalNoticeSigner $notices,
+		private PartnerRootRenewalOffers $offers,
 		private FederationPartnerService $partners,
-		private FederationPartnerMapper $partnerMapper,
-		private PartnerRootRenewalVerifier $verifier,
-		private PartnerRootRenewalNotifier $admins,
-		private IOCMDiscoveryService $ocmDiscovery,
-		private ICloudIdManager $cloudIdManager,
-		private ITimeFactory $time,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -114,13 +77,12 @@ class PartnerRootRenewalService {
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function noticeIdentity(array $payload): string {
-		$partner = $this->partnerNamedBy(payload: $payload);
-		if ($partner === null) {
+		$identity = $this->notices->identity(payload: $payload);
+		if ($identity === '') {
 			$this->logIgnored(payload: $payload);
-			return '';
 		}
 
-		return $this->identityOf(partner: $partner);
+		return $identity;
 	}//end noticeIdentity()
 
 	/**
@@ -138,17 +100,8 @@ class PartnerRootRenewalService {
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function noticeReceived(array $payload): void {
-		$partner = $this->partnerNamedBy(payload: $payload);
-		$signer = null;
-		if ($partner !== null) {
-			try {
-				$signer = $this->ocmDiscovery->getIncomingSignedRequest($this->identityOf(partner: $partner))?->getOrigin();
-			} catch (Throwable) {
-				$signer = null;
-			}
-		}
-
-		if ($partner === null || $signer === null || $this->partners->hostOf(url: $signer) !== $partner->getHost()) {
+		$partner = $this->notices->signedPartner(payload: $payload);
+		if ($partner === null) {
 			$this->logIgnored(payload: $payload);
 			throw new ShareNotFound();
 		}
@@ -158,7 +111,7 @@ class PartnerRootRenewalService {
 
 	/**
 	 * Start the check when an outbound partner's lookup answer announces a renewal to a root that is neither pinned
-	 * nor already offered. Only the announced root's fingerprint is read, to decide that.
+	 * nor already offered.
 	 *
 	 * @param FederationPartner $partner The partner that answered
 	 * @param mixed $announcement The answer's `rootRenewal`
@@ -168,11 +121,7 @@ class PartnerRootRenewalService {
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function announcedInLookup(FederationPartner $partner, mixed $announcement): void {
-		$fingerprint = $this->verifier->announcedFingerprint(announcement: $announcement);
-		$pending = (string)$partner->getPendingRootFingerprint();
-		if ($fingerprint === null || hash_equals($partner->getRootFingerprint(), $fingerprint) === true
-			|| hash_equals($pending, $fingerprint) === true
-		) {
+		if ($this->offers->announcesNewRoot(partner: $partner, announcement: $announcement) === false) {
 			return;
 		}
 
@@ -207,57 +156,21 @@ class PartnerRootRenewalService {
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-the-announcement-changes-before-it-is-accepted
 	 */
 	public function accept(string $id, string $fingerprint, string $adminId): array {
-		$partner = $this->partnerMapper->findById(id: $id);
-		$offered = $partner->offeredRenewal(now: $this->time->getDateTime());
-		if ($offered === null || hash_equals($offered['fingerprint'], strtolower(trim($fingerprint))) === false) {
-			throw new InvalidArgumentException('No renewed certificate with this fingerprint is offered for this partner');
-		}
-
+		$partner = $this->offers->offeredBy(id: $id, fingerprint: $fingerprint);
+		$offered = (string)$partner->getPendingRootFingerprint();
 		$verified = $this->verifyOrWithdraw(partner: $partner);
 		if ($verified === null) {
 			throw new InvalidArgumentException('The partner no longer announces this renewed certificate');
 		}
 
-		if (hash_equals($offered['fingerprint'], $verified['fingerprint']) === false) {
+		if (hash_equals($offered, $verified['fingerprint']) === false) {
 			$this->logRefusal(partner: $partner, reason: 'another_renewal');
-			$this->offer(partner: $partner, verified: $verified);
+			$this->offers->offer(partner: $partner, verified: $verified);
 			throw new InvalidArgumentException('The partner no longer announces this renewed certificate');
 		}
 
-		return $this->partners->repin(id: $id, confirmedFingerprint: $offered['fingerprint'], adminId: $adminId);
+		return $this->partners->repin(id: $id, confirmedFingerprint: $offered, adminId: $adminId);
 	}//end accept()
-
-	/**
-	 * The hourly pass: withdraw every offered renewal whose window ended, and remind the administrators 7, 5, 3 and 1
-	 * day before a window ends, each reminder once.
-	 *
-	 * @param DateTime $now The current time
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-offered-renewal-expires-after-30-days-with-reminders
-	 */
-	public function remindAndExpire(DateTime $now): void {
-		foreach ($this->partnerMapper->findWithOfferedRenewal() as $partner) {
-			$endsAt = $partner->getPendingRootWindowEndsAt();
-			if ($endsAt === null || $endsAt <= $now) {
-				$partner->withdrawRenewal();
-				$this->partnerMapper->update(entity: $partner);
-				continue;
-			}
-
-			$daysLeft = (int)ceil(($endsAt->getTimestamp() - $now->getTimestamp()) / 86400);
-			$threshold = $this->thresholdFor(daysLeft: $daysLeft);
-			$reminded = $partner->getPendingRootReminded();
-			if ($threshold === null || ($reminded !== null && $reminded <= $threshold)) {
-				continue;
-			}
-
-			$this->admins->notifyAdmins(subject: self::SUBJECT_REMINDER, partner: $partner, daysLeft: $daysLeft);
-			$partner->setPendingRootReminded($threshold);
-			$this->partnerMapper->update(entity: $partner);
-		}
-	}//end remindAndExpire()
 
 	/**
 	 * Run the check once per partner and process, and offer the renewal when it passes.
@@ -276,23 +189,22 @@ class PartnerRootRenewalService {
 		$this->checked[$partner->getId()] = true;
 		$verified = $this->verifyOrWithdraw(partner: $partner);
 		if ($verified !== null) {
-			$this->offer(partner: $partner, verified: $verified);
+			$this->offers->offer(partner: $partner, verified: $verified);
 		}
 	}//end check()
 
 	/**
-	 * Run every check on the partner's announcement. A failed check withdraws any offered renewal; only a document
-	 * that could not be fetched leaves it, since that may pass.
+	 * Run every check on the partner's announcement; a failed check is logged and withdraws any offered renewal.
 	 *
 	 * @param FederationPartner $partner The partner
 	 *
-	 * @return array{fingerprint:string,windowEndsAt:DateTime}|null The verified renewal, null when a check failed
+	 * @return array{fingerprint:string,windowEndsAt:\DateTime}|null The verified renewal, null when a check failed
 	 *
 	 * @throws PartnerUnreachableException When the partner's discovery document could not be fetched
 	 */
 	private function verifyOrWithdraw(FederationPartner $partner): ?array {
 		try {
-			return $this->verifier->verify(partner: $partner);
+			return $this->offers->verify(partner: $partner);
 		} catch (PartnerUnreachableException $exception) {
 			$this->logRefusal(partner: $partner, reason: $exception->getMessage());
 			throw $exception;
@@ -300,89 +212,8 @@ class PartnerRootRenewalService {
 			$this->logRefusal(partner: $partner, reason: $exception->getMessage());
 		}
 
-		if ($partner->getPendingRootFingerprint() !== null) {
-			$partner->withdrawRenewal();
-			$this->partnerMapper->update(entity: $partner);
-		}
-
 		return null;
 	}//end verifyOrWithdraw()
-
-	/**
-	 * Store a verified renewal as the partner's offer and notify the administrators, unless the same renewal is
-	 * offered already. The offer counts as the reminder its days left fall in.
-	 *
-	 * @param FederationPartner $partner The partner
-	 * @param array{fingerprint:string,windowEndsAt:DateTime} $verified The verified renewal
-	 *
-	 * @return void
-	 */
-	private function offer(FederationPartner $partner, array $verified): void {
-		$endsAt = $partner->getPendingRootWindowEndsAt();
-		if ($partner->getPendingRootFingerprint() === $verified['fingerprint']
-			&& $endsAt?->getTimestamp() === $verified['windowEndsAt']->getTimestamp()
-		) {
-			return;
-		}
-
-		$now = $this->time->getDateTime();
-		$daysLeft = (int)ceil(($verified['windowEndsAt']->getTimestamp() - $now->getTimestamp()) / 86400);
-		$partner->offerRenewal(fingerprint: $verified['fingerprint'], verifiedAt: $now, windowEndsAt: $verified['windowEndsAt']);
-		$partner->setPendingRootReminded($this->thresholdFor(daysLeft: $daysLeft));
-		$this->partnerMapper->update(entity: $partner);
-
-		$this->admins->notifyAdmins(subject: self::SUBJECT_OFFERED, partner: $partner, daysLeft: $daysLeft);
-	}//end offer()
-
-	/**
-	 * The reminder a number of days left falls in: (5, 7] is 7, (3, 5] is 5, (1, 3] is 3 and (0, 1] is 1.
-	 *
-	 * @param int $daysLeft Whole days left, rounded up
-	 *
-	 * @return int|null Null outside them
-	 */
-	private function thresholdFor(int $daysLeft): ?int {
-		$threshold = null;
-		foreach (self::REMINDER_DAYS as $days) {
-			if ($daysLeft <= $days && $daysLeft > 0) {
-				$threshold = $days;
-			}
-		}
-
-		return $threshold;
-	}//end thresholdFor()
-
-	/**
-	 * The listed partner, in any direction, whose host the notice's `sender` names.
-	 *
-	 * @param array<array-key,mixed> $payload The notice
-	 *
-	 * @return FederationPartner|null
-	 */
-	private function partnerNamedBy(array $payload): ?FederationPartner {
-		$sender = ($payload['sender'] ?? null);
-		if (is_string($sender) === false || $this->cloudIdManager->isValidCloudId($sender) === false) {
-			return null;
-		}
-
-		try {
-			$host = $this->partners->hostOf(url: $this->cloudIdManager->resolveCloudId($sender)->getRemote());
-			return $this->partnerMapper->findByHost(host: (string)$host);
-		} catch (InvalidArgumentException | DoesNotExistException) {
-			return null;
-		}
-	}//end partnerNamedBy()
-
-	/**
-	 * The OCM address a partner's notice is signed as.
-	 *
-	 * @param FederationPartner $partner The partner
-	 *
-	 * @return string
-	 */
-	private function identityOf(FederationPartner $partner): string {
-		return AppIdentity::APP_ID . '@' . $partner->getHost();
-	}//end identityOf()
 
 	/**
 	 * Log a renewal notice that no listed partner signed.

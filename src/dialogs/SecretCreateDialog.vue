@@ -527,27 +527,6 @@ export default {
 		},
 
 		/**
-		 * Why listed files cannot be added, '' when they can.
-		 *
-		 * @return {string}
-		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
-		 */
-		filesUnavailable() {
-			if (this.canAddFiles) {
-				return ''
-			}
-			return useOfflineStore().readOnly
-				? t(
-						'keepiq',
-						'Files cannot be added while you are offline. Remove them to save.',
-					)
-				: t(
-						'keepiq',
-						'Files can only be added to a secret you own. Remove them to save.',
-					)
-		},
-
-		/**
 		 * Whether the form around the value is ready: not busy, named, every
 		 * field value fitting its schema, a folder chosen and no code error.
 		 *

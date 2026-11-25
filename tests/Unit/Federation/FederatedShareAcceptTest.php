@@ -319,7 +319,7 @@ class FederatedShareAcceptTest extends TestCase {
 			shareMapper: $shares,
 			secretMapper: $secrets,
 			partners: $partners,
-			root: new FederationRootService($this->caMapper()),
+			root: $this->rootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $this->createMock(FederatedShareMessenger::class),
 			random: $this->createMock(ISecureRandom::class),

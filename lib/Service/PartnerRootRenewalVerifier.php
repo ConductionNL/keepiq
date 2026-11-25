@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Exception\PartnerUnreachableException;
@@ -35,13 +34,6 @@ use OCP\AppFramework\Utility\ITimeFactory;
  * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
  */
 class PartnerRootRenewalVerifier {
-	/**
-	 * Days after the renewal time during which an announced renewal can be accepted.
-	 *
-	 * @var int
-	 */
-	public const WINDOW_DAYS = 30;
-
 	/**
 	 * Constructor for PartnerRootRenewalVerifier.
 	 *
@@ -189,8 +181,9 @@ class PartnerRootRenewalVerifier {
 	 * @throws InvalidArgumentException `renewal_time_invalid`, `renewal_in_the_future` or `renewal_too_old`
 	 */
 	private function windowEnd(string $renewedAt, DateTime $now): DateTime {
-		$time = date_create_from_format('!Y-m-d\TH:i:s\Z', $renewedAt, new DateTimeZone('UTC'));
-		if ($time === false || $time->format('Y-m-d\TH:i:s\Z') !== $renewedAt) {
+		$times = new RootRenewalTime();
+		$time = $times->parse(renewedAt: $renewedAt);
+		if ($time === null) {
 			throw new InvalidArgumentException('renewal_time_invalid');
 		}
 
@@ -198,7 +191,7 @@ class PartnerRootRenewalVerifier {
 			throw new InvalidArgumentException('renewal_in_the_future');
 		}
 
-		$endsAt = (clone $time)->modify('+' . self::WINDOW_DAYS . ' days');
+		$endsAt = $times->windowEnd(renewedAt: $time);
 		if ($endsAt <= $now) {
 			throw new InvalidArgumentException('renewal_too_old');
 		}

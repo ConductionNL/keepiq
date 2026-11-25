@@ -16,7 +16,7 @@ The backend lead decided the flow: an announced renewal, a short notification, a
 
 `renewRoot` signs the new root certificate with the old root's key, in the same transaction that stores the new root, and keeps the signature with the new root. The discovery document then publishes, under `federation`, the current root's fingerprint as today, plus a renewal announcement: the new root certificate, the previous root certificate, the time of the renewal, and the previous root's signature over the new root. `FederatedCertificateService::answer` (`:123`) adds the same announcement to every lookup answer, next to the chain. Both carry it as `rootRenewal`: `previousRoot` and `newRoot` as PEM, `renewedAt` as an ISO 8601 UTC time, and `signature`, the base64 RSA signature with SHA-256 (`openssl_sign`, `OPENSSL_ALGO_SHA256`) by the previous root's key over the new root's DER, the digest the CA already uses.
 
-An instance whose root was never renewed publishes no announcement. A second renewal replaces the announcement with one signed by the root it replaces, so a partner two renewals behind cannot follow it and falls back to the manual re-pin.
+The announcement is published until 30 days after the renewal, when the window of D6 ends and no partner can accept it any more; from then on neither the discovery document nor a lookup answer carries it, so a partner stops reading the document again on every lookup. An instance whose root was never renewed publishes no announcement. A second renewal replaces the announcement with one signed by the root it replaces, so a partner two renewals behind cannot follow it and falls back to the manual re-pin.
 
 ## D2. The notification
 

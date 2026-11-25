@@ -27,6 +27,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\FederationPartnerController;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederationPartnerChanges;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\PartnerRootRenewalService;
@@ -103,8 +104,7 @@ class FederationPartnerControllerTest extends TestCase {
 			partners: $this->partners,
 			root: $this->root,
 			userSession: $this->session,
-			federatedShares: $this->shares,
-			renewals: $this->renewals,
+			changes: new FederationPartnerChanges(partners: $this->partners, federatedShares: $this->shares, renewals: $this->renewals),
 		);
 	}//end controller()
 

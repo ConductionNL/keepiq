@@ -56,7 +56,8 @@ interface FederationRootServiceInterface {
 	public function localRootFingerprint(): ?string;
 
 	/**
-	 * The announcement of this instance's last root renewal, or null for a root that was never renewed.
+	 * The announcement of this instance's last root renewal, or null for a root that was never renewed and once 30
+	 * days have passed since the renewal.
 	 *
 	 * @return array{previousRoot:string,newRoot:string,renewedAt:string,signature:string}|null
 	 *

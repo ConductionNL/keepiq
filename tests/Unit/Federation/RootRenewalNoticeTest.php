@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\RootRenewalNoticeDelivery;
+use OCA\Keepiq\Service\RootRenewalNoticeSender;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Http\Client\IResponse;
@@ -103,10 +104,8 @@ class RootRenewalNoticeTest extends TestCase {
 
 		return new RootRenewalNoticeDelivery(
 			partnerMapper: $mapper,
-			providerManager: $ocm,
-			factory: $factory,
-			cloudIdManager: $this->cloudIdManager(),
-			root: new FederationRootService($this->caMapper()),
+			sender: new RootRenewalNoticeSender(providerManager: $ocm, factory: $factory, cloudIdManager: $this->cloudIdManager()),
+			root: $this->rootService($this->caMapper()),
 			logger: $logger,
 		);
 	}//end delivery()
