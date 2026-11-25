@@ -62,73 +62,59 @@ class FederatedShareResumeController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Resume a suspended share with a value encrypted now.
+	 * Resume a suspended share with a value encrypted now. The body carries
+	 * `certFingerprint` (SHA-256 of the certificate the browser verified),
+	 * `sourceUpdatedAt` (the version it encrypted from) and the ciphertext
+	 * `key`, `login`, `additionalFields`, `totp` and `passkeys`.
 	 *
 	 * @param string $id The federated share
-	 * @param string $certFingerprint SHA-256 of the certificate the browser verified
-	 * @param string $sourceUpdatedAt The version of the secret the browser encrypted from
-	 * @param string $key The value, encrypted for the recipient
-	 * @param string|null $login The login, encrypted for the recipient
-	 * @param string|null $additionalFields The additional fields, encrypted for the recipient
-	 * @param string|null $totp The TOTP seed, encrypted for the recipient
-	 * @param string|null $passkeys The passkeys, encrypted for the recipient
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) One parameter per request field, as Nextcloud binds them.
 	 */
 	#[NoAdminRequired]
-	public function resume(
-		string $id,
-		string $certFingerprint = '',
-		string $sourceUpdatedAt = '',
-		string $key = '',
-		?string $login = null,
-		?string $additionalFields = null,
-		?string $totp = null,
-		?string $passkeys = null,
-	): JSONResponse {
+	public function resume(string $id): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$share = $this->resumes->resume(
-				shareId: $id,
-				userId: $user->getUID(),
-				certFingerprint: $certFingerprint,
-				ciphertext: [
-					'key' => $key,
-					'login' => $login,
-					'additionalFields' => $additionalFields,
-					'totp' => $totp,
-					'passkeys' => $passkeys,
-				],
-				sourceUpdatedAt: $sourceUpdatedAt,
-			);
+			$share = $this->resumes->resume(shareId: $id, userId: $user->getUID(), body: $this->request->getParams());
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		} catch (ShareSaveRefusal $refusal) {
 			return new JSONResponse(data: $refusal->getBody(), statusCode: $refusal->getStatus());
 		} catch (PartnerUpgradeRequiredException $exception) {
-			return new JSONResponse(
-				data: [
-					'error' => PartnerUpgradeRequiredException::CODE,
-					'message' => $exception->getMessage(),
-					'requiredVersion' => $exception->getRequiredVersion(),
-					'shareId' => $id,
-				],
-				statusCode: Http::STATUS_CONFLICT
-			);
+			return $this->upgradeRequired(exception: $exception, shareId: $id);
 		} catch (NotFoundException) {
 			return new JSONResponse(data: ['message' => 'Share not found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse(data: $share->jsonSerialize());
 	}//end resume()
+
+	/**
+	 * The refusal of a value the recipient's instance is too old to hold, as
+	 * the share routes answer it.
+	 *
+	 * @param PartnerUpgradeRequiredException $exception The refusal
+	 * @param string $shareId The federated share
+	 *
+	 * @return JSONResponse
+	 */
+	private function upgradeRequired(PartnerUpgradeRequiredException $exception, string $shareId): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => PartnerUpgradeRequiredException::CODE,
+				'message' => $exception->getMessage(),
+				'requiredVersion' => $exception->getRequiredVersion(),
+				'shareId' => $shareId,
+			],
+			statusCode: Http::STATUS_CONFLICT
+		);
+	}//end upgradeRequired()
 }//end class

@@ -185,6 +185,28 @@ async function encryptForVerified(secret, recipient) {
 }
 
 /**
+ * Encrypt a secret for a verified partner recipient. A login with a one-time
+ * code or passkeys is refused with a PartnerUpgradeRequiredError, before
+ * anything is encrypted, when the partner did not advertise it stores them:
+ * the server would take the field as null, so the partner's copy would
+ * quietly lack it.
+ *
+ * @param {object} secret The decrypted secret.
+ * @param {{spki: Uint8Array, valueFields?: Array<string>}} recipient From lookup().
+ * @return {Promise<object>} The ciphertext for the recipient.
+ * @throws {PartnerUpgradeRequiredError} The partner cannot store a field the login holds.
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ */
+async function encryptForPartner(secret, recipient) {
+	if (
+		BLOB_FIELDS.some((field) => secret?.[field] && !partnerStores(recipient, field))
+	) {
+		throw new PartnerUpgradeRequiredError()
+	}
+	return encryptForVerified(secret, recipient)
+}
+
+/**
  * The server's 409 `partner_upgrade_required` as a PartnerUpgradeRequiredError;
  * any other error as it is.
  *
@@ -454,14 +476,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 			if (recipient.cloudId !== share.recipientCloudId) {
 				throw new CloudIdMismatchError(share.recipientCloudId)
 			}
-			if (
-				BLOB_FIELDS.some(
-					(field) => secret?.[field] && !partnerStores(recipient, field),
-				)
-			) {
-				throw new PartnerUpgradeRequiredError()
-			}
-			const encrypted = await encryptForVerified(secret, recipient)
+			const encrypted = await encryptForPartner(secret, recipient)
 			// The share names its recipient already.
 			const body = {
 				...federatedShareBody(recipient, encrypted),
@@ -502,16 +517,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 		 */
 		async share(secretId, secret, recipient) {
-			// The server would take the field as null, so the partner's copy
-			// would quietly lack it.
-			if (
-				BLOB_FIELDS.some(
-					(field) => secret?.[field] && !partnerStores(recipient, field),
-				)
-			) {
-				throw new PartnerUpgradeRequiredError()
-			}
-			const encrypted = await encryptForVerified(secret, recipient)
+			const encrypted = await encryptForPartner(secret, recipient)
 			const url = generateUrl(
 				`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
 			)

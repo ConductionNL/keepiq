@@ -8166,42 +8166,10 @@
             "post": {
                 "operationId": "federated-share-resume-resume",
                 "summary": "Resume a suspended share with a value encrypted now",
-                "description": "Resume a suspended share with a value encrypted now.",
+                "description": "Resume a suspended share with a value encrypted now. The body carries `certFingerprint` (SHA-256 of the certificate the browser verified), `sourceUpdatedAt` (the version it encrypted from) and the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`.",
                 "tags": [
                     "federated-share-resume"
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "certFingerprint": {
-                                        "type": "string"
-                                    },
-                                    "sourceUpdatedAt": {
-                                        "type": "string"
-                                    },
-                                    "key": {
-                                        "type": "string"
-                                    },
-                                    "login": {
-                                        "type": "string"
-                                    },
-                                    "additionalFields": {
-                                        "type": "string"
-                                    },
-                                    "totp": {
-                                        "type": "string"
-                                    },
-                                    "passkeys": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "id",
@@ -8275,28 +8243,6 @@
                     },
                     "404": {
                         "description": "Not found",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Problem"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Error"
-                                        }
-                                    ]
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict with the current state",
                         "content": {
                             "application/problem+json": {
                                 "schema": {

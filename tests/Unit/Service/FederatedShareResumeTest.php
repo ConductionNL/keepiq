@@ -22,22 +22,19 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use Closure;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\SecretVersionLock;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
-use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareResume;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -46,22 +43,50 @@ class FederatedShareResumeTest extends TestCase {
 	private const VERSION = '2026-11-25T10:00:00+00:00';
 	private const FINGERPRINT = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
+	/**
+	 * Alice's share with Bob, suspended.
+	 *
+	 * @var FederatedShare
+	 */
 	private FederatedShare $row;
-	private FederatedShareMapper&MockObject $mapper;
-	private FederatedShareService&MockObject $shares;
-	private SecretVersionLock&MockObject $locks;
-	private FederatedNotificationDelivery&MockObject $delivery;
-	private FederatedShareAuditTrail&MockObject $audit;
-	private IDBConnection&MockObject $db;
-
-	/** @var list<string> What happened, in order. */
-	private array $steps = [];
-
-	/** @var list<string> The audit event types recorded. */
-	private array $recorded = [];
 
 	/**
-	 * A suspended share of alice's secret with bob.
+	 * The share rows.
+	 *
+	 * @var FederatedShareMapper&MockObject
+	 */
+	private FederatedShareMapper&MockObject $mapper;
+
+	/**
+	 * Makes the share live and stores the value.
+	 *
+	 * @var FederatedShareService&MockObject
+	 */
+	private FederatedShareService&MockObject $shares;
+
+	/**
+	 * Tells Bob's server.
+	 *
+	 * @var FederatedNotificationDelivery&MockObject
+	 */
+	private FederatedNotificationDelivery&MockObject $delivery;
+
+	/**
+	 * The source's version under its lock; null when it is gone.
+	 *
+	 * @var DateTime|null
+	 */
+	private ?DateTime $version = null;
+
+	/**
+	 * What happened, in order.
+	 *
+	 * @var list<string>
+	 */
+	private array $steps = [];
+
+	/**
+	 * A suspended share of Alice's secret with Bob.
 	 *
 	 * @return void
 	 */
@@ -71,59 +96,50 @@ class FederatedShareResumeTest extends TestCase {
 		$this->row->setId(self::SHARE_ID);
 		$this->row->setSourceSecretId('secret-1');
 		$this->row->setOwnerId('alice');
-		$this->row->setRecipientCloudId('bob@cloud.partner.example');
-		$this->row->setPartnerId('p-1');
 		$this->row->setStatus(FederatedShare::STATUS_SUSPENDED);
-		$this->row->setKey('old-ciphertext');
+		$this->version = new DateTime(self::VERSION, new DateTimeZone('UTC'));
 
-		$this->mapper = $this->createMock(FederatedShareMapper::class);
-		$this->mapper->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => ($id === self::SHARE_ID) ? $this->row : throw new DoesNotExistException('none')
-		);
-		$this->shares = $this->createMock(FederatedShareService::class);
-		$this->locks = $this->createMock(SecretVersionLock::class);
-		$this->locks->method('lock')->willReturnCallback(function (string $id): ?DateTime {
-			$this->steps[] = 'lock ' . $id;
-			return new DateTime(self::VERSION, new DateTimeZone('UTC'));
-		});
-		$this->delivery = $this->createMock(FederatedNotificationDelivery::class);
-		$this->audit = $this->createMock(FederatedShareAuditTrail::class);
-		$this->audit->method('recordOutbound')->willReturnCallback(
-			function (string $eventType, FederatedShare $row, ?string $actorId): void {
-				$this->recorded[] = $eventType;
-				$this->assertSame('alice', $actorId);
+		$this->mapper = $this->createMock(originalClassName: FederatedShareMapper::class);
+		$this->mapper->method('findById')->willReturnCallback(callback: function (string $id): FederatedShare {
+			if ($id !== self::SHARE_ID) {
+				throw new DoesNotExistException(msg: 'none');
 			}
-		);
-		$this->db = $this->createMock(IDBConnection::class);
-		$this->db->method('beginTransaction')->willReturnCallback(function (): void {
-			$this->steps[] = 'begin';
+
+			return $this->row;
 		});
-		$this->db->method('commit')->willReturnCallback(function (): void {
-			$this->steps[] = 'commit';
-		});
-		$this->db->method('rollBack')->willReturnCallback(function (): void {
-			$this->steps[] = 'rollback';
+		$this->shares = $this->createMock(originalClassName: FederatedShareService::class);
+		$this->delivery = $this->createMock(originalClassName: FederatedNotificationDelivery::class);
+		$this->delivery->method('deliver')->willReturnCallback(callback: function (FederatedShare $row, string $type): bool {
+			$this->steps[] = 'deliver ' . $type;
+			return true;
 		});
 	}//end setUp()
 
 	/**
-	 * The service under test.
+	 * The service under test, with a lock that records its transaction.
 	 *
 	 * @return FederatedShareResume
 	 */
 	private function resumes(): FederatedShareResume {
-		return new FederatedShareResume(
-			shareMapper: $this->mapper,
-			shares: $this->shares,
-			locks: $this->locks,
-			delivery: $this->delivery,
-			audit: $this->audit,
-			db: $this->db,
-		);
+		$locks = $this->createMock(originalClassName: SecretVersionLock::class);
+		$locks->method('whileLocked')->willReturnCallback(callback: function (string $id, Closure $work): mixed {
+			$this->steps[] = 'lock ' . $id;
+			try {
+				$result = $work($this->version);
+			} catch (\Throwable $exception) {
+				$this->steps[] = 'rollback';
+				throw $exception;
+			}
+
+			$this->steps[] = 'commit';
+			return $result;
+		});
+
+		return new FederatedShareResume(shareMapper: $this->mapper, shares: $this->shares, locks: $locks, delivery: $this->delivery);
 	}//end resumes()
 
 	/**
-	 * Resume as alice with a value encrypted from `$version`.
+	 * Resume as a user with a value encrypted from a version.
 	 *
 	 * @param string $version The version the browser encrypted from
 	 * @param string $userId The caller
@@ -134,78 +150,91 @@ class FederatedShareResumeTest extends TestCase {
 		return $this->resumes()->resume(
 			shareId: self::SHARE_ID,
 			userId: $userId,
-			certFingerprint: self::FINGERPRINT,
-			ciphertext: ['key' => 'new-ciphertext', 'login' => null, 'additionalFields' => null],
-			sourceUpdatedAt: $version,
+			body: ['id' => self::SHARE_ID, 'certFingerprint' => self::FINGERPRINT, 'sourceUpdatedAt' => $version, 'key' => 'new', 'login' => 'l', 'totp' => 7],
 		);
 	}//end resume()
 
 	/**
-	 * The share goes live with the new value, stored for the version under
-	 * the source's lock, and bob is told after the commit.
+	 * The share goes live with the new value for the version under the
+	 * source's lock, and Bob is told after the commit.
 	 *
 	 * @return void
 	 */
 	public function testASuspendedShareResumesWithTheValueEncryptedNow(): void {
-		$this->mapper->expects($this->once())->method('updateIfStatus')->willReturnCallback(
-			function (FederatedShare $row, string $status, string $ending): int {
-				$this->steps[] = 'activate';
-				$this->assertSame(FederatedShare::STATUS_ACTIVE, $row->getStatus());
-				$this->assertSame(FederatedShare::STATUS_SUSPENDED, $status);
-				$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $ending);
-				return 1;
-			}
-		);
-		$this->shares->expects($this->once())->method('writeCiphertext')->willReturnCallback(
-			function (FederatedShare $row, string $certFingerprint, array $ciphertext, DateTime $savedAt): FederatedShare {
-				$this->steps[] = 'write';
-				$this->assertSame(self::FINGERPRINT, $certFingerprint);
-				$this->assertSame('new-ciphertext', $ciphertext['key']);
-				$this->assertSame(strtotime(self::VERSION), $savedAt->getTimestamp());
+		$this->shares->expects($this->once())->method('resumeSuspended')->willReturnCallback(
+			callback: function (FederatedShare $row, string $certFingerprint, array $ciphertext, DateTime $savedAt): FederatedShare {
+				$this->steps[] = 'resume';
+				$this->assertSame(expected: self::FINGERPRINT, actual: $certFingerprint);
+				$this->assertSame(
+					expected: ['key' => 'new', 'login' => 'l', 'additionalFields' => null, 'totp' => null, 'passkeys' => null],
+					actual: $ciphertext
+				);
+				$this->assertSame(expected: strtotime(self::VERSION), actual: $savedAt->getTimestamp());
+				$row->setStatus(FederatedShare::STATUS_ACTIVE);
 				return $row;
-			}
-		);
-		$this->delivery->expects($this->once())->method('deliver')->willReturnCallback(
-			function (FederatedShare $row, string $type): bool {
-				$this->steps[] = 'deliver';
-				$this->assertSame(FederatedNotificationDelivery::SHARE_UPDATED, $type);
-				return true;
 			}
 		);
 
 		$row = $this->resume();
 
-		$this->assertSame(FederatedShare::STATUS_ACTIVE, $row->getStatus());
-		$this->assertSame(['begin', 'lock secret-1', 'activate', 'write', 'commit', 'deliver'], $this->steps);
-		$this->assertSame([AuditEventTypes::FEDERATED_SHARE_RESUMED], $this->recorded);
+		$this->assertSame(expected: FederatedShare::STATUS_ACTIVE, actual: $row->getStatus());
+		$this->assertSame(expected: ['lock secret-1', 'resume', 'commit', 'deliver SHARE_UPDATED'], actual: $this->steps);
 	}//end testASuspendedShareResumesWithTheValueEncryptedNow()
 
 	/**
-	 * A share-save landed after the browser read the secret: nothing
-	 * changes, and the answer names the current version.
+	 * A share-save landed after the browser read the secret: nothing changes,
+	 * and the answer names the current version.
 	 *
 	 * @return void
 	 */
 	public function testAValueFromAnOlderVersionIsRefused(): void {
-		$this->mapper->expects($this->never())->method('updateIfStatus');
-		$this->shares->expects($this->never())->method('writeCiphertext');
-		$this->delivery->expects($this->never())->method('deliver');
+		$this->shares->expects($this->never())->method('resumeSuspended');
 
 		try {
 			$this->resume(version: '2026-11-25T09:00:00+00:00');
-			$this->fail('A stale value was taken');
+			$this->fail(message: 'A stale value was taken');
 		} catch (ShareSaveRefusal $refusal) {
-			$this->assertSame(409, $refusal->getStatus());
-			$this->assertSame('stale_source', $refusal->getBody()['error']);
-			$this->assertSame('2026-11-25T10:00:00+00:00', $refusal->getBody()['sourceUpdatedAt']);
+			$this->assertSame(expected: 409, actual: $refusal->getStatus());
+			$this->assertSame(expected: 'stale_source', actual: $refusal->getBody()['error']);
+			$this->assertSame(expected: self::VERSION, actual: $refusal->getBody()['sourceUpdatedAt']);
 		}
 
-		$this->assertSame(['begin', 'lock secret-1', 'rollback'], $this->steps);
-		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->row->getStatus());
-		$this->assertSame([], $this->recorded);
+		$this->assertSame(expected: ['lock secret-1', 'rollback'], actual: $this->steps);
 	}//end testAValueFromAnOlderVersionIsRefused()
 
 	/**
+	 * A secret that is gone resumes nothing.
+	 *
+	 * @return void
+	 */
+	public function testAGoneSecretResumesNothing(): void {
+		$this->version = null;
+		$this->shares->expects($this->never())->method('resumeSuspended');
+
+		$this->expectException(exception: NotFoundException::class);
+		$this->resume();
+	}//end testAGoneSecretResumesNothing()
+
+	/**
+	 * A revoke or a decline that landed meanwhile wins, and Bob is told
+	 * nothing.
+	 *
+	 * @return void
+	 */
+	public function testAShareThatChangedMeanwhileIsNotFound(): void {
+		$this->shares->method('resumeSuspended')->willThrowException(exception: new NotFoundException(message: 'Share not found'));
+
+		try {
+			$this->resume();
+			$this->fail(message: 'A revoked share resumed');
+		} catch (NotFoundException) {
+			$this->assertSame(expected: ['lock secret-1', 'rollback'], actual: $this->steps);
+		}
+	}//end testAShareThatChangedMeanwhileIsNotFound()
+
+	/**
+	 * The statuses that never resume.
+	 *
 	 * @return array<string,array{0:string}>
 	 */
 	public static function notSuspended(): array {
@@ -218,8 +247,8 @@ class FederatedShareResumeTest extends TestCase {
 	}//end notSuspended()
 
 	/**
-	 * Only a suspended share resumes; a share bob declined while it was
-	 * suspended is declined and stays so.
+	 * Only a suspended share resumes; one Bob declined while it was suspended
+	 * is declined and stays so.
 	 *
 	 * @param string $status The share's status
 	 *
@@ -231,22 +260,22 @@ class FederatedShareResumeTest extends TestCase {
 	 */
 	public function testOnlyASuspendedShareResumes(string $status): void {
 		$this->row->setStatus($status);
-		$this->db->expects($this->never())->method('beginTransaction');
-		$this->delivery->expects($this->never())->method('deliver');
 
-		$this->expectException(NotFoundException::class);
-		$this->resume();
+		try {
+			$this->resume();
+			$this->fail(message: 'A ' . $status . ' share resumed');
+		} catch (NotFoundException) {
+			$this->assertSame(expected: [], actual: $this->steps);
+		}
 	}//end testOnlyASuspendedShareResumes()
 
 	/**
-	 * Someone else's share, and one that is gone, are not found.
+	 * Someone else's share is not found.
 	 *
 	 * @return void
 	 */
 	public function testAnotherUsersShareIsNotFound(): void {
-		$this->db->expects($this->never())->method('beginTransaction');
-
-		$this->expectException(NotFoundException::class);
+		$this->expectException(exception: NotFoundException::class);
 		$this->resume(userId: 'mallory');
 	}//end testAnotherUsersShareIsNotFound()
 
@@ -256,91 +285,35 @@ class FederatedShareResumeTest extends TestCase {
 	 * @return void
 	 */
 	public function testAMissingShareIsNotFound(): void {
-		$this->expectException(NotFoundException::class);
-		$this->resumes()->resume(
-			shareId: 'nope',
-			userId: 'alice',
-			certFingerprint: self::FINGERPRINT,
-			ciphertext: ['key' => 'k', 'login' => null, 'additionalFields' => null],
-			sourceUpdatedAt: self::VERSION,
-		);
+		$this->expectException(exception: NotFoundException::class);
+		$this->resumes()->resume(shareId: 'nope', userId: 'alice', body: ['sourceUpdatedAt' => self::VERSION, 'key' => 'k']);
 	}//end testAMissingShareIsNotFound()
 
 	/**
-	 * A revoke or a decline that landed while the browser encrypted wins.
+	 * Versions a resume cannot name.
 	 *
-	 * @return void
-	 */
-	public function testARevokeThatLandedMeanwhileWins(): void {
-		$this->mapper->method('updateIfStatus')->willReturn(0);
-		$this->shares->expects($this->never())->method('writeCiphertext');
-		$this->delivery->expects($this->never())->method('deliver');
-
-		try {
-			$this->resume();
-			$this->fail('A revoked share resumed');
-		} catch (NotFoundException) {
-			$this->assertSame(['begin', 'lock secret-1', 'rollback'], $this->steps);
-		}
-
-		$this->assertSame([], $this->recorded);
-	}//end testARevokeThatLandedMeanwhileWins()
-
-	/**
-	 * A value the partner cannot store undoes the status change too.
-	 *
-	 * @return void
-	 */
-	public function testARefusedValueLeavesTheShareSuspended(): void {
-		$this->mapper->method('updateIfStatus')->willReturn(1);
-		$this->shares->method('writeCiphertext')->willThrowException(new PartnerUpgradeRequiredException());
-		$this->delivery->expects($this->never())->method('deliver');
-
-		try {
-			$this->resume();
-			$this->fail('A refused value was taken');
-		} catch (PartnerUpgradeRequiredException) {
-			$this->assertSame(['begin', 'lock secret-1', 'rollback'], $this->steps);
-		}
-
-		$this->assertSame([], $this->recorded);
-	}//end testARefusedValueLeavesTheShareSuspended()
-
-	/**
-	 * A secret that is gone resumes nothing.
-	 *
-	 * @return void
-	 */
-	public function testAGoneSecretResumesNothing(): void {
-		$locks = $this->createMock(SecretVersionLock::class);
-		$locks->method('lock')->willReturn(null);
-		$this->locks = $locks;
-		$this->mapper->expects($this->never())->method('updateIfStatus');
-
-		$this->expectException(NotFoundException::class);
-		$this->resume();
-	}//end testAGoneSecretResumesNothing()
-
-	/**
-	 * @return array<string,array{0:string}>
+	 * @return array<string,array{0:mixed}>
 	 */
 	public static function badVersions(): array {
-		return ['empty' => [''], 'not a time' => ['yesterday-ish?']];
+		return ['absent' => [null], 'empty' => [''], 'not a time' => ['yesterday-ish?'], 'no string' => [42]];
 	}//end badVersions()
 
 	/**
 	 * A resume must name the version it encrypted from.
 	 *
-	 * @param string $version What the browser sent
+	 * @param mixed $version What the browser sent
 	 *
 	 * @return void
 	 *
 	 * @dataProvider badVersions
 	 */
-	public function testAResumeWithoutAVersionIsInvalid(string $version): void {
-		$this->db->expects($this->never())->method('beginTransaction');
-
-		$this->expectException(InvalidArgumentException::class);
-		$this->resume(version: $version);
+	public function testAResumeWithoutAVersionIsInvalid(mixed $version): void {
+		try {
+			$this->resumes()->resume(shareId: self::SHARE_ID, userId: 'alice', body: ['sourceUpdatedAt' => $version, 'key' => 'k']);
+			$this->fail(message: 'A resume without a version was taken');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame(expected: 'invalid', actual: $exception->getMessage());
+			$this->assertSame(expected: [], actual: $this->steps);
+		}
 	}//end testAResumeWithoutAVersionIsInvalid()
 }//end class

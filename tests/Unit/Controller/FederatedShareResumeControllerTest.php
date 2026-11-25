@@ -37,7 +37,19 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 class FederatedShareResumeControllerTest extends TestCase {
+	/**
+	 * The resume behind the route.
+	 *
+	 * @var FederatedShareResume&MockObject
+	 */
 	private FederatedShareResume&MockObject $resumes;
+
+	/**
+	 * The request body as Nextcloud binds it.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $params = [];
 
 	/**
 	 * Fresh mocks for every test.
@@ -46,7 +58,7 @@ class FederatedShareResumeControllerTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->resumes = $this->createMock(FederatedShareResume::class);
+		$this->resumes = $this->createMock(originalClassName: FederatedShareResume::class);
 	}//end setUp()
 
 	/**
@@ -57,49 +69,42 @@ class FederatedShareResumeControllerTest extends TestCase {
 	 * @return FederatedShareResumeController
 	 */
 	private function controller(bool $signedIn = true): FederatedShareResumeController {
-		$session = $this->createMock(IUserSession::class);
+		$session = $this->createMock(originalClassName: IUserSession::class);
 		$user = null;
 		if ($signedIn === true) {
-			$user = $this->createMock(IUser::class);
-			$user->method('getUID')->willReturn('alice');
+			$user = $this->createMock(originalClassName: IUser::class);
+			$user->method('getUID')->willReturn(value: 'alice');
 		}
-		$session->method('getUser')->willReturn($user);
 
-		return new FederatedShareResumeController(
-			request: $this->createMock(IRequest::class),
-			resumes: $this->resumes,
-			userSession: $session,
-		);
+		$session->method('getUser')->willReturn(value: $user);
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$request->method('getParams')->willReturnCallback(callback: fn (): array => $this->params);
+
+		return new FederatedShareResumeController(request: $request, resumes: $this->resumes, userSession: $session);
 	}//end controller()
 
 	/**
-	 * The resumed share comes back with its new status, and the request's
-	 * fields reach the service as they were sent.
+	 * The resumed share comes back with its new status, and the request body
+	 * reaches the service as it was sent.
 	 *
 	 * @return void
 	 */
 	public function testAResumedShareIsAnswered(): void {
+		$this->params = ['id' => 's-1', 'certFingerprint' => 'fp', 'sourceUpdatedAt' => '2026-11-25T10:00:00+00:00', 'key' => 'k'];
 		$row = new FederatedShare();
 		$row->setId('s-1');
 		$row->setStatus(FederatedShare::STATUS_ACTIVE);
-		$this->resumes->expects($this->once())->method('resume')->with(
-			's-1',
-			'alice',
-			'fp',
-			['key' => 'k', 'login' => 'l', 'additionalFields' => null, 'totp' => null, 'passkeys' => null],
-			'2026-11-25T10:00:00+00:00',
-		)->willReturn($row);
-
-		$response = $this->controller()->resume(
-			id: 's-1',
-			certFingerprint: 'fp',
-			sourceUpdatedAt: '2026-11-25T10:00:00+00:00',
-			key: 'k',
-			login: 'l',
+		$this->resumes->expects($this->once())->method('resume')->willReturnCallback(
+			callback: function (string $shareId, string $userId, array $body) use ($row): FederatedShare {
+				$this->assertSame(expected: ['s-1', 'alice', $this->params], actual: [$shareId, $userId, $body]);
+				return $row;
+			}
 		);
 
-		$this->assertSame(200, $response->getStatus());
-		$this->assertSame('active', $response->getData()['status']);
+		$response = $this->controller()->resume(id: 's-1');
+
+		$this->assertSame(expected: 200, actual: $response->getStatus());
+		$this->assertSame(expected: 'active', actual: $response->getData()['status']);
 	}//end testAResumedShareIsAnswered()
 
 	/**
@@ -110,10 +115,12 @@ class FederatedShareResumeControllerTest extends TestCase {
 	public function testASignedOutCallerIsRefused(): void {
 		$this->resumes->expects($this->never())->method('resume');
 
-		$this->assertSame(401, $this->controller(signedIn: false)->resume(id: 's-1')->getStatus());
+		$this->assertSame(expected: 401, actual: $this->controller(signedIn: false)->resume(id: 's-1')->getStatus());
 	}//end testASignedOutCallerIsRefused()
 
 	/**
+	 * The refusals and how they are answered.
+	 *
 	 * @return array<string,array{0:Throwable,1:int,2:array<string,mixed>}>
 	 */
 	public static function refusals(): array {
@@ -140,27 +147,27 @@ class FederatedShareResumeControllerTest extends TestCase {
 	 * @dataProvider refusals
 	 */
 	public function testARefusalKeepsItsStatus(Throwable $refusal, int $status, array $body): void {
-		$this->resumes->method('resume')->willThrowException($refusal);
+		$this->resumes->method('resume')->willThrowException(exception: $refusal);
 
-		$response = $this->controller()->resume(id: 's-1', sourceUpdatedAt: '2026-11-25T10:00:00+00:00', key: 'k');
+		$response = $this->controller()->resume(id: 's-1');
 
-		$this->assertSame($status, $response->getStatus());
-		$this->assertSame($body, $response->getData());
+		$this->assertSame(expected: [$status, $body], actual: [$response->getStatus(), $response->getData()]);
 	}//end testARefusalKeepsItsStatus()
 
 	/**
-	 * A partner too old for a field the login holds is answered as the
-	 * share routes answer it, so the web app shows the same upgrade text.
+	 * A partner too old for a field the login holds is answered as the share
+	 * routes answer it, so the web app shows the same upgrade text.
 	 *
 	 * @return void
 	 */
 	public function testAPartnerTooOldIsAnsweredAsUpgradeRequired(): void {
-		$this->resumes->method('resume')->willThrowException(new PartnerUpgradeRequiredException());
+		$this->resumes->method('resume')->willThrowException(exception: new PartnerUpgradeRequiredException());
 
-		$response = $this->controller()->resume(id: 's-1', sourceUpdatedAt: '2026-11-25T10:00:00+00:00', key: 'k');
+		$response = $this->controller()->resume(id: 's-1');
 
-		$this->assertSame(409, $response->getStatus());
-		$this->assertSame(PartnerUpgradeRequiredException::CODE, $response->getData()['error']);
-		$this->assertSame('s-1', $response->getData()['shareId']);
+		$this->assertSame(
+			expected: [409, PartnerUpgradeRequiredException::CODE, 's-1'],
+			actual: [$response->getStatus(), $response->getData()['error'], $response->getData()['shareId']]
+		);
 	}//end testAPartnerTooOldIsAnsweredAsUpgradeRequired()
 }//end class
