@@ -62,7 +62,9 @@ class PartnerShareRevoker {
 
 	/**
 	 * Revoke a share and tell its recipient's instance now. Should that fail, the retry job tries again:
-	 * up to 6 attempts in all while the secret exists, after which the owner sees the share failed, and for 30 days once it is deleted for good.
+	 * up to 6 attempts in all while the secret exists, after which the owner sees the share failed, and for 30 days once it is deleted for good,
+	 * unless the partner refuses it (a 4xx other than 429) from the 6th attempt on, which drops the share.
+	 * A partner removed meanwhile is not told: the retry job drops the share unsent.
 	 *
 	 * @param FederatedShare $row The share
 	 * @param string $actorId Who revokes it
