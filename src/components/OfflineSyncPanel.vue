@@ -171,7 +171,7 @@ export default {
 		 *
 		 * @param {object} entry The failed entry.
 		 * @return {string|null}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
 		 */
 		reason(entry) {
 			return failureText(entry.failure)

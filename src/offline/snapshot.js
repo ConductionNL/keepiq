@@ -17,7 +17,7 @@
  *   }
  *
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
  */
 import { decryptMetadata, encryptMetadata } from '../crypto/metadata.js'
 

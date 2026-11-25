@@ -252,6 +252,8 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_UPDATED = 'federated_share.updated';
 	public const FEDERATED_SHARE_REVOKED = 'federated_share.revoked';
 	public const FEDERATED_SHARE_SUSPENDED = 'federated_share.suspended';
+	// The owner resumed a suspended share (sharing-atomic-share-save 3.4).
+	public const FEDERATED_SHARE_RESUMED = 'federated_share.resumed';
 	public const FEDERATED_SHARE_FAILED = 'federated_share.failed';
 	public const FEDERATED_SHARE_RECEIVED = 'federated_share.received';
 	public const FEDERATED_SHARE_ACCEPTED = 'federated_share.accepted';

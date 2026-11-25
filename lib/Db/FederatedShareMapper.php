@@ -111,7 +111,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return int The rows handed over
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function reassignOwner(string $sourceSecretId, string $ownerId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -162,7 +162,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return int The rows matched: 0 when the share is no longer active
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function updateIfActive(FederatedShare $share): int {
 		$qb = $this->changes(share: $share);
@@ -209,7 +209,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return int The rows matched: 0 when something else was queued meanwhile
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function updateIfUnchanged(FederatedShare $share, string $pending, string $status, ?DateTime $updatedAt): int {
 		$qb = $this->changes(share: $share);

@@ -1757,6 +1757,8 @@
         "Change sent to another organisation": "Módosítás elküldve egy másik szervezetnek",
         "Share with another organisation revoked": "Megosztás egy másik szervezettel visszavonva",
         "Sharing with another organisation stopped": "Megosztás egy másik szervezettel leállítva",
+        "Resume": "Folytatás",
+        "Sharing with another organisation resumed": "Megosztás egy másik szervezettel folytatva",
         "Another organisation did not get a change": "Egy másik szervezet nem kapott meg egy módosítást",
         "Secret received from another organisation": "Titok érkezett egy másik szervezettől",
         "Secret from another organisation accepted": "Egy másik szervezettől kapott titok elfogadva",

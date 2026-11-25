@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Зміну надіслано іншій організації",
         "Share with another organisation revoked": "Спільний доступ для іншої організації відкликано",
         "Sharing with another organisation stopped": "Спільний доступ для іншої організації зупинено",
+        "Resume": "Відновити",
+        "Sharing with another organisation resumed": "Обмін з іншою організацією відновлено",
         "Another organisation did not get a change": "Інша організація не отримала зміну",
         "Secret received from another organisation": "Отримано секрет з іншої організації",
         "Secret from another organisation accepted": "Секрет з іншої організації прийнято",

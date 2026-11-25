@@ -1781,6 +1781,8 @@
         "Change sent to another organisation": "Athrú seolta chuig eagraíocht eile",
         "Share with another organisation revoked": "Comhroinnt le heagraíocht eile cúlghairthe",
         "Sharing with another organisation stopped": "Comhroinnt le heagraíocht eile stoptha",
+        "Resume": "Atosaigh",
+        "Sharing with another organisation resumed": "Atosaíodh comhroinnt le heagraíocht eile",
         "Another organisation did not get a change": "Ní bhfuair eagraíocht eile athrú",
         "Secret received from another organisation": "Rún faighte ó eagraíocht eile",
         "Secret from another organisation accepted": "Rún ó eagraíocht eile glactha",

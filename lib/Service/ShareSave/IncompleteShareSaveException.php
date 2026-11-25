@@ -26,7 +26,7 @@ use OCP\AppFramework\Http;
  * the caller must write. Carries the current lists, so the client encrypts
  * for what is missing and sends again.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class IncompleteShareSaveException extends ShareSaveRefusal {
 	/**

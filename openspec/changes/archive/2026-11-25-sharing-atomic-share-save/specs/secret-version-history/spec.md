@@ -13,6 +13,15 @@ The system MUST let a user list versions newest-first (metadata only), view a ve
 - WHEN Bob sends `POST /api/v1/versions/{id}/restore` for `V`
 - THEN the system MUST answer 428 with `error` `view_only`, and Bob's copy and its version list MUST stay as they were
 
+#### Scenario: A restore of the TOTP seed and passkeys
+@e2e exclude Asserted on the persisted head and the share-save body; covered by PHPUnit (SecretVersionServiceTest, ShareSaveRequestTest, ShareSaveServiceTest).
+- GIVEN a version records an empty `totp` or `passkeys` as `''` and a version made before the fields existed holds null
+- WHEN the version is restored
+- THEN a null field MUST keep the head's value, a `''` field MUST clear it, and a value MUST set it, on the head and on every copy
+- AND a field whose value is the head's own ciphertext counts as kept, so a client that does not send it is not refused; a different value the patch leaves out MUST be refused with 400 `invalid_body`
+- AND the restore MUST clear `totp_updated_at` or `passkeys_updated_at` of each of the two it changes, and on a flagged secret `key_updated_at` of a key it changes, so written-back old ciphertext never counts as a rotation and reads as exposed
+- AND on a secret that is not flagged a restore that changes the key MUST set `key_updated_at` to the time of the restore, as an edit does, so the password's age for expiry, health and the compliance report is never taken from `created_at` by a restore
+
 ## ADDED Requirements
 
 ### Requirement: A restore is one share-save of the version

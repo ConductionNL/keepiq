@@ -71,8 +71,8 @@ class UnknownQueueOpError extends Error {
  *
  * @param {Error|object} e The error.
  * @return {string} conflict, failed or retry.
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 function replayKind(e) {
 	if (e instanceof UnknownQueueOpError) {
@@ -107,7 +107,7 @@ function replayKind(e) {
  *
  * @param {object} [answer] The 409's body.
  * @return {string|null}
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
  */
 function conflictSource(answer) {
 	return answer?.error === 'stale' || answer?.error === 'stale_source'
@@ -248,7 +248,7 @@ const FAILURE_RULES = [
  *
  * @param {Error|object} e The error.
  * @return {object} `{ code, partners?, reason?, message? }`.
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 function failureOf(e) {
 	const rule = FAILURE_RULES.find(([matches]) => matches(e))
@@ -529,7 +529,7 @@ const FAILURE_TEXTS = new Map([
  *
  * @param {object|undefined} failure The entry's `failure`.
  * @return {string|null}
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export function failureText(failure) {
 	const text = FAILURE_TEXTS.get(failure?.code)
@@ -830,7 +830,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {object} entry The opened entry.
 		 * @return {Promise<string>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async replayOne(entry) {
 			try {
@@ -851,7 +851,7 @@ export const useOfflineStore = defineStore('offline', {
 		 *
 		 * @param {object} entry The queued entry.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async sendEntry(entry) {
 			const base = `/apps/keepiq/api/v1/secrets`
@@ -893,7 +893,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {object} entry The queued entry.
 		 * @param {Error|object} error The thrown error.
 		 * @return {Promise<string>} 'conflict', 'failed' or 'retry'.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
 		 */
 		async replayFailure(entry, error) {
 			const kind = replayKind(error)
@@ -936,7 +936,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {object} [patch] The own-row patch; the queued body by default.
 		 * @param {string|null} [sourceBaseUpdatedAt] Through a copy, the source version the change was made from; null takes the source version of replay time.
 		 * @return {Promise<object>} The share-save answer.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async shareSave(
 			entry,
@@ -963,7 +963,7 @@ export const useOfflineStore = defineStore('offline', {
 		 *
 		 * @param {object} entry The opened entry.
 		 * @return {Promise<string>} done.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async replayPendingSync(entry) {
 			const row = (
@@ -995,8 +995,8 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {string} status The new status.
 		 * @param {object} [failure] Why it failed; any other status clears it.
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async setStatus(entry, status, failure) {
 			const session = useSessionStore()
@@ -1033,7 +1033,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * @param {'mine'|'server'} choice The user's choice.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 		 */
 		async resolveConflict(entryId, choice) {
 			const entry = this.entries.find((e) => e.entryId === entryId)
@@ -1085,7 +1085,7 @@ export const useOfflineStore = defineStore('offline', {
 		 *
 		 * @param {string} entryId The entry.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
 		 */
 		async retryEntry(entryId) {
 			const entry = this.entries.find((e) => e.entryId === entryId)

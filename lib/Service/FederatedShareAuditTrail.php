@@ -58,12 +58,12 @@ class FederatedShareAuditTrail {
 	 * @param string $eventType One of the FEDERATED_SHARE_ types
 	 * @param FederatedShare $row The outbound share
 	 * @param string|null $actorId The owner, or null for the system (retries, partner removal)
-	 * @param array<string,string> $extra `reason`, `notification` or `kept`
+	 * @param array<string,string> $extra `reason`, `notification`, `kept` or `was`
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/archive/2026-10-04-sharing-federated-recipients/tasks.md#task-4.3
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
 	 */
 	public function recordOutbound(string $eventType, FederatedShare $row, ?string $actorId, array $extra = []): void {
 		$metadata = array_merge(
@@ -72,7 +72,7 @@ class FederatedShareAuditTrail {
 				'recipientCloudId' => $row->getRecipientCloudId(),
 				'partnerId' => $row->getPartnerId(),
 			],
-			array_intersect_key($extra, array_flip(['reason', 'notification', 'kept']))
+			array_intersect_key($extra, array_flip(['reason', 'notification', 'kept', 'was']))
 		);
 
 		$this->dispatch(

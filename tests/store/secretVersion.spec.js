@@ -9,7 +9,7 @@
  * server's restore rule expects; a partner share, which takes the whole value,
  * then gets the head's.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
  */
 
 import { readFileSync } from 'node:fs'

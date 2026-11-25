@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Reading, locking and comparing the version a share row names.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 #[CoversClass(ShareSourceVersion::class)]
 class ShareSourceVersionTest extends TestCase {

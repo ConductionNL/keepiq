@@ -7,7 +7,7 @@
  * the pinned partner root, and each refusal handed to share-save as the
  * single lookup's error would have been.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
  */
 
 import axios from '@nextcloud/axios'
