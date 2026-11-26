@@ -203,5 +203,6 @@ jobs:
             media/shots/
             media/*.mp4
             media/*.xcresult/
+            media/*.log
           if-no-files-found: warn
           retention-days: 14

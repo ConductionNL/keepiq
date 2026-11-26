@@ -6,6 +6,7 @@ package nl.conduction.keepiq.shared.api
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpHeaders
@@ -46,6 +47,16 @@ class KeepiqApiTest {
             status,
             headersOf(*(mapOf(HttpHeaders.ContentType to "application/json") + extra).map { it.key to listOf(it.value) }.toTypedArray()),
         )
+
+    @Test
+    fun everyRequestCarriesTheConnectAndSocketTimeouts() = runTest {
+        api { json("""{"items":[],"total":0}""") }.latestSecret()
+        val timeout = seen.single().getCapabilityOrNull(HttpTimeoutCapability)
+        assertEquals(KeepiqApi.CONNECT_TIMEOUT_MS, timeout?.connectTimeoutMillis)
+        assertEquals(KeepiqApi.SOCKET_TIMEOUT_MS, timeout?.socketTimeoutMillis)
+        // No cap on the whole request: a slow but moving transfer completes.
+        assertNull(timeout?.requestTimeoutMillis)
+    }
 
     @Test
     fun requestsCarryTheExtensionsHeadersAndPath() = runTest {
