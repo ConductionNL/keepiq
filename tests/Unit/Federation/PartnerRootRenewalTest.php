@@ -58,8 +58,6 @@ use OCP\IConfig;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
-use OCP\Notification\IManager;
-use OCP\Notification\INotification;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\Signature\IIncomingSignedRequest;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -198,6 +196,10 @@ class PartnerRootRenewalTest extends TestCase {
 				return true;
 			}
 		);
+		$notifications->method('dismiss')->willReturnCallback(function (string $objectType, string $objectId): void {
+			$this->assertSame('federation_partner', $objectType);
+			$this->dismissed[] = $objectId;
+		});
 		$members = ['admin' => ['admin', 'second-admin'], 'keepiq-admins' => ['dana', 'admin']];
 		$groups = $this->createMock(IGroupManager::class);
 		$groups->method('get')->willReturnCallback(function (string $groupId) use ($members): ?IGroup {
@@ -219,23 +221,6 @@ class PartnerRootRenewalTest extends TestCase {
 		$delegates->method('groupIdsFor')->willReturnCallback(
 			fn (): array => $this->delegatedGroups ?? throw new RuntimeException('table gone')
 		);
-		$notificationManager = $this->createMock(IManager::class);
-		$notificationManager->method('createNotification')->willReturnCallback(function (): INotification {
-			$notification = $this->createMock(INotification::class);
-			$notification->method('setApp')->willReturnSelf();
-			$notification->method('setObject')->willReturnCallback(
-				function (string $type, string $id) use ($notification): INotification {
-					$notification->method('getObjectType')->willReturn($type);
-					$notification->method('getObjectId')->willReturn($id);
-					return $notification;
-				}
-			);
-			return $notification;
-		});
-		$notificationManager->method('markProcessed')->willReturnCallback(function (INotification $notification): void {
-			$this->assertSame('federation_partner', $notification->getObjectType());
-			$this->dismissed[] = $notification->getObjectId();
-		});
 
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(function (): ?IIncomingSignedRequest {
@@ -258,7 +243,7 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$partners = new FederationPartnerService($mapper, $clients, $config, new FederationPartnerAuditTrail($dispatcher));
 		$this->partnerService = $partners;
-		$notifier = new PartnerRootRenewalNotifier($notifications, $groups, $logger, $notificationManager, $delegates);
+		$notifier = new PartnerRootRenewalNotifier($notifications, $groups, $logger, $delegates);
 		$this->offers = new PartnerRootRenewalOffers(
 			partnerMapper: $mapper,
 			verifier: new PartnerRootRenewalVerifier($partners, $this->rootService($this->caMapper()), $time),

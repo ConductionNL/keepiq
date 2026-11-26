@@ -106,6 +106,22 @@ class NotificationService implements NotificationServiceInterface {
 	}//end notify()
 
 	/**
+	 * Remove every recipient's Keepiq notifications about one object.
+	 *
+	 * @param string $objectType The object type the notifications were sent with
+	 * @param string $objectId The object ID
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-the-notifications-go-when-the-offer-goes
+	 */
+	public function dismiss(string $objectType, string $objectId): void {
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp(AppIdentity::APP_ID)->setObject($objectType, $objectId);
+		$this->notificationManager->markProcessed($notification);
+	}//end dismiss()
+
+	/**
 	 * Whether a subject is one this app sends; an unknown one is logged and dropped.
 	 *
 	 * @param string $subject The subject key

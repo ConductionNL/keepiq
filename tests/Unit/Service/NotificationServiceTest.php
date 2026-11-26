@@ -318,4 +318,22 @@ class NotificationServiceTest extends TestCase {
 
 		$this->assertCount(expectedCount: 3, haystack: $objectIds);
 	}//end testNotifyWithoutAnObjectIdSetsAValidOne()
+
+	/**
+	 * Dismissing removes every recipient's Keepiq notifications about that one object, and nothing else: no user or
+	 * subject narrows it.
+	 *
+	 * @return void
+	 */
+	public function testDismissMarksTheObjectsNotificationsProcessed(): void {
+		$notification = $this->createMock(INotification::class);
+		$notification->expects($this->once())->method('setApp')->with('keepiq')->willReturnSelf();
+		$notification->expects($this->once())->method('setObject')->with('federation_partner', 'p-1')->willReturnSelf();
+		$notification->expects($this->never())->method('setUser');
+		$notification->expects($this->never())->method('setSubject');
+		$this->manager->method('createNotification')->willReturn($notification);
+		$this->manager->expects($this->once())->method('markProcessed')->with($notification);
+
+		$this->service->dismiss('federation_partner', 'p-1');
+	}//end testDismissMarksTheObjectsNotificationsProcessed()
 }//end class

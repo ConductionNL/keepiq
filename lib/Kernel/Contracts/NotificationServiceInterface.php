@@ -137,4 +137,16 @@ interface NotificationServiceInterface {
 		?string $objectType = null,
 		?string $objectId = null,
 	): bool;
+
+	/**
+	 * Remove every recipient's Keepiq notifications about one object.
+	 *
+	 * @param string $objectType The object type the notifications were sent with
+	 * @param string $objectId The object ID
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-the-notifications-go-when-the-offer-goes
+	 */
+	public function dismiss(string $objectType, string $objectId): void;
 }//end interface

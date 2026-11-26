@@ -25,11 +25,9 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\DelegatedSettingsGroups;
 use OCA\Keepiq\Db\FederationPartner;
-use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\IGroupManager;
-use OCP\Notification\IManager;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -52,7 +50,6 @@ class PartnerRootRenewalNotifier {
 	 * @param NotificationServiceInterface $notifications Sends the Nextcloud notifications
 	 * @param IGroupManager $groupManager The `admin` group and the delegated groups
 	 * @param LoggerInterface $logger Logs a notification that failed
-	 * @param IManager $notificationManager Removes the notifications of an offer that is gone
 	 * @param DelegatedSettingsGroups $delegates The groups delegated Keepiq's general admin settings
 	 *
 	 * @return void
@@ -63,7 +60,6 @@ class PartnerRootRenewalNotifier {
 		private NotificationServiceInterface $notifications,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private IManager $notificationManager,
 		private DelegatedSettingsGroups $delegates,
 	) {
 	}//end __construct()
@@ -108,9 +104,7 @@ class PartnerRootRenewalNotifier {
 	 */
 	public function dismiss(string $partnerId): void {
 		try {
-			$notification = $this->notificationManager->createNotification();
-			$notification->setApp(AppIdentity::APP_ID)->setObject(self::OBJECT_TYPE, $partnerId);
-			$this->notificationManager->markProcessed($notification);
+			$this->notifications->dismiss(objectType: self::OBJECT_TYPE, objectId: $partnerId);
 		} catch (Throwable $exception) {
 			$this->logger->warning('Keepiq: removing the partner root renewal notifications failed: ' . $exception::class);
 		}
