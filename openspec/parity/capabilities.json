@@ -3198,13 +3198,13 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "src/dialogs/SecretEditDialog.vue (opened via SecretDetailSidebar.vue:1495 openEdit -> cnOpenModal('secret-edit')) submits through src/store/modules/secret.js update action; when a sensitive field changes (secret.js:459) it calls useShareStore().syncUpdate(...) (secret.js:471) -> PUT /apps/keepiq/api/v1/secrets/{id}/sync (share.js:551) -> appinfo/routes.php:129 share#sync.",
+        "evidence": "src/dialogs/SecretEditDialog.vue (opened via SecretDetailSidebar.vue openEdit -> cnOpenModal('secret-edit')) submits through src/store/modules/secret.js, which saves a shared secret with saveShared() (secret.js:756, src/services/shareSave.js) -> PUT /apps/keepiq/api/v1/secrets/{id}/share-save -> appinfo/routes.php:183 shareSave#save: the editor's row, every copy and every partner share in one transaction (sharing-atomic-share-save, archived 25 Nov 2026).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret row -> sidebar -> Edit -> save",
         "note": "Sync runs automatically as part of the normal edit flow; no separate user action is needed.",
         "spec": "openspec/specs/user-sharing",
-        "requirement": "openspec/specs/user-sharing :: Sync on Update",
-        "plan": "openspec/changes/sharing-atomic-share-save"
+        "requirement": "openspec/specs/user-sharing :: A shared secret and every copy save in one transaction",
+        "plan": "openspec/changes/archive/2026-11-25-sharing-atomic-share-save"
       },
       "rowSource": "own",
       "provider": "keepiq",

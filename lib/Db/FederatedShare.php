@@ -276,7 +276,7 @@ class FederatedShare extends Entity implements JsonSerializable {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function stamp(DateTime $now): void {
 		$version = max($now->getTimestamp(), ($this->updatedAt?->getTimestamp() ?? 0) + 1);

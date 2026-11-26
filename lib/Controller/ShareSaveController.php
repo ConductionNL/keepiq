@@ -46,7 +46,7 @@ use OCP\IUserSession;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Each refusal of the save is
  *   its own exception with its own status; the coupling is that mapping.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 class ShareSaveController extends OCSController {
 	/**
@@ -85,9 +85,9 @@ class ShareSaveController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	#[NoAdminRequired]
 	public function save(string $id): JSONResponse {
@@ -131,7 +131,7 @@ class ShareSaveController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	private function answer(string $id, string $userId): JSONResponse {
 		$request = new ShareSaveRequest(params: $this->request->getParams());
@@ -153,7 +153,7 @@ class ShareSaveController extends OCSController {
 	 *
 	 * @return array<string,string>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	private function forbiddenBody(ForbiddenException $refusal): array {
 		$code = $refusal->policyCode();
@@ -173,7 +173,7 @@ class ShareSaveController extends OCSController {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	private function staleBody(StaleWriteException $refusal, string $userId): array {
 		$current = $refusal->getCurrent();

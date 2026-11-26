@@ -128,6 +128,10 @@ function stoppedFederatedShareEventLabels() {
 			'keepiq',
 			'Sharing with another organisation stopped',
 		),
+		'federated_share.resumed': t(
+			'keepiq',
+			'Sharing with another organisation resumed',
+		),
 		'federated_share.failed': t(
 			'keepiq',
 			'Another organisation did not get a change',
@@ -317,6 +321,7 @@ const AUDIT_EVENT_TYPES = [
 	'federated_share.updated',
 	'federated_share.revoked',
 	'federated_share.suspended',
+	'federated_share.resumed',
 	'federated_share.failed',
 	'federated_share.received',
 	'federated_share.accepted',

@@ -104,7 +104,7 @@ final class DirectShareRow {
 	 *
 	 * @return array{sourceSecretId:string,targetUserId:string,status:string,sourceUpdatedAt:string|null}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function stale(?string $current): array {
 		return [

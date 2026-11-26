@@ -28,7 +28,7 @@ use RuntimeException;
  * Thrown inside the share transaction when the source moved on since the browser encrypted the copy, so the
  * transaction rolls back with nothing written.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 class StaleShareSourceException extends RuntimeException {
 	/**
@@ -38,7 +38,7 @@ class StaleShareSourceException extends RuntimeException {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function __construct(public readonly ?DateTime $current) {
 		parent::__construct(message: 'stale_source');
@@ -49,7 +49,7 @@ class StaleShareSourceException extends RuntimeException {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function currentVersion(): ?string {
 		return $this->current?->format(DATE_ATOM);

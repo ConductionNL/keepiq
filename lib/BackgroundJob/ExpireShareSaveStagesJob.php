@@ -32,7 +32,7 @@ use Throwable;
 /**
  * The share-save stage sweep, every ten minutes.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  */
 class ExpireShareSaveStagesJob extends TimedJob {
 
@@ -65,7 +65,7 @@ class ExpireShareSaveStagesJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Mandated by TimedJob::run().
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	protected function run($argument): void {
 		try {

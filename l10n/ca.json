@@ -1757,6 +1757,8 @@
         "Change sent to another organisation": "Canvi enviat a una altra organització",
         "Share with another organisation revoked": "Compartició amb una altra organització revocada",
         "Sharing with another organisation stopped": "Compartició amb una altra organització aturada",
+        "Resume": "Reprèn",
+        "Sharing with another organisation resumed": "S’ha reprès la compartició amb una altra organització",
         "Another organisation did not get a change": "Una altra organització no ha rebut un canvi",
         "Secret received from another organisation": "Secret rebut d’una altra organització",
         "Secret from another organisation accepted": "Secret d’una altra organització acceptat",

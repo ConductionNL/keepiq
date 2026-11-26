@@ -2,7 +2,7 @@
 
 ### Requirement: Owner updates reach the remote copy and revocation removes it
 
-When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate and send it in the owner's share-save, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. When the shared secret is deleted for good, by purging it from the trash, by the trash retention job or by deleting the owner's account, the sending server MUST revoke each of its partner shares the same way, and keep retrying the `SHARE_UNSHARED` for at least 30 days while the partner cannot be reached (no answer, a 5xx or a 429), with no more than 6 hours between attempts. Only after 30 days without success MAY it drop the share, recording the failure in the audit trail. When the partner refuses it outright, with a 4xx other than 429, at the 6th attempt or any later one, the sending server MUST drop the share at that attempt, recording the failure in the audit trail the same way, and MUST NOT send it again. The same holds for a user's copy of a secret shared with them that is deleted for good together with its share, because the owner revokes that share, trashes or purges the secret, ends the team-folder share or the user leaves the group it came through: the partner shares that user made of the copy MUST be revoked before the copy goes, each `SHARE_UNSHARED` left to the retry job. On such a deletion, a share the recipient declined, and a share whose partner was removed, MUST be removed without a notification and recorded as revoked in the audit trail, except a share already revoked, whose pending `SHARE_UNSHARED` is left to the retry job; a suspended share whose partner is still one is revoked and told like any other. A pending `SHARE_UNSHARED` whose partner was removed after it was queued MUST NOT be sent again: the retry job MUST drop the share and record the failure in the audit trail. When a `SHARE_UNSHARED` arrives for a share the receiving server has already ended, for example because the answer to an earlier one was lost, the receiving server MUST answer it as taken once the shared secret and the partner's signature check out, and MUST NOT count it as a failed request; any other notification for an ended share MUST still be refused. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner. When the secret passes to a new owner, its federated shares MUST pass with it in the same transaction, and the sending server MUST NOT serve a federated share whose owner is not the secret's owner.
+When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate and send it in the owner's share-save, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner. When the secret passes to a new owner, its federated shares MUST pass with it in the same transaction, and the sending server MUST NOT serve a federated share whose owner is not the secret's owner.
 
 #### Scenario: A password change reaches Bob
 
@@ -22,50 +22,6 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice revokes it
 - **THEN** Bob's server MUST delete the copy from Bob's vault
-
-#### Scenario: Deleting the secret for good removes Bob's copy
-
-- **GIVEN** a federated share accepted by Bob
-- **WHEN** Alice's secret is deleted for good, because she purges it from the trash, the retention job purges it or her account is deleted
-- **THEN** Alice's server MUST send `SHARE_UNSHARED` for Bob's share, and retry it for at least 30 days while Bob's server cannot be reached
-- **AND** Bob's server MUST delete the copy from Bob's vault
-
-#### Scenario: A removed partner is not told
-
-- **GIVEN** a federated share to Bob, suspended or failed, whose organisation the administrator removed as a partner
-- **WHEN** Alice's secret is deleted for good
-- **THEN** Alice's server MUST remove the share and record it as revoked in the audit trail
-- **AND** Alice's server MUST NOT queue or send a `SHARE_UNSHARED` to Bob's server
-- **AND** when Bob's organisation is removed only after a `SHARE_UNSHARED` for one of its shares was queued, the retry job MUST drop that share without sending it, recording the failure in the audit trail
-
-#### Scenario: A received copy deleted for good ends its partner shares
-
-- **GIVEN** Carol shared a secret with Bob, and Bob shared his full-access copy with a partner recipient
-- **WHEN** Bob's copy is deleted for good with its share, because Carol revokes the share, trashes or purges her secret, ends the team-folder share, or Bob leaves the group the share came through
-- **THEN** Bob's partner share MUST be revoked before his copy goes, with `SHARE_UNSHARED` pending
-- **AND** the retry job MUST send it, so the partner deletes its copy
-
-#### Scenario: An unreachable partner is retried for 30 days
-
-- **GIVEN** a federated share accepted by Bob, whose server is down for a day
-- **WHEN** Alice's secret is deleted for good
-- **THEN** Alice's server MUST keep retrying the `SHARE_UNSHARED`, at most 6 hours apart, and MUST NOT give it up after a fixed number of attempts
-- **AND** once Bob's server is back and takes it, Bob's copy MUST be deleted
-- **AND** only a share still not taken after 30 days MAY be dropped, with the failure recorded in the audit trail
-
-#### Scenario: A partner that refuses the unshare is not retried for 30 days
-
-- **GIVEN** a federated share accepted by Bob, whose server answers every `SHARE_UNSHARED` for it with a 400
-- **WHEN** Alice's secret is deleted for good
-- **THEN** Alice's server MUST drop the share after the 6th refused attempt, with the failure recorded in the audit trail
-- **AND** Alice's server MUST NOT send that `SHARE_UNSHARED` again
-
-#### Scenario: A repeated unshare is taken
-
-- **GIVEN** Bob's server deleted his copy after a `SHARE_UNSHARED`, but its answer never reached Alice's server
-- **WHEN** Alice's server sends the `SHARE_UNSHARED` again
-- **THEN** Bob's server MUST answer it as taken, so Alice's server stops retrying
-- **AND** Bob's server MUST NOT count it as a failed request against Alice's server
 
 #### Scenario: Bob's share follows the secret to a new owner
 
@@ -153,7 +109,7 @@ A partner share's ciphertext MUST change in the same transaction as the owner's 
 
 ### Requirement: An unreachable partner stops the save unless the user saves without them
 
-When the partner certificate lookup for an active partner share answers that the partner can't be reached, the web app MUST save nothing and MUST tell the owner which partners it couldn't reach, offering to save without them. Saving without them MUST suspend those partner shares in the same share-save; a suspended share stays suspended until the owner revokes it or shares again, and the web app MUST say so before the owner confirms. A decline or accept from the recipient's server MUST NOT change a suspended share. A local server error or a lost connection MUST abort the save with an ordinary error and MUST NOT offer to suspend anything. `unknown_recipient`, `not_a_partner` and `bad_chain` count as the share being gone only with the status this server sends them with (404, 403 and 502); with any other status they are a local server error. When the lookup is rate-limited, the web app MUST wait as long as the server asks, keep what it already encrypted and continue, and MUST abort with its own error after five minutes of waiting in total. Certificates verified during a failed save MAY be reused for up to five minutes by the save that follows it, and MUST be forgotten when the vault locks.
+When the partner certificate lookup for an active partner share answers that the partner can't be reached, the web app MUST save nothing and MUST tell the owner which partners it couldn't reach, offering to save without them. Saving without them MUST suspend those partner shares in the same share-save; a suspended share stays suspended until the owner resumes it, revokes it or shares again, and the web app MUST say before the owner confirms that the share stops. An accept from the recipient's server MUST NOT change a suspended share. A decline from the recipient's server MUST end a suspended share as declined and drop its ciphertext, so that neither a later accept nor a resume can make it live again (decision of 25 Nov 2026). A local server error or a lost connection MUST abort the save with an ordinary error and MUST NOT offer to suspend anything. `unknown_recipient`, `not_a_partner` and `bad_chain` count as the share being gone only with the status this server sends them with (404, 403 and 502); with any other status they are a local server error. When the lookup is rate-limited, the web app MUST wait as long as the server asks, keep what it already encrypted and continue, and MUST abort with its own error after five minutes of waiting in total. Certificates verified during a failed save MAY be reused for up to five minutes by the save that follows it, and MUST be forgotten when the vault locks.
 
 #### Scenario: Bob's server is down
 
@@ -166,9 +122,17 @@ When the partner certificate lookup for an active partner share answers that the
 #### Scenario: Bob's server cannot end a suspension
 
 - **GIVEN** Alice's share with Bob is suspended
-- **WHEN** Bob's server sends `SHARE_DECLINED` for it, and later `SHARE_ACCEPTED`
+- **WHEN** Bob's server sends `SHARE_ACCEPTED` for it
 - **THEN** Alice's share MUST stay suspended, and Bob's server MUST NOT be able to pull it
-- **AND** Alice's audit trail MUST record Bob's decline, marked as keeping the share suspended
+
+#### Scenario: A decline while suspended ends the share
+
+- **GIVEN** Alice's share with Bob is suspended
+- **WHEN** Bob's server sends `SHARE_DECLINED` for it, and later `SHARE_ACCEPTED`
+- **THEN** Alice's share MUST be declined and MUST hold no ciphertext any more
+- **AND** the accept MUST be answered "share not found", and Bob's server MUST NOT be able to pull the share
+- **AND** Alice MUST NOT be able to resume it; she shares again if Bob still needs it
+- **AND** Alice's audit trail MUST record Bob's decline, marked as made while the share was suspended
 
 #### Scenario: A local error never suspends a partner
 
@@ -187,6 +151,36 @@ When the partner certificate lookup for an active partner share answers that the
 - **GIVEN** a secret shared with 250 partner shares, looked up in batches of 100
 - **WHEN** Alice saves a new password and the lookup is rate-limited before the third batch
 - **THEN** the dialog MUST say it is waiting, and the save MUST go through in one share-save once the limit allows the remaining batch
+
+### Requirement: The owner resumes a suspended partner share
+
+The owner MUST be able to resume their own suspended partner share from the sharing sidebar (keepiq#1262). A resume MUST carry the current value, encrypted in the owner's browser for the recipient certificate it looked up and verified again, and the version of the secret it was encrypted from. The server MUST take it only while the share is still suspended and only for the secret's current version, checked under the secret's row lock; it MUST make the share live and store the value in one transaction, record `federated_share.resumed`, and tell the recipient's server after the commit. A resume from an older version MUST be refused as `stale_source` with the current version, and the web app MUST read and encrypt the secret again, at most three times. A share that isn't the caller's, or isn't suspended, MUST be answered "share not found". A Resume action MUST be offered only on a suspended share.
+
+#### Scenario: Alice resumes Bob's share once his server is back
+
+- **GIVEN** Alice saved without Bob while his server was down, so his share is suspended with the old value
+- **WHEN** Alice chooses Resume on Bob's share
+- **THEN** her browser MUST verify Bob's certificate again and encrypt the current value for it
+- **AND** Bob's share MUST be active with that value, and Bob's server MUST be told to pull it
+
+#### Scenario: A save that lands during the resume wins
+
+- **GIVEN** Alice resumes Bob's share
+- **WHEN** a share-save of the secret commits after her browser read it
+- **THEN** the resume MUST be refused as `stale_source` with nothing changed
+- **AND** the web app MUST read the secret again and resume with the newer value
+
+#### Scenario: A certificate that no longer verifies resumes nothing
+
+- **GIVEN** Bob's share is suspended
+- **WHEN** Alice chooses Resume and Bob's certificate does not chain to the pinned partner root
+- **THEN** nothing MUST be encrypted or sent, and Alice MUST be told why
+
+#### Scenario: Only a suspended share resumes
+
+- **GIVEN** a partner share that is active, declined, failed or revoked
+- **THEN** the sharing sidebar MUST offer no Resume for it
+- **AND** a resume request for it MUST be answered "share not found" with nothing changed
 
 ### Requirement: The owner looks up their partner shares' certificates in one request
 

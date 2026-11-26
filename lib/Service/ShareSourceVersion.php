@@ -28,7 +28,7 @@ use OCA\Keepiq\Db\SecretVersionLock;
 /**
  * Reads, locks and compares the `sourceUpdatedAt` of a register-batch or team-folder share row.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 class ShareSourceVersion {
 	/**
@@ -51,7 +51,7 @@ class ShareSourceVersion {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function sent(array $row): ?string {
 		$sent = ($row['sourceUpdatedAt'] ?? null);
@@ -75,7 +75,7 @@ class ShareSourceVersion {
 	 *
 	 * @return DateTime|null The version of the row it was encrypted from, null when gone
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function lockedVersion(string $sourceId, string $readId): ?DateTime {
 		$current = $this->locks->lock(id: $sourceId);
@@ -94,7 +94,7 @@ class ShareSourceVersion {
 	 *
 	 * @return array<string,DateTime|null> The version by source id, null for a source that is gone
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function lockAll(array $sourceIds): array {
 		$sourceIds = array_values(array_unique($sourceIds));
@@ -115,7 +115,7 @@ class ShareSourceVersion {
 	 *
 	 * @return array<string,DateTime|null> The version by source id
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function lockNamed(array $rows, array $allowedIds): array {
 		$ids = [];
@@ -138,7 +138,7 @@ class ShareSourceVersion {
 	 *
 	 * @return array{reason:string,extra:array<string,string|null>}|null
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+	 * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
 	 */
 	public function refusal(array $row, array $versions): ?array {
 		$sent     = $this->sent(row: $row);
@@ -164,7 +164,7 @@ class ShareSourceVersion {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function isCurrent(string $sent, ?DateTime $current): bool {
 		return $current !== null && $current->getTimestamp() === (new DateTime($sent))->getTimestamp();

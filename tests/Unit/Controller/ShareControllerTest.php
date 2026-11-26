@@ -138,7 +138,7 @@ class ShareControllerTest extends TestCase {
 	 * secret goes through share-save, which writes the row, every copy and
 	 * every partner share in one transaction.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/tasks.md#3.3
+	 * @spec openspec/changes/archive/2026-11-25-sharing-atomic-share-save/tasks.md#3.3
 	 *
 	 * @return void
 	 */

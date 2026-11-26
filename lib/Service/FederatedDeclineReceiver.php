@@ -10,16 +10,18 @@
  * the recipient's own partner. Then the share is marked declined, nothing
  * more is served or sent for it, and a change still waiting for its retry is
  * dropped. A share whose revocation still waits for its unshare is removed
- * instead, as a delivered unshare would. A suspended share stays suspended:
- * only the owner ends a suspension, so a decline cannot open it to a later
- * accept; the audit trail records the decline. Every refusal is the same
- * "share not found".
+ * instead, as a delivered unshare would. A suspended share becomes declined
+ * too (decision of 25 Nov 2026), and the ciphertext the recipient no longer
+ * holds is dropped with it: such a share can neither be accepted back nor
+ * resumed by the owner, who shares again if the recipient still needs it.
+ * Every refusal is the same "share not found".
  *
  * It also takes the recipient's `SHARE_ACCEPTED` for a declined share: the
  * recipient restored the copy from their trash (decision of 4 Oct 2026).
  * Under the same checks the share is live again and gets the owner's changes;
- * a share that was revoked, suspended or failed meanwhile, or that the owner
- * already sent again, stays as it is and the answer is "share not found".
+ * a share that was revoked, suspended or failed meanwhile, that the owner
+ * already sent again, or that was declined while suspended (it holds no
+ * ciphertext any more), stays as it is and the answer is "share not found".
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -84,7 +86,8 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 	 * @throws ShareNotFound For every refusal
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
 	 */
 	public function handle(string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
@@ -96,8 +99,9 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 	/**
 	 * Mark the share declined. A revocation still waiting for its unshare is
 	 * finished instead: the decline shows the copy is gone, which is what the
-	 * unshare was for. A share declined or suspended already stays as it is,
-	 * and a suspended one records the decline. When the row changed after it
+	 * unshare was for. A share declined already stays as it is. A suspended
+	 * one is declined without its ciphertext, so that neither a later accept
+	 * nor the owner's Resume can serve it again. When the row changed after it
 	 * was read (the owner suspended, revoked or saved while the signature was
 	 * checked), it is read once more and decided again.
 	 *
@@ -118,32 +122,34 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 			return;
 		}
 
-		// Only the owner ends a suspension, as a declined share can be
-		// accepted back to live. The trail still tells the owner the copy is
-		// gone.
-		if ($row->getStatus() === FederatedShare::STATUS_SUSPENDED) {
-			$this->audit->recordOutbound(
-				eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED,
-				row: $row,
-				actorId: null,
-				extra: ['kept' => FederatedShare::STATUS_SUSPENDED]
-			);
-			return;
-		}
-
 		// A second decline changes nothing.
 		if ($row->getStatus() === FederatedShare::STATUS_REVOKED || $row->getStatus() === FederatedShare::STATUS_DECLINED) {
 			return;
 		}
 
 		$read = $row->getStatus();
+		$extra = [];
+		// A suspended share holds a value the owner stopped sending. The
+		// recipient's copy is gone, so the value goes too: a declined share
+		// without it is never accepted back, and only a suspended share can
+		// be resumed.
+		if ($read === FederatedShare::STATUS_SUSPENDED) {
+			$this->dropCiphertext(row: $row);
+			$extra = ['was' => FederatedShare::STATUS_SUSPENDED];
+		}
+
 		$row->setStatus(FederatedShare::STATUS_DECLINED);
 		$row->setPendingNotification(null);
 		$row->setNotifyAttempts(0);
 		$row->setNextNotifyAt(null);
 		$row->stamp(now: new DateTime());
 		if ($this->write(row: $row, read: $read) === true) {
-			$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, row: $row, actorId: null);
+			$this->audit->recordOutbound(
+				eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED,
+				row: $row,
+				actorId: null,
+				extra: $extra
+			);
 			return;
 		}
 
@@ -152,6 +158,24 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 			$this->decline(row: $current, again: false);
 		}
 	}//end decline()
+
+	/**
+	 * Drop the ciphertext of a share the recipient declined while it was
+	 * suspended: what is left is the row and its trail.
+	 *
+	 * @param FederatedShare $row The share
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
+	 */
+	private function dropCiphertext(FederatedShare $row): void {
+		$row->setKey(null);
+		$row->setLogin(null);
+		$row->setAdditionalFields(null);
+		$row->setTotp(null);
+		$row->setPasskeys(null);
+	}//end dropCiphertext()
 
 	/**
 	 * Apply a `SHARE_ACCEPTED` from the recipient's instance: a declined
@@ -193,7 +217,13 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 			return;
 		}
 
-		if ($row === null || $row->getStatus() !== FederatedShare::STATUS_DECLINED || $this->sentAgain(row: $row) === true) {
+		// A share declined while suspended holds no ciphertext: nothing to
+		// serve, and the owner never ended that suspension.
+		if ($row === null
+			|| $row->getStatus() !== FederatedShare::STATUS_DECLINED
+			|| $row->getKey() === null
+			|| $this->sentAgain(row: $row) === true
+		) {
 			throw new ShareNotFound();
 		}
 

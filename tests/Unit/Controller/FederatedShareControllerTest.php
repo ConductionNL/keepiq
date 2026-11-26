@@ -237,7 +237,7 @@ class FederatedShareControllerTest extends TestCase {
 	 * changes only through its owner's share-save, in the same transaction as
 	 * the owner's row. Revoke and suspend stay.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/tasks.md#3.3
+	 * @spec openspec/changes/archive/2026-11-25-sharing-atomic-share-save/tasks.md#3.3
 	 *
 	 * @return void
 	 */

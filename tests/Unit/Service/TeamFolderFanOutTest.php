@@ -296,7 +296,7 @@ class TeamFolderFanOutTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+	 * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
 	 */
 	public function testARowFromAnOlderVersionIsSkippedAsStale(): void {
 		$this->answerVersionLocks(

@@ -229,7 +229,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @throws NotFoundException When the share stopped being active meanwhile or its partner is gone
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function writeCiphertext(
 		FederatedShare $row,
@@ -270,6 +270,42 @@ class FederatedShareService implements FederatedShareServiceInterface {
 
 		return $row;
 	}//end writeCiphertext()
+
+	/**
+	 * Make a suspended share live with a value encrypted now (sharing-atomic-share-save 3.4). Call it inside the
+	 * transaction that holds the source's row lock. A revoke or a decline that landed meanwhile wins: the share is
+	 * then not found. The recipient is told by the caller after the commit; the row carries `SHARE_UPDATED`.
+	 *
+	 * @param FederatedShare $row The owner's suspended share
+	 * @param string $certFingerprint SHA-256 of the certificate the browser verified now
+	 * @param array{key:string,login:?string,additionalFields:?string,totp?:?string,passkeys?:?string} $ciphertext Encrypted for the recipient
+	 * @param DateTime $savedAt The source's current version
+	 *
+	 * @return FederatedShare
+	 *
+	 * @throws NotFoundException When it stopped being suspended meanwhile or its partner is gone
+	 * @throws InvalidArgumentException `invalid`
+	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+	 */
+	public function resumeSuspended(FederatedShare $row, string $certFingerprint, array $ciphertext, DateTime $savedAt): FederatedShare {
+		$row->setStatus(FederatedShare::STATUS_ACTIVE);
+		$row->stamp(now: new DateTime());
+		if ($this->shareMapper->updateIfStatus(
+			share: $row,
+			status: FederatedShare::STATUS_SUSPENDED,
+			ending: FederatedNotificationDelivery::SHARE_UNSHARED
+		) === 0
+		) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		$row = $this->writeCiphertext(row: $row, certFingerprint: $certFingerprint, ciphertext: $ciphertext, savedAt: $savedAt);
+		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RESUMED, row: $row, actorId: $row->getOwnerId());
+
+		return $row;
+	}//end resumeSuspended()
 
 	/**
 	 * Refuse a fingerprint that is no SHA-256 hex or a ciphertext without a key.
@@ -354,7 +390,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @throws NotFoundException When it is not the user's live share
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function suspend(string $shareId, string $userId, string $reason): FederatedShare {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
@@ -498,7 +534,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @return array<string,mixed>|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function answerPull(?string $signer, string $shareId, array $payload): ?array {
 		$sharedSecret = $payload['sharedSecret'] ?? null;

@@ -98,7 +98,7 @@ async function registerMemberCopies(store, share) {
  * @param {{secretId: string, groupShareId: string|null, members: Array<{userId: string, certificate: string}>}} share The source, the group share the copies hang on and the members a copy was made for.
  * @param {Array<object>} stale The rows the server answered `stale_source`.
  * @return {Promise<Array<object>>} The rows encrypted again.
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
 export function encryptAgain(store, { secretId, groupShareId, members }, stale) {
 	const again = new Set(stale.map((row) => row.targetUserId))

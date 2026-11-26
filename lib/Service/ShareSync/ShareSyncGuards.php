@@ -46,7 +46,7 @@ use OCA\Keepiq\Service\ShareSyncService;
  *   share rows, their holders' vault keys and the pending quarantine scan's
  *   verdict on each row, each through its own collaborator.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSyncGuards {
 
@@ -134,7 +134,7 @@ class ShareSyncGuards {
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row of a copy
 	 *
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function assertGroupWrite(
@@ -186,7 +186,7 @@ class ShareSyncGuards {
 	 *
 	 * @return array{0:array<string,bool>,1:array<string,bool>}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function namedRows(array $updates): array {
 		$named     = [];
@@ -287,7 +287,7 @@ class ShareSyncGuards {
 	 *
 	 * @return array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,unjudged:list<string>}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function liveCopies(Secret $source, ?string $leaveOut, ?JudgedShareRows $judged = null): array {
@@ -315,7 +315,7 @@ class ShareSyncGuards {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function holderHasVaultKey(Secret $source, array $copy): bool {
 		$ownerType = 'user';
@@ -338,7 +338,7 @@ class ShareSyncGuards {
 	 *
 	 * @throws InvalidArgumentException When a key is empty or a row is named twice
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function assertBody(array $updates): void {
 		$parser = new ShareSaveEntryParser();

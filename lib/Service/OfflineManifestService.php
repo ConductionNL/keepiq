@@ -94,7 +94,7 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 	 *
 	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	public function buildForUser(string $userId): array {
 		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
@@ -132,7 +132,7 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	private function liveSecrets(string $userId): array {
 		$sourceVersions = $this->sourceVersions(userId: $userId);
@@ -191,7 +191,7 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 	 *
 	 * @return array<string,string|null>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	private function sourceVersions(string $userId): array {
 		$sourceOf = [];

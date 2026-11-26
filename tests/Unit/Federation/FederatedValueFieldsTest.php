@@ -417,7 +417,7 @@ class FederatedValueFieldsTest extends TestCase {
 	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it. A share-save
 	 * writes the share through writeCiphertext(), which owns this rule.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/tasks.md#3.3
+	 * @spec openspec/changes/archive/2026-11-25-sharing-atomic-share-save/tasks.md#3.3
 	 */
 	public function testAnAbsentFieldIsKeptOnlyUnderTheSameCertificate(): void {
 		$this->alice(valueFields: '["totp","passkeys"]');

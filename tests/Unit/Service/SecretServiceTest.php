@@ -1364,7 +1364,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testUpdateTakesTheVersionAShareSaveLockedIn(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
@@ -1446,7 +1446,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testLoadForUpdateRefusesWhatUpdateRefuses(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
