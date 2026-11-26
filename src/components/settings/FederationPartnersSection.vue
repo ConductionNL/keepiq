@@ -90,6 +90,26 @@
 									)
 								}}</code>
 							</p>
+							<p
+								v-if="partner.pendingRenewal.windowEndsAt"
+								data-testid="federation-renewal-deadline">
+								{{
+									t('keepiq', 'Accept before {date}', {
+										date: localDateTime(
+											partner.pendingRenewal.windowEndsAt,
+										),
+									})
+								}}
+							</p>
+							<p data-testid="federation-renewal-trust">
+								{{
+									t(
+										'keepiq',
+										"Accepting replaces the root this server trusts for {partner}. If in doubt, compare the new fingerprint with the partner's administrator first.",
+										{ partner: partner.baseUrl },
+									)
+								}}
+							</p>
 							<NcButton
 								:ref="
 									(button) =>
@@ -283,6 +303,7 @@ import {
 	NcNoteCard,
 	NcTextField,
 } from '@nextcloud/vue'
+import { localDateTime } from '../../utils/dateTime.js'
 import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
 
 const BASE = '/apps/keepiq/api/v1/federation/partners'
@@ -342,6 +363,7 @@ export default {
 
 	methods: {
 		t,
+		localDateTime,
 
 		/**
 		 * @param {string} hex A lowercase hex SHA-256.

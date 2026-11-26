@@ -117,6 +117,22 @@ describe('an announced partner root renewal', () => {
 		).toBe('Accept renewed certificate')
 	})
 
+	it('says until when the offer stands and that accepting replaces the trusted root', async () => {
+		const { wrapper } = await mountWith([PARTNER])
+
+		expect(
+			wrapper.find('[data-testid="federation-renewal-deadline"]').text(),
+		).toBe(
+			'Accept before '
+				+ new Date('2026-12-24T10:00:00+00:00').toLocaleString(),
+		)
+		expect(
+			wrapper.find('[data-testid="federation-renewal-trust"]').text(),
+		).toContain(
+			'Accepting replaces the root this server trusts for https://cloud.partner.example.',
+		)
+	})
+
 	it('offers nothing for a partner without an offered renewal', async () => {
 		const { wrapper } = await mountWith([{ ...PARTNER, pendingRenewal: null }])
 
