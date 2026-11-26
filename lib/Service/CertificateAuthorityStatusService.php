@@ -113,7 +113,7 @@ class CertificateAuthorityStatusService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-bootstrap
 	 */
 	public function markHealthy(): void {
 		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
@@ -124,7 +124,7 @@ class CertificateAuthorityStatusService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-bootstrap
 	 */
 	public function markDegraded(): void {
 		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'degraded');
