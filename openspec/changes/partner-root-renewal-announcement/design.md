@@ -16,7 +16,7 @@ The flow: an announced renewal, a short notification, a check of the old root's 
 
 `renewRoot` signs the new root certificate with the old root's key, in the same transaction that stores the new root, and keeps the signature with the new root. The discovery document then publishes, under `federation`, the current root's fingerprint as today, plus a renewal announcement: the new root certificate, the previous root certificate, the time of the renewal, and the previous root's signature over the new root. `FederatedCertificateService::answer` (`:123`) adds the same announcement to every lookup answer, next to the chain. Both carry it as `rootRenewal`: `previousRoot` and `newRoot` as PEM, `renewedAt` as an ISO 8601 UTC time, and `signature`, the base64 RSA signature with SHA-256 (`openssl_sign`, `OPENSSL_ALGO_SHA256`) by the previous root's key over the new root's DER, the digest the CA already uses.
 
-The announcement is published until 30 days after the renewal, when the window of D6 ends and no partner can accept it any more; from then on neither the discovery document nor a lookup answer carries it, so a partner stops reading the document again on every lookup. An instance whose root was never renewed publishes no announcement. A second renewal replaces the announcement with one signed by the root it replaces, so a partner two renewals behind cannot follow it and falls back to the manual re-pin.
+The announcement is published until 30 days after the renewal, when the window of D6 ends and no partner can accept it any more; from then on neither the discovery document nor a lookup answer carries it, so a partner stops reading the document again on every lookup. An instance whose root was never renewed publishes no announcement. When the old root's key cannot be read, for example after the instance secret changed, `renewRoot` still renews (Robert's decision on #1283): the new root is stored without a signature, `RootRenewedEvent` is not dispatched, so nothing is published or sent, a warning is logged, and the renew response carries `announced: false`, on which the CA health section tells the admin that every partner has to re-pin by hand. Renewing stays the way out of an unreadable or unwanted root key. A second renewal replaces the announcement with one signed by the root it replaces, so a partner two renewals behind cannot follow it and falls back to the manual re-pin.
 
 ## D2. The notification
 
@@ -29,7 +29,7 @@ The check starts on a renewal notification from a listed partner, outbound shari
 - the previous root's SHA-256 fingerprint equals the partner's pinned fingerprint;
 - the previous root's signature over the new root verifies;
 - the new root's fingerprint equals the `rootFingerprint` the document publishes;
-- the new root is a CA certificate valid now;
+- the new root is a CA certificate valid now: basicConstraints `CA:TRUE`, a keyUsage, if there is one, that allows keyCertSign, as the browser's chain check requires, and a validity window around now;
 - the new fingerprint differs from the pin;
 - the renewal time is not in the future and less than 30 days ago.
 
@@ -57,4 +57,4 @@ A partner that missed the notification finds the announcement in its first certi
 
 ## D8. What a leaked old root key can do
 
-A holder of the old root key can make a valid announcement for a root of their choosing. They still need an admin here to accept it, and to serve it from the partner's own discovery URL. The renewal time is theirs to set, so the 30 days limit how long a genuine announcement stays acceptable, not what they can do; the admin's acceptance is what stops them. A partner can't be moved without an admin's action, and the admin sees which partner and which fingerprint they accept.
+A holder of the old root key can make a valid announcement for a root of their choosing. They still need an admin here to accept it, and to serve it from the partner's own discovery URL. The renewal time is theirs to set, so the 30 days limit how long a genuine announcement stays acceptable, not what they can do; the admin's acceptance is what stops them. A partner can't be moved without an admin's action, and the admin sees which partner and which fingerprint they accept; the offer says that accepting replaces the root this server trusts, and advises comparing the fingerprint with the partner's administrator when in doubt. An instance whose old root key leaked can renew whether or not that key is still readable to it; when it is not, the renewal goes out unannounced and partners re-pin by hand with an out-of-band comparison.

@@ -6,7 +6,7 @@
 
 ## 1. Renewing side
 
-- [x] 1.1 Sign the new root with the previous root's key in `CertificateAuthorityService::renewRoot`, in the same transaction, and keep the signature with the new root. Verify: a unit test that the signature verifies with the previous root's public key, and that a failed signing stores no new root.
+- [x] 1.1 Sign the new root with the previous root's key in `CertificateAuthorityService::renewRoot`, in the same transaction, and keep the signature with the new root. When the previous root's key cannot be read, renew anyway without a signature, announce nothing, and tell the admin that partners must re-pin by hand. Verify: a unit test that the signature verifies with the previous root's public key, that a failed signing stores no new root, and that an unreadable previous key stores a new root without a signature and announces nothing.
 - [x] 1.2 Publish the announcement in the discovery document and in `FederatedCertificateService::answer` next to the chain, as `rootRenewal` in the format of D1, and nothing for a root that was never renewed. Verify: `DiscoveryController` and `answer` tests for both.
 - [x] 1.3 Send the renewal notification, its own OCM notification type tied to no share, to every partner with inbound sharing on, with retries: the renewal only queues the notices through `RootRenewedEvent`, and `RetryFederatedNotificationsJob` sends them. Verify: unit tests that only inbound partners get it, that announcing sends nothing itself, for a failed delivery being retried, and that the notification carries no certificate.
 
