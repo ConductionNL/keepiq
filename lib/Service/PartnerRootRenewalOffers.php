@@ -114,7 +114,7 @@ class PartnerRootRenewalOffers {
 	}//end verify()
 
 	/**
-	 * Withdraw the renewal the partner offers, if any.
+	 * Withdraw the renewal the partner offers, if any, with its notifications.
 	 *
 	 * @param FederationPartner $partner The partner
 	 *
@@ -126,6 +126,7 @@ class PartnerRootRenewalOffers {
 		if ($partner->getPendingRootFingerprint() !== null) {
 			$partner->withdrawRenewal();
 			$this->partnerMapper->update(entity: $partner);
+			$this->admins->dismiss(partnerId: $partner->getId());
 		}
 	}//end withdraw()
 
@@ -179,11 +180,16 @@ class PartnerRootRenewalOffers {
 			return;
 		}
 
+		$replaces = $current->getPendingRootFingerprint() !== null;
 		$now = $this->time->getDateTime();
 		$daysLeft = (int)ceil(($verified['windowEndsAt']->getTimestamp() - $now->getTimestamp()) / 86400);
 		$current->offerRenewal(fingerprint: $verified['fingerprint'], verifiedAt: $now, windowEndsAt: $verified['windowEndsAt']);
 		$current->setPendingRootReminded($this->thresholdFor(daysLeft: $daysLeft));
 		$this->partnerMapper->update(entity: $current);
+
+		if ($replaces === true) {
+			$this->admins->dismiss(partnerId: $current->getId());
+		}
 
 		$this->admins->notifyAdmins(subject: self::SUBJECT_OFFERED, partner: $current, daysLeft: $daysLeft);
 	}//end offer()
@@ -204,6 +210,7 @@ class PartnerRootRenewalOffers {
 			if ($endsAt === null || $endsAt <= $now) {
 				$partner->withdrawRenewal();
 				$this->partnerMapper->update(entity: $partner);
+				$this->admins->dismiss(partnerId: $partner->getId());
 				continue;
 			}
 

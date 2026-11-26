@@ -20,7 +20,7 @@ When an instance renews its Keepiq root, it MUST sign the new root's DER with th
 
 ### Requirement: An announced renewal is offered to administrators after its signature checks out
 
-On a renewal notification from a listed partner, whether outbound sharing is on or off, or a certificate lookup answer from it that carries an announcement not already offered, the system MUST read the partner's discovery document the same way as when the partner was added, and MUST offer the renewal only when the previous root is the pinned one, the previous root's signature over the new root verifies, the new root is the root the document publishes, the new root is a CA certificate valid now, it differs from the pin, and the renewal time is not in the future and less than 30 days ago. Each root MUST be read from exactly one certificate block, and every check MUST use that one certificate. Otherwise it MUST offer nothing and notify no one, and MUST withdraw an offered renewal for that partner, unless the discovery document could not be read. The system MUST NOT take any certificate or fingerprint from the notification or the lookup answer itself, and MUST NOT change a pin without an administrator's acceptance. An offered renewal MUST be shown on the partner in the federation admin settings with the new fingerprint and the note that the previous root signed it, and every member of the Nextcloud `admin` group MUST get a Nextcloud notification to accept the renewed certificate. A notification from a host that is not a listed partner MUST be ignored and logged. Accepting MUST require Nextcloud password confirmation, MUST read the discovery document again and repeat the checks before storing, and MUST store the pin through the administrator re-pin, writing its audit entry. A newer valid announcement MUST replace an offered one, also when it is found while accepting, and any re-pin MUST clear it. A partner that publishes no announcement MUST keep only the manual re-pin.
+On a renewal notification from a listed partner, whether outbound sharing is on or off, or a certificate lookup answer from it that carries an announcement not already offered, the system MUST read the partner's discovery document the same way as when the partner was added, and MUST offer the renewal only when the previous root is the pinned one, the previous root's signature over the new root verifies, the new root is the root the document publishes, the new root is a CA certificate valid now, it differs from the pin, and the renewal time is not in the future and less than 30 days ago. Each root MUST be read from exactly one certificate block, and every check MUST use that one certificate. Otherwise it MUST offer nothing and notify no one, and MUST withdraw an offered renewal for that partner, unless the discovery document could not be read. The system MUST NOT take any certificate or fingerprint from the notification or the lookup answer itself, and MUST NOT change a pin without an administrator's acceptance. An offered renewal MUST be shown on the partner in the federation admin settings with the new fingerprint and the note that the previous root signed it. Whoever may add or re-pin a partner may accept it: the members of the Nextcloud `admin` group and every user delegated Keepiq's general admin settings. Each of them MUST get a Nextcloud notification to accept the renewed certificate, once, also when they are in more than one of those groups, and the same for each reminder. The offer's notifications MUST be removed for everyone when the offer is accepted, withdrawn, replaced by a newer one or expires, when the partner is re-pinned by hand and when the partner is removed. A notification from a host that is not a listed partner MUST be ignored and logged. Accepting MUST require Nextcloud password confirmation, MUST read the discovery document again and repeat the checks before storing, and MUST store the pin through the administrator re-pin, writing its audit entry. A newer valid announcement MUST replace an offered one, also when it is found while accepting, and any re-pin MUST clear it. A partner that publishes no announcement MUST keep only the manual re-pin.
 
 #### Scenario: An administrator accepts a verified renewal
 
@@ -28,6 +28,19 @@ On a renewal notification from a listed partner, whether outbound sharing is on 
 - **WHEN** `cloud.example` receives the notification
 - **THEN** its administrators MUST be notified to accept the renewed certificate
 - **AND** when an administrator accepts it with their password, the partner MUST be stored with the new fingerprint and the audit log MUST record the re-pin
+
+#### Scenario: A delegated administrator is told
+
+- **GIVEN** Dana, who is not in the `admin` group, is in a group delegated Keepiq's general admin settings, and Erik is in both
+- **WHEN** a renewal from `cloud.partner.example` is offered
+- **THEN** Dana and Erik MUST each get one notification to accept it, and the same for each reminder
+
+#### Scenario: The notifications go when the offer goes
+
+- **GIVEN** a renewal offered for `cloud.partner.example`, about which the administrators were notified
+- **WHEN** an administrator accepts it, the partner's discovery document stops checking out, a newer announcement replaces it, the 30 days end, or the partner is re-pinned by hand or removed
+- **THEN** the notifications about that offer MUST be removed for every administrator
+- **AND** a replacing offer MUST be notified anew
 
 #### Scenario: A renewal signed by another root
 

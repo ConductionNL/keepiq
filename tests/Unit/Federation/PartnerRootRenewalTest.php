@@ -30,13 +30,16 @@ namespace OCA\Keepiq\Tests\Unit\Federation;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\DelegatedSettingsGroups;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\PartnerUnreachableException;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
 use OCA\Keepiq\Service\FederationPartnerAuditTrail;
+use OCA\Keepiq\Service\FederationPartnerChanges;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\PartnerRootRenewalNoticeSigner;
 use OCA\Keepiq\Service\PartnerRootRenewalNotifier;
@@ -55,6 +58,8 @@ use OCP\IConfig;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
+use OCP\Notification\IManager;
+use OCP\Notification\INotification;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\Signature\IIncomingSignedRequest;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -83,6 +88,15 @@ class PartnerRootRenewalTest extends TestCase {
 
 	/** @var list<array{0:string,1:string,2:array<string,mixed>}> Notifications: subject, recipient, params */
 	private array $notified = [];
+
+	/** @var list<string> The `federation_partner` object ids whose notifications were marked processed */
+	private array $dismissed = [];
+
+	/** @var list<string>|null The groups delegated Keepiq's general admin settings; null fails the lookup */
+	private ?array $delegatedGroups = [];
+
+	/** The partner changes the controller re-pins and removes through. */
+	private FederationPartnerChanges $changes;
 
 	/** @var list<Event> Audit events */
 	private array $audited = [];
@@ -184,16 +198,44 @@ class PartnerRootRenewalTest extends TestCase {
 				return true;
 			}
 		);
-		$admins = [];
-		foreach (['admin', 'second-admin'] as $uid) {
-			$user = $this->createMock(IUser::class);
-			$user->method('getUID')->willReturn($uid);
-			$admins[] = $user;
-		}
-		$group = $this->createMock(IGroup::class);
-		$group->method('getUsers')->willReturn($admins);
+		$members = ['admin' => ['admin', 'second-admin'], 'keepiq-admins' => ['dana', 'admin']];
 		$groups = $this->createMock(IGroupManager::class);
-		$groups->method('get')->with('admin')->willReturn($group);
+		$groups->method('get')->willReturnCallback(function (string $groupId) use ($members): ?IGroup {
+			if (isset($members[$groupId]) === false) {
+				return null;
+			}
+
+			$users = [];
+			foreach ($members[$groupId] as $uid) {
+				$user = $this->createMock(IUser::class);
+				$user->method('getUID')->willReturn($uid);
+				$users[] = $user;
+			}
+			$group = $this->createMock(IGroup::class);
+			$group->method('getUsers')->willReturn($users);
+			return $group;
+		});
+		$delegates = $this->createMock(DelegatedSettingsGroups::class);
+		$delegates->method('groupIdsFor')->willReturnCallback(
+			fn (): array => $this->delegatedGroups ?? throw new RuntimeException('table gone')
+		);
+		$notificationManager = $this->createMock(IManager::class);
+		$notificationManager->method('createNotification')->willReturnCallback(function (): INotification {
+			$notification = $this->createMock(INotification::class);
+			$notification->method('setApp')->willReturnSelf();
+			$notification->method('setObject')->willReturnCallback(
+				function (string $type, string $id) use ($notification): INotification {
+					$notification->method('getObjectType')->willReturn($type);
+					$notification->method('getObjectId')->willReturn($id);
+					return $notification;
+				}
+			);
+			return $notification;
+		});
+		$notificationManager->method('markProcessed')->willReturnCallback(function (INotification $notification): void {
+			$this->assertSame('federation_partner', $notification->getObjectType());
+			$this->dismissed[] = $notification->getObjectId();
+		});
 
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(function (): ?IIncomingSignedRequest {
@@ -216,19 +258,28 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$partners = new FederationPartnerService($mapper, $clients, $config, new FederationPartnerAuditTrail($dispatcher));
 		$this->partnerService = $partners;
+		$notifier = new PartnerRootRenewalNotifier($notifications, $groups, $logger, $notificationManager, $delegates);
 		$this->offers = new PartnerRootRenewalOffers(
 			partnerMapper: $mapper,
 			verifier: new PartnerRootRenewalVerifier($partners, $this->rootService($this->caMapper()), $time),
-			admins: new PartnerRootRenewalNotifier($notifications, $groups, $logger),
+			admins: $notifier,
 			time: $time,
 		);
 
-		return new PartnerRootRenewalService(
+		$service = new PartnerRootRenewalService(
 			notices: new PartnerRootRenewalNoticeSigner($partners, $mapper, $ocm, $this->cloudIdManager()),
 			offers: $this->offers,
 			partners: $partners,
 			logger: $logger,
 		);
+		$this->changes = new FederationPartnerChanges(
+			partners: $partners,
+			federatedShares: $this->createMock(FederatedShareServiceInterface::class),
+			renewals: $service,
+			renewalNotices: $notifier,
+		);
+
+		return $service;
 	}//end service()
 
 	/**
@@ -316,9 +367,29 @@ class PartnerRootRenewalTest extends TestCase {
 			],
 			$this->notified
 		);
+		$this->assertSame([], $this->dismissed);
 		// The pin moves only when an administrator accepts.
 		$this->assertSame(self::fingerprintOf(self::root('previous')['pem']), $this->partner->getRootFingerprint());
 		$this->assertSame([], $this->audited);
+	}
+
+	public function testEveryoneDelegatedTheAdminSettingsIsNotifiedOnce(): void {
+		$this->delegatedGroups = ['keepiq-admins', 'admin', 'a-group-since-deleted'];
+		$this->document = $this->validDocument();
+
+		$this->service()->noticeReceived($this->notice());
+
+		$this->assertSame(['admin', 'second-admin', 'dana'], array_column($this->notified, 1));
+	}
+
+	public function testAFailingDelegationLookupStillNotifiesTheAdminGroup(): void {
+		$this->delegatedGroups = null;
+		$this->document = $this->validDocument();
+
+		$this->service()->noticeReceived($this->notice());
+
+		$this->assertSame(['admin', 'second-admin'], array_column($this->notified, 1));
+		$this->assertStringContainsString('delegated admin groups', implode("\n", $this->warnings));
 	}
 
 	public function testAPartnerWithOutboundOffIsOfferedTheRenewalToo(): void {
@@ -385,6 +456,8 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$this->assertSame(self::fingerprintOf(self::root('new')['pem']), $this->partner->getPendingRootFingerprint());
 		$this->assertNull($this->partner->getPendingRootReminded());
+		// The replaced offer's notifications go before the new offer's go out.
+		$this->assertSame([$this->partner->getId()], $this->dismissed);
 		$this->assertCount(2, $this->notified);
 	}
 
@@ -608,6 +681,7 @@ class PartnerRootRenewalTest extends TestCase {
 		$this->assertNull($this->partner->getPendingRootReminded());
 		$this->assertSame([$this->partner], $this->updated);
 		$this->assertSame([], $this->notified);
+		$this->assertSame([$this->partner->getId()], $this->dismissed);
 		$this->assertSame(self::fingerprintOf(self::root('previous')['pem']), $this->partner->getRootFingerprint());
 		$this->assertStringContainsString($reason, implode("\n", $this->warnings));
 	}
@@ -829,6 +903,7 @@ class PartnerRootRenewalTest extends TestCase {
 		$this->fetches = 0;
 		$this->updated = [];
 		$this->notified = [];
+		$this->dismissed = [];
 
 		return $service;
 	}
@@ -933,6 +1008,47 @@ class PartnerRootRenewalTest extends TestCase {
 		$this->assertSame(self::fingerprintOf(self::root('new')['pem']), $this->partner->getPendingRootFingerprint());
 		$this->assertSame([], $this->updated);
 		$this->assertSame([], $this->audited);
+	}
+
+	public function testAcceptingThroughTheControllerRemovesTheOfferNotifications(): void {
+		$this->offered();
+
+		$this->changes->repin($this->partner->getId(), self::fingerprintOf(self::root('new')['pem']), true, 'admin');
+
+		$this->assertNull($this->partner->getPendingRootFingerprint());
+		$this->assertSame([$this->partner->getId()], $this->dismissed);
+	}
+
+	public function testAManualRepinRemovesTheOfferNotifications(): void {
+		$this->offered();
+		$this->document = $this->discoveryOf('new', null);
+
+		$this->changes->repin($this->partner->getId(), self::fingerprintOf(self::root('new')['pem']), false, 'admin');
+
+		$this->assertNull($this->partner->getPendingRootFingerprint());
+		$this->assertSame([$this->partner->getId()], $this->dismissed);
+	}
+
+	public function testRemovingThePartnerRemovesTheOfferNotifications(): void {
+		$this->offered();
+
+		$this->changes->remove($this->partner->getId());
+
+		$this->assertSame([$this->partner->getId()], $this->dismissed);
+	}
+
+	public function testARefusedAcceptLeavesTheNotificationsOfAnOfferThatStands(): void {
+		$this->offered();
+		$this->document = 'unreachable';
+
+		try {
+			$this->changes->repin($this->partner->getId(), self::fingerprintOf(self::root('new')['pem']), true, 'admin');
+			$this->fail('The accept went through');
+		} catch (PartnerUnreachableException|InvalidArgumentException) {
+		}
+
+		$this->assertNotNull($this->partner->getPendingRootFingerprint());
+		$this->assertSame([], $this->dismissed);
 	}
 
 	public function testARepinToTheFingerprintAlreadyPinnedWithdrawsAnOfferedRenewal(): void {
@@ -1072,6 +1188,7 @@ class PartnerRootRenewalTest extends TestCase {
 		$this->assertNull($this->partner->getPendingRootFingerprint());
 		$this->assertNull($this->partner->getPendingRootWindowEndsAt());
 		$this->assertSame([$this->partner], $this->updated);
+		$this->assertSame([$this->partner->getId()], $this->dismissed);
 		$this->assertNull($this->partner->jsonSerialize()['pendingRenewal']);
 		// The manual re-pin stays: the pin itself is untouched.
 		$this->assertSame(self::fingerprintOf(self::root('previous')['pem']), $this->partner->getRootFingerprint());

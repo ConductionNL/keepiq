@@ -38,6 +38,7 @@ class FederationPartnerChanges {
 	 * @param FederationPartnerServiceInterface $partners The partner allowlist
 	 * @param FederatedShareServiceInterface $federatedShares Suspends shares to a removed partner
 	 * @param PartnerRootRenewalService $renewals Accepts an offered root renewal
+	 * @param PartnerRootRenewalNotifier $renewalNotices Removes the notifications of an offer a re-pin cleared
 	 *
 	 * @return void
 	 *
@@ -47,12 +48,13 @@ class FederationPartnerChanges {
 		private FederationPartnerServiceInterface $partners,
 		private FederatedShareServiceInterface $federatedShares,
 		private PartnerRootRenewalService $renewals,
+		private PartnerRootRenewalNotifier $renewalNotices,
 	) {
 	}//end __construct()
 
 	/**
 	 * Remove a partner. Shares to that organisation stop being served, and their owners see them suspended
-	 * (sharing-federated-recipients task 4.2).
+	 * (sharing-federated-recipients task 4.2). Notifications about a renewal it offered go with it.
 	 *
 	 * @param string $id The partner UUID
 	 *
@@ -65,11 +67,12 @@ class FederationPartnerChanges {
 	public function remove(string $id): void {
 		$this->partners->remove(id: $id);
 		$this->federatedShares->suspendForPartner(partnerId: $id);
+		$this->renewalNotices->dismiss(partnerId: $id);
 	}//end remove()
 
 	/**
 	 * Pin the root fingerprint the partner publishes now, or, with `$acceptRenewal`, accept the offered renewal with
-	 * that fingerprint after its checks are repeated.
+	 * that fingerprint after its checks are repeated. Either clears any offered renewal, so its notifications go too.
 	 *
 	 * @param string $id The partner UUID
 	 * @param string $fingerprint The fingerprint the administrator compared, or the offered one they accept
@@ -83,12 +86,16 @@ class FederationPartnerChanges {
 	 *
 	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-an-administrator-accepts-a-verified-renewal
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-the-notifications-go-when-the-offer-goes
 	 */
 	public function repin(string $id, string $fingerprint, bool $acceptRenewal, string $adminId): array {
-		if ($acceptRenewal === true) {
-			return $this->renewals->accept(id: $id, fingerprint: $fingerprint, adminId: $adminId);
-		}
+		$result = match ($acceptRenewal) {
+			true => $this->renewals->accept(id: $id, fingerprint: $fingerprint, adminId: $adminId),
+			false => $this->partners->repin(id: $id, confirmedFingerprint: $fingerprint, adminId: $adminId),
+		};
 
-		return $this->partners->repin(id: $id, confirmedFingerprint: $fingerprint, adminId: $adminId);
+		$this->renewalNotices->dismiss(partnerId: $id);
+
+		return $result;
 	}//end repin()
 }//end class

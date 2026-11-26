@@ -541,7 +541,8 @@ class FederatedShareOwnerChangesTest extends TestCase {
 			new \OCA\Keepiq\Service\FederationPartnerChanges(
 				$partners,
 				$this->service,
-				$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class)
+				$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class),
+				$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalNotifier::class)
 			)
 		);
 

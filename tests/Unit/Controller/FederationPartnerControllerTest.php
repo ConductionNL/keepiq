@@ -30,6 +30,7 @@ use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerChanges;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerRootRenewalNotifier;
 use OCA\Keepiq\Service\PartnerRootRenewalService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -104,7 +105,12 @@ class FederationPartnerControllerTest extends TestCase {
 			partners: $this->partners,
 			root: $this->root,
 			userSession: $this->session,
-			changes: new FederationPartnerChanges(partners: $this->partners, federatedShares: $this->shares, renewals: $this->renewals),
+			changes: new FederationPartnerChanges(
+				partners: $this->partners,
+				federatedShares: $this->shares,
+				renewals: $this->renewals,
+				renewalNotices: $this->createMock(PartnerRootRenewalNotifier::class),
+			),
 		);
 	}//end controller()
 
