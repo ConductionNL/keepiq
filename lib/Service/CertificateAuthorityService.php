@@ -308,49 +308,54 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	/**
 	 * Renew the root certificate and generate a new intermediate. The current root's key signs the new root, and the
 	 * signature is stored with it in the same transaction; when that signing fails, nothing is stored. Right after the
-	 * commit, RootRenewedEvent queues the notices to partners.
+	 * commit, RootRenewedEvent queues the notices to partners. When the current root's key cannot be read, the root is
+	 * renewed anyway, without a signature and unannounced, so every partner has to re-pin it by hand.
 	 *
-	 * @return int Number of suites re-signed.
+	 * @return array{resignedCount:int,announced:bool} The number of suites re-signed, and whether partners are told
 	 *
-	 * @throws RuntimeException When the current root's key cannot be loaded or cannot sign the new root
+	 * @throws RuntimeException When the current root's key cannot sign the new root
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
 	 */
-	public function renewRoot(): int {
+	public function renewRoot(): array {
 		$oldRoot = $this->caCertificateMapper->findRoot();
-		$oldKey = openssl_pkey_get_private(private_key: $this->crypto->decrypt((string)$oldRoot->getPrivateKey()));
-		if ($oldKey === false) {
-			throw new RuntimeException('Failed to load the current root CA private key: ' . openssl_error_string());
-		}
+		$oldKey  = $this->renewals->previousKey(
+			decrypt: fn (): string => $this->crypto->decrypt((string)$oldRoot->getPrivateKey())
+		);
 
 		$rootKey  = $this->newRsaKey();
 		$rootCert = $this->signRoot(rootKey: $rootKey);
 		$pems = $this->exportPems(key: $rootKey, certificate: $rootCert);
 
 		// The old root vouches for the new one, so partners that pinned it can check the renewal.
-		$signature = $this->renewals->sign(newRootPem: $pems['certificate'], previousKey: $oldKey);
+		$signature = null;
+		if ($oldKey !== null) {
+			$signature = $this->renewals->sign(newRootPem: $pems['certificate'], previousKey: $oldKey);
+		}
 
-		$this->renewals->record(
-			store: function () use ($oldRoot, $pems, $signature, $rootKey, $rootCert): void {
-				$newRoot = $this->insertCa(type: 'root', pems: $pems, predecessorSignature: $signature);
-				$oldRoot->setSuccessorId($newRoot->getId());
-				$this->caCertificateMapper->update($oldRoot);
+		$store = function () use ($oldRoot, $pems, $signature, $rootKey, $rootCert): void {
+			$newRoot = $this->insertCa(type: 'root', pems: $pems, predecessorSignature: $signature);
+			$oldRoot->setSuccessorId($newRoot->getId());
+			$this->caCertificateMapper->update($oldRoot);
 
-				$oldIntermediate = $this->deactivateIntermediate();
-				$newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
-				if ($oldIntermediate !== null) {
-					$oldIntermediate->setSuccessorId($newIntermediate->getId());
-					$this->caCertificateMapper->update($oldIntermediate);
-				}
+			$oldIntermediate = $this->deactivateIntermediate();
+			$newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
+			if ($oldIntermediate !== null) {
+				$oldIntermediate->setSuccessorId($newIntermediate->getId());
+				$this->caCertificateMapper->update($oldIntermediate);
 			}
-		);
+		};
+		match ($signature) {
+			null => $this->renewals->recordUnannounced(store: $store),
+			default => $this->renewals->record(store: $store),
+		};
 
 		$resignedCount = $this->issuanceService->resignAllActiveSuites();
 
 		$this->logger->info("Keepiq: Root renewed, {$resignedCount} suites re-signed");
 
-		return $resignedCount;
+		return ['resignedCount' => $resignedCount, 'announced' => $signature !== null];
 	}//end renewRoot()
 
 	/**

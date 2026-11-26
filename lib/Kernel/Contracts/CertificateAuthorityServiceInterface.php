@@ -95,11 +95,12 @@ interface CertificateAuthorityServiceInterface {
 	/**
 	 * Renew the root certificate and generate a new intermediate.
 	 *
-	 * @return int Number of suites re-signed.
+	 * @return array{resignedCount:int,announced:bool} The number of suites re-signed, and whether partners are told
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
 	 */
-	public function renewRoot(): int;
+	public function renewRoot(): array;
 
 	/**
 	 * Retry bootstrap (called from admin panel when CA is degraded).

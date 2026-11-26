@@ -200,5 +200,26 @@ describe('CaHealthSection actions', () => {
 		expect(wrapper.find('[data-testid="ca-renew-root-result"]').text()).toBe(
 			'Root renewed. 0 encryption suites signed again.',
 		)
+		expect(
+			wrapper.find('[data-testid="ca-renew-root-unannounced"]').exists(),
+		).toBe(false)
+	})
+
+	it('tells the admin to have partners re-pin when the renewal was not announced', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { status: 'healthy', root: { expiresAt: '2046-01-01' } },
+		})
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { resignedCount: 2, announced: false },
+		})
+		const wrapper = mountSection()
+		await flushPromises()
+
+		wrapper.vm.renewRoot()
+		await flushPromises()
+
+		expect(
+			wrapper.find('[data-testid="ca-renew-root-unannounced"]').text(),
+		).toContain('re-pin this server')
 	})
 })

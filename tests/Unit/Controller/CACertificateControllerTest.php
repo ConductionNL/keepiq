@@ -162,7 +162,7 @@ class CACertificateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRenewRootReturnsCountAndStatus(): void {
-		$this->caService->method('renewRoot')->willReturn(10);
+		$this->caService->method('renewRoot')->willReturn(['resignedCount' => 10, 'announced' => false]);
 
 		$statusData = [
 			'status' => 'healthy',
@@ -176,6 +176,7 @@ class CACertificateControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$data = $response->getData();
 		$this->assertSame(10, $data['resignedCount']);
+		$this->assertFalse($data['announced']);
 		$this->assertArrayHasKey('status', $data);
 	}//end testRenewRootReturnsCountAndStatus()
 

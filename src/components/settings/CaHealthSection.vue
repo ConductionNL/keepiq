@@ -90,6 +90,17 @@
 				data-testid="ca-renew-root-result">
 				{{ renewRootResult }}
 			</p>
+			<NcNoteCard
+				v-if="renewRootUnannounced"
+				type="warning"
+				data-testid="ca-renew-root-unannounced">
+				{{
+					t(
+						'keepiq',
+						"Partners were not told about the new root, because the previous root's key could not be read. Each partner's administrator has to re-pin this server by hand, after you read them the new fingerprint by phone or in person.",
+					)
+				}}
+			</NcNoteCard>
 		</div>
 
 		<CaRenewRootConfirmDialog
@@ -104,12 +115,17 @@
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton } from '@nextcloud/vue'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import CaRenewRootConfirmDialog from '../../dialogs/CaRenewRootConfirmDialog.vue'
 
 export default {
 	name: 'CaHealthSection',
-	components: { NcButton, CnSettingsSection, CaRenewRootConfirmDialog },
+	components: {
+		NcButton,
+		NcNoteCard,
+		CnSettingsSection,
+		CaRenewRootConfirmDialog,
+	},
 
 	data() {
 		return {
@@ -117,6 +133,7 @@ export default {
 			loading: false,
 			renewRootOpen: false,
 			renewRootResult: '',
+			renewRootUnannounced: false,
 		}
 	},
 
@@ -200,13 +217,17 @@ export default {
 		/**
 		 * Admin action: renew the root certificate after the admin confirmed it
 		 * in the dialog. The server re-signs every active suite and answers
-		 * with the count, which is shown back so the admin sees the reach.
+		 * with the count, which is shown back so the admin sees the reach. A
+		 * renewal the previous root could not sign is not announced, so the admin
+		 * is told that every partner has to re-pin by hand.
 		 *
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-certificate-renewal
+		 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-a-root-whose-key-cannot-be-read-is-renewed-unannounced
 		 */
 		async renewRoot() {
 			this.loading = true
 			this.renewRootResult = ''
+			this.renewRootUnannounced = false
 			try {
 				const response = await axios.post(
 					generateUrl('/apps/keepiq/api/v1/ca/renew-root'),
@@ -216,6 +237,7 @@ export default {
 					'Root renewed. {n} encryption suites signed again.',
 					{ n: response.data?.resignedCount ?? 0 },
 				)
+				this.renewRootUnannounced = response.data?.announced === false
 				this.renewRootOpen = false
 				await this.fetchStatus()
 			} catch {

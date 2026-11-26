@@ -2,7 +2,7 @@
 
 ### Requirement: A renewed root is announced to partners
 
-When an instance renews its Keepiq root, it MUST sign the new root's DER with the previous root's key (RSA with SHA-256) in the same transaction, MUST publish in its discovery document the new root, the previous root, the time of the renewal and that signature, MUST add the same announcement to its certificate lookup answers next to the chain, and MUST send every partner with inbound sharing on a signed OCM notification of its own type, tied to no share, that carries only the fact that this server announced a renewal. The notification MUST be retried when it fails, as share notifications are. The announcement MUST be published until 30 days after the renewal; from then on the discovery document and the lookup answers MUST NOT carry it. An instance whose root was never renewed MUST publish no announcement.
+When an instance renews its Keepiq root, it MUST sign the new root's DER with the previous root's key (RSA with SHA-256) in the same transaction, MUST publish in its discovery document the new root, the previous root, the time of the renewal and that signature, MUST add the same announcement to its certificate lookup answers next to the chain, and MUST send every partner with inbound sharing on a signed OCM notification of its own type, tied to no share, that carries only the fact that this server announced a renewal. The notification MUST be retried when it fails, as share notifications are. The announcement MUST be published until 30 days after the renewal; from then on the discovery document and the lookup answers MUST NOT carry it. An instance whose root was never renewed MUST publish no announcement. When the previous root's key can no longer be read, for example after the instance secret changed, the renewal MUST still go ahead: the new root MUST be stored without a signature, no announcement MUST be published and no notification sent, a warning MUST be logged, and the administrator who renewed MUST be told that every partner has to re-pin the new root by hand after comparing its fingerprint out of band.
 
 #### Scenario: The partner renews its root
 
@@ -10,6 +10,13 @@ When an instance renews its Keepiq root, it MUST sign the new root's DER with th
 - **WHEN** the administrator of `cloud.partner.example` renews its Keepiq root
 - **THEN** its discovery document and its certificate lookup answers MUST carry the new root, the previous root and the previous root's signature over the new root
 - **AND** `cloud.example` MUST receive a notification that a renewal was announced, carrying no certificate
+
+#### Scenario: A root whose key cannot be read is renewed unannounced
+
+- **GIVEN** `cloud.partner.example`, whose current root key can no longer be decrypted
+- **WHEN** its administrator renews the Keepiq root
+- **THEN** a new root MUST be stored without a signature, and no announcement MUST be published or sent
+- **AND** the administrator MUST be told that each partner, such as `cloud.example`, has to re-pin it by hand after comparing the fingerprint out of band
 
 ### Requirement: An announced renewal is offered to administrators after its signature checks out
 
