@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Промена послата другој организацији",
         "Share with another organisation revoked": "Дељење са другом организацијом укинуто",
         "Sharing with another organisation stopped": "Дељење са другом организацијом заустављено",
+        "Resume": "Настави",
+        "Sharing with another organisation resumed": "Дељење са другом организацијом је настављено",
         "Another organisation did not get a change": "Друга организација није добила промену",
         "Secret received from another organisation": "Тајна примљена из друге организације",
         "Secret from another organisation accepted": "Тајна из друге организације прихваћена",

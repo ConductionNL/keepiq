@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Değişiklik başka bir kuruluşa gönderildi",
         "Share with another organisation revoked": "Başka bir kuruluşla paylaşım kaldırıldı",
         "Sharing with another organisation stopped": "Başka bir kuruluşla paylaşım durduruldu",
+        "Resume": "Sürdür",
+        "Sharing with another organisation resumed": "Başka bir kuruluşla paylaşım sürdürüldü",
         "Another organisation did not get a change": "Başka bir kuruluş bir değişikliği almadı",
         "Secret received from another organisation": "Başka bir kuruluştan gizli alındı",
         "Secret from another organisation accepted": "Başka bir kuruluştan gelen gizli kabul edildi",

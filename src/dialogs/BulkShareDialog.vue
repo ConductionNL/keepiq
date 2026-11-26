@@ -187,7 +187,7 @@ export default {
 		 * @param {string} secretId The secret id.
 		 * @param {object} source The decrypted secret.
 		 * @return {Promise<object>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 		 */
 		async copyRow(secretId, source) {
 			const blob = await useShareStore().encryptForRecipient(

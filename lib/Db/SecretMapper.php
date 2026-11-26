@@ -126,7 +126,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return array<string,Secret>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function findByIds(array $ids): array {
 		$found = [];
@@ -156,7 +156,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return int The number of rows changed: 0 when the row moved on or is gone
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function advanceVersion(string $id, DateTime $base, DateTime $savedAt): int {
 		$qb = $this->db->getQueryBuilder();

@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Ndryshimi u dërgua te një organizatë tjetër",
         "Share with another organisation revoked": "Ndarja me një organizatë tjetër u revokua",
         "Sharing with another organisation stopped": "Ndarja me një organizatë tjetër u ndal",
+        "Resume": "Rifillo",
+        "Sharing with another organisation resumed": "Ndarja me një organizatë tjetër rifilloi",
         "Another organisation did not get a change": "Një organizatë tjetër nuk e mori një ndryshim",
         "Secret received from another organisation": "U mor një sekret nga një organizatë tjetër",
         "Secret from another organisation accepted": "Sekreti nga një organizatë tjetër u pranua",

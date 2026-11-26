@@ -9,7 +9,7 @@
  *
  * Each case is its own test. Set RECORD_GOLDEN=1 to rewrite the fixture.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
  */
 
 import fs from 'node:fs'

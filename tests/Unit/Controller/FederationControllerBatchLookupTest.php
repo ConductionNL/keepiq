@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
  * The batch route is the caller's: anonymous is 401, an empty list 400, more than the bound 400, and the
  * service's answer goes out as is.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
  */
 #[CoversClass(FederationController::class)]
 class FederationControllerBatchLookupTest extends TestCase {

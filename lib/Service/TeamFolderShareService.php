@@ -180,7 +180,7 @@ class TeamFolderShareService {
 	 *
 	 * @return ShareSourceVersion
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	private function sourceVersions(): ShareSourceVersion {
 		return $this->sourceVersions ??= new ShareSourceVersion(locks: new SecretVersionLock(db: $this->db));

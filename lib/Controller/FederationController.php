@@ -121,7 +121,7 @@ class FederationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 60, period: 60)]

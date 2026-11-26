@@ -36,7 +36,7 @@ use Throwable;
  * Hands partner shares left behind by an ownership transfer to their
  * secret's owner.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
  */
 class ReownTransferredPartnerShares implements IRepairStep {
 	/**
@@ -60,7 +60,7 @@ class ReownTransferredPartnerShares implements IRepairStep {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function getName(): string {
 		return 'Hand partner shares to the current owner of their secret';
@@ -74,7 +74,7 @@ class ReownTransferredPartnerShares implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function run(IOutput $output): void {
 		try {

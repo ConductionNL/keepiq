@@ -7,7 +7,7 @@
  * branch, before they are split into named steps.
  *
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'

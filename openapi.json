@@ -129,6 +129,9 @@
             "name": "federated-share"
         },
         {
+            "name": "federated-share-resume"
+        },
+        {
             "name": "federation"
         },
         {
@@ -8159,6 +8162,110 @@
                 }
             }
         },
+        "/federated-shares/{id}/resume": {
+            "post": {
+                "operationId": "federated-share-resume-resume",
+                "summary": "Resume a suspended share with a value encrypted now",
+                "description": "Resume a suspended share with a value encrypted now. The body carries `certFingerprint` (SHA-256 of the certificate the browser verified), `sourceUpdatedAt` (the version it encrypted from) and the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`.",
+                "tags": [
+                    "federated-share-resume"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/federated-shares/{id}/suspend": {
             "post": {
                 "operationId": "federated-share-suspend",
@@ -16074,7 +16181,7 @@
             "put": {
                 "operationId": "secret-update-update",
                 "summary": "Update a secret",
-                "description": "Update a secret. Only the fields present in the request change: `name`, `url`, `typeId`, `folderId`, the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`, plus `mergedPending` (request-filled blobs the client merged, keepiq#750) and `baseUpdatedAt` (the version an offline edit was made from). A field the request leaves out keeps its stored value, and an empty string clears it. A JSON null counts as left out, as Nextcloud's getParam() reads it.",
+                "description": "Update a secret. Only the fields present in the request change: `name`, `url`, `typeId`, `folderId`, the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`, plus `mergedPending` (request-filled blobs the client merged, keepiq#750) and `baseUpdatedAt` (the version an offline edit was made from). A field the request leaves out keeps its stored value, and an empty string clears it. A JSON null counts as left out, as Nextcloud's getParam() reads it. A value change of a shared secret answers 409 `share_save_required`: it goes through the share-save, which writes every copy (keepiq#1300).",
                 "tags": [
                     "secret-update"
                 ],
@@ -16129,28 +16236,6 @@
                     },
                     "401": {
                         "description": "Not logged in",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Problem"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Error"
-                                        }
-                                    ]
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Not allowed",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -23859,7 +23944,7 @@
             "post": {
                 "operationId": "secret-version-restore",
                 "summary": "Restore a version onto this one row",
-                "description": "Restore a version onto this one row. The web app restores through share-save (`restoredFrom`). A copy whose holder may not write its source is view-only and its restore is refused.",
+                "description": "Restore a version onto this one row. The web app restores through share-save (`restoredFrom`). A copy whose holder may not write its source is view-only and its restore is refused, and a restore that changes the value of a shared secret answers 409 `share_save_required`.",
                 "tags": [
                     "secret-version"
                 ],

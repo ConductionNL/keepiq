@@ -42,7 +42,7 @@ use OCP\AppFramework\Http;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads the sharing graph from
  *   copies, share targets and partner shares, each through its mapper.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSaveScope {
 
@@ -86,7 +86,7 @@ class ShareSaveScope {
 	 * @throws ShareSaveRefusal `not_allowed` for a copy holder without the right to write every copy,
 	 *   `share_scan_pending` for a share row the pending quarantine scan cannot judge
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function resolve(Secret $row, string $userId): ShareSavePath {
@@ -152,7 +152,7 @@ class ShareSaveScope {
 	 * @throws ForbiddenException When the source became a read-only or use-only copy
 	 * @throws ShareSaveRefusal `not_allowed` for a copy holder who lost the right to write every copy
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function assertStillWriter(ShareSavePath $path, string $userId): ShareSavePath {
 		if ($path->isCopyEditor() === false) {
@@ -232,7 +232,7 @@ class ShareSaveScope {
 	 * @throws IncompleteShareSaveException With the current lists
 	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertComplete(ShareSavePath $path, ShareSaveEntries $entries, string $userId): array {
 		$required = $this->requirement(path: $path, userId: $userId);
@@ -269,7 +269,7 @@ class ShareSaveScope {
 	 *
 	 * @return array{required:list<array{shareId:string,recipientCloudId:string}>,missing:list<string>,unexpected:list<string>}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function federatedLists(array $required, ShareSaveEntries $entries): array {
 		$namedShares = array_flip($entries->shareIds());
@@ -300,7 +300,7 @@ class ShareSaveScope {
 	 *
 	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, or `share_scan_pending`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function assertWithinReach(ShareSavePath $path, ShareSaveEntries $entries, int $chunks, string $userId): void {
 		$required = $this->requirement(path: $path, userId: $userId);

@@ -30,7 +30,7 @@ use OCA\Keepiq\Db\Secret;
  *   where an older client leaves out the fields it does not know;
  * - suspend: `{shareId, reason}`.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 final class ShareSaveEntryParser {
 	/**
@@ -42,7 +42,7 @@ final class ShareSaveEntryParser {
 	 *
 	 * @throws ShareSaveRefusal `invalid_body`, `invalid_fingerprint` or `invalid_key`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function entries(array $params): ShareSaveEntries {
 		return new ShareSaveEntries(
@@ -65,7 +65,7 @@ final class ShareSaveEntryParser {
 	 *
 	 * @throws ShareSaveRefusal `invalid_body`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function entry(mixed $entry, array $required, array $optional): array {
 		if (is_array($entry) === false || ($entry !== [] && array_is_list($entry) === true)) {
@@ -89,7 +89,7 @@ final class ShareSaveEntryParser {
 	 *
 	 * @throws ShareSaveRefusal `invalid_key`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertKeyNotEmpty(array $entry): void {
 		if (array_key_exists('key', $entry) === true && $entry['key'] === '') {
@@ -104,7 +104,7 @@ final class ShareSaveEntryParser {
 	 *
 	 * @return ShareSaveRefusal
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function invalidBody(string $what): ShareSaveRefusal {
 		return new ShareSaveRefusal(error: 'invalid_body', message: 'Invalid '.$what);

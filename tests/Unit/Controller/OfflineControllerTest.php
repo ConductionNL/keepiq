@@ -215,7 +215,7 @@ class OfflineControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-saves-value-changes-through-the-share-save
 	 */
 	public function testManifestCarriesEachCopysSourceVersion(): void {
 		$this->appConfig->method('getValueBool')->willReturn(true);

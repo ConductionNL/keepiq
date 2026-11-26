@@ -31,7 +31,7 @@ use Ramsey\Uuid\Uuid;
  * The chunks of a share-save too large for one request. A stage belongs to
  * one user, one row and one base version, and lives 30 minutes.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  */
 class ShareSaveStages implements ShareSaveStagesInterface {
 	/**
@@ -67,7 +67,7 @@ class ShareSaveStages implements ShareSaveStagesInterface {
 	 *
 	 * @throws ShareSaveRefusal `stage_unknown` or `stage_mismatch`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function load(string $stageId, string $userId, string $secretId, DateTime $base, ?DateTime $sourceBase): array {
 		$chunks = $this->liveChunks(stageId: $stageId);
@@ -103,7 +103,7 @@ class ShareSaveStages implements ShareSaveStagesInterface {
 	 *
 	 * @throws ShareSaveRefusal `stage_unknown`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	private function liveChunks(string $stageId): array {
 		$chunks = $this->mapper->findLiveByStage(stageId: $stageId, now: new DateTime());
@@ -125,7 +125,7 @@ class ShareSaveStages implements ShareSaveStagesInterface {
 	 *
 	 * @return ShareSaveEntries
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	private function chunkEntries(ShareSaveStage $chunk): ShareSaveEntries {
 		$lists = json_decode($chunk->getEntries(), true, 16, JSON_THROW_ON_ERROR);
@@ -151,7 +151,7 @@ class ShareSaveStages implements ShareSaveStagesInterface {
 	 *
 	 * @return array{stageId:string,expiresAt:DateTime}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function add(
 		?string $stageId,
@@ -193,7 +193,7 @@ class ShareSaveStages implements ShareSaveStagesInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function drop(string $stageId): void {
 		$this->mapper->deleteByStage(stageId: $stageId);
@@ -206,7 +206,7 @@ class ShareSaveStages implements ShareSaveStagesInterface {
 	 *
 	 * @return int The number of chunks removed
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function dropExpired(DateTime $now): int {
 		return $this->mapper->deleteExpired(now: $now);

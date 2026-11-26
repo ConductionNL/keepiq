@@ -521,7 +521,7 @@ class ShareServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testWriteCopyBlobsOpensNoTransactionAndStampsTheSaveVersion(): void {
 		$source = $this->makeOwnerSecret('src-1', 'alice');
@@ -657,7 +657,7 @@ class ShareServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	#[\PHPUnit\Framework\Attributes\DataProvider('expectedVersionOrNone')]
 	public function testSyncUpdateOverASourceThatMovesAfterItsReadIsRefused(string $expectedUpdatedAt): void {
@@ -694,7 +694,7 @@ class ShareServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testSyncUpdateMovesTheSourcePastItsStoredVersion(): void {
 		$stored = (new DateTime('+1 hour'))->getTimestamp();

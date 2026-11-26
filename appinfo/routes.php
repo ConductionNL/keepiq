@@ -413,6 +413,7 @@ $extra = [
     ['name' => 'federatedShare#create', 'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'POST'],
     ['name' => 'federatedShare#destroy', 'url' => '/api/v1/federated-shares/{id}',         'verb' => 'DELETE'],
     ['name' => 'federatedShare#suspend', 'url' => '/api/v1/federated-shares/{id}/suspend', 'verb' => 'POST'],
+    ['name' => 'federatedShareResume#resume', 'url' => '/api/v1/federated-shares/{id}/resume', 'verb' => 'POST'],
     ['name' => 'federatedInbound#index',   'url' => '/api/v1/federation/incoming',              'verb' => 'GET'],
     ['name' => 'federatedInbound#accept',  'url' => '/api/v1/federation/incoming/{id}/accept',  'verb' => 'POST'],
     ['name' => 'federatedInbound#decline', 'url' => '/api/v1/federation/incoming/{id}/decline', 'verb' => 'POST'],

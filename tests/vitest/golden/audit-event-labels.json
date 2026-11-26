@@ -225,6 +225,10 @@
    "label": "[keepiq] Shared with another organisation"
   },
   {
+   "id": "federated_share.resumed",
+   "label": "[keepiq] Sharing with another organisation resumed"
+  },
+  {
    "id": "federated_share.suspended",
    "label": "[keepiq] Sharing with another organisation stopped"
   },
@@ -252,6 +256,7 @@
   "federated_share.received": "[keepiq] Secret received from another organisation",
   "federated_share.recipient_declined": "[keepiq] Recipient at another organisation removed their copy",
   "federated_share.recipient_resumed": "[keepiq] Recipient at another organisation restored their copy",
+  "federated_share.resumed": "[keepiq] Sharing with another organisation resumed",
   "federated_share.revoked": "[keepiq] Share with another organisation revoked",
   "federated_share.sent": "[keepiq] Shared with another organisation",
   "federated_share.suspended": "[keepiq] Sharing with another organisation stopped",

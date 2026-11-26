@@ -330,7 +330,7 @@ class DirectShareRegistrar {
 	 *
 	 * @return ShareSourceVersion|null
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	private function sourceVersions(): ?ShareSourceVersion {
 		if ($this->connection === null) {
@@ -353,7 +353,7 @@ class DirectShareRegistrar {
 	 *
 	 * @throws StaleShareSourceException When the row it was encrypted from moved on since
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	private function assertSourceCurrent(DirectShareMint $mint): void {
 		$versions = $this->sourceVersions();

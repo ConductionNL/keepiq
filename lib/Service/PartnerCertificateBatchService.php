@@ -36,7 +36,7 @@ use Throwable;
 /**
  * Batch certificate lookup over the caller's own active partner shares.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
  */
 class PartnerCertificateBatchService {
 
@@ -118,7 +118,7 @@ class PartnerCertificateBatchService {
 	 *
 	 * @throws InvalidArgumentException `too_many_shares` above MAX_SHARES distinct ids
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
 	 */
 	public function lookup(array $shareIds, string $userId): array {
 		$shareIds = array_values(array_unique(array_filter($shareIds, 'is_string')));
@@ -160,7 +160,7 @@ class PartnerCertificateBatchService {
 	 *
 	 * @return FederatedShare|null
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-another-users-partner-share-is-not-looked-up
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-another-users-partner-share-is-not-looked-up
 	 */
 	private function ownActiveShare(string $shareId, string $userId): ?FederatedShare {
 		try {
@@ -184,7 +184,7 @@ class PartnerCertificateBatchService {
 	 *
 	 * @return array{certificate?:array<string,mixed>,refused?:array{status:int,message:string}}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-one-unreachable-partner-does-not-fail-the-others
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-one-unreachable-partner-does-not-fail-the-others
 	 */
 	private function answerFor(string $cloudId, string $userId): array {
 		try {

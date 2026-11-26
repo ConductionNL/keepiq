@@ -1712,6 +1712,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Wijziging verstuurd naar een andere organisatie",
         "Share with another organisation revoked": "Delen met een andere organisatie ingetrokken",
         "Sharing with another organisation stopped": "Delen met een andere organisatie gestopt",
+        "Resume": "Hervatten",
+        "Sharing with another organisation resumed": "Delen met een andere organisatie hervat",
         "Another organisation did not get a change": "Een andere organisatie heeft een wijziging niet ontvangen",
         "Secret received from another organisation": "Geheim ontvangen van een andere organisatie",
         "Secret from another organisation accepted": "Geheim van een andere organisatie geaccepteerd",

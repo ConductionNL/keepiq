@@ -1131,7 +1131,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object|null} [runningAtSend] The write-back in flight when the open's read went out.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async persistMergedPending(id, runningAtSend = null) {
 			const current = this.currentSecret
@@ -1171,7 +1171,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} id The secret ID.
 		 * @param {((ms: number) => void)|null} [onWait] Told when the write-back waits on the partner lookup limit, also of a wait already begun.
 		 * @return {Promise<{sourceUpdatedAt: string|null}|null>} The source version the write-back wrote, null when it saved only the own copy; null when none was in flight or it failed.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async writeBackSettled(id, onWait = null) {
 			const inFlight = writeBacks.get(id)
@@ -1313,7 +1313,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {Promise<object>} The updated secret row.
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async updateSecret(id, data, options = {}) {
 			await awaitWriteBack(this, { id, options })
@@ -1355,7 +1355,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {string}
 		 * @throws {Error} When no version is known: fetching the current one
 		 *   now would switch the stale check off.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		baseOf(id, given) {
 			const known =

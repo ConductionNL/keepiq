@@ -1757,6 +1757,8 @@
         "Change sent to another organisation": "Ændring sendt til en anden organisation",
         "Share with another organisation revoked": "Deling med en anden organisation tilbagekaldt",
         "Sharing with another organisation stopped": "Deling med en anden organisation stoppet",
+        "Resume": "Genoptag",
+        "Sharing with another organisation resumed": "Deling med en anden organisation genoptaget",
         "Another organisation did not get a change": "En anden organisation fik ikke en ændring",
         "Secret received from another organisation": "Hemmelighed modtaget fra en anden organisation",
         "Secret from another organisation accepted": "Hemmelighed fra en anden organisation accepteret",

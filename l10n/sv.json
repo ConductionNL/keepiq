@@ -1757,6 +1757,8 @@
         "Change sent to another organisation": "Ändring skickad till en annan organisation",
         "Share with another organisation revoked": "Delning med en annan organisation återkallad",
         "Sharing with another organisation stopped": "Delning med en annan organisation stoppad",
+        "Resume": "Återuppta",
+        "Sharing with another organisation resumed": "Delning med en annan organisation återupptagen",
         "Another organisation did not get a change": "En annan organisation fick inte en ändring",
         "Secret received from another organisation": "Hemlighet mottagen från en annan organisation",
         "Secret from another organisation accepted": "Hemlighet från en annan organisation godkänd",

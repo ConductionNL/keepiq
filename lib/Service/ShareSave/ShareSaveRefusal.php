@@ -26,7 +26,7 @@ use RuntimeException;
  * A share-save refused before anything was written, with the `error` code
  * and HTTP status the client acts on.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 class ShareSaveRefusal extends RuntimeException {
 	/**
@@ -53,7 +53,7 @@ class ShareSaveRefusal extends RuntimeException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function getError(): string {
 		return $this->error;
@@ -64,7 +64,7 @@ class ShareSaveRefusal extends RuntimeException {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function getStatus(): int {
 		return $this->status;
@@ -75,7 +75,7 @@ class ShareSaveRefusal extends RuntimeException {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function getBody(): array {
 		return ['error' => $this->error, 'message' => $this->getMessage()] + $this->details;

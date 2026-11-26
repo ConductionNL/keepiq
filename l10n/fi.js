@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Muutos lähetetty toiselle organisaatiolle",
         "Share with another organisation revoked": "Jako toiselle organisaatiolle peruutettu",
         "Sharing with another organisation stopped": "Jako toiselle organisaatiolle pysäytetty",
+        "Resume": "Jatka",
+        "Sharing with another organisation resumed": "Jakaminen toisen organisaation kanssa jatkui",
         "Another organisation did not get a change": "Toinen organisaatio ei saanut muutosta",
         "Secret received from another organisation": "Salaisuus vastaanotettu toisesta organisaatiosta",
         "Secret from another organisation accepted": "Salaisuus toisesta organisaatiosta hyväksytty",

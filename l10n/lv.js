@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Izmaiņas nosūtītas citai organizācijai",
         "Share with another organisation revoked": "Kopīgošana ar citu organizāciju atsaukta",
         "Sharing with another organisation stopped": "Kopīgošana ar citu organizāciju pārtraukta",
+        "Resume": "Atsākt",
+        "Sharing with another organisation resumed": "Kopīgošana ar citu organizāciju atsākta",
         "Another organisation did not get a change": "Cita organizācija nesaņēma izmaiņas",
         "Secret received from another organisation": "Saņemts noslēpums no citas organizācijas",
         "Secret from another organisation accepted": "Noslēpums no citas organizācijas pieņemts",
