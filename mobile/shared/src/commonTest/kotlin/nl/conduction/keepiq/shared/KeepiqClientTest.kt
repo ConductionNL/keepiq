@@ -165,6 +165,8 @@ class KeepiqClientTest {
     fun unpairRevokesTheAppPasswordAndWipesTheDevice() = runTest {
         val account = client.pairManually("cloud.example.com", "alice", "app-password-1")
         storage.write("pin:${account.id}", "{}")
+        client.lockState.recordLock(account.id)
+        client.lockState.recordOrganisationMax(account.id, 5)
         val wiped = mutableListOf<String>()
         client.onWipe = { wiped += it }
         assertTrue(client.unpair(account.id))
