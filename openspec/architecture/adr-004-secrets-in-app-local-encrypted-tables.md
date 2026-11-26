@@ -75,13 +75,20 @@ trails and the share authorization stay app-local:
 - `lib/Service/ApplicationAuditTrail.php` (gate 23 rules: 2)
 - `lib/Service/SiemAuditTrail.php` (gate 23 rules: 2)
 - `lib/Service/FederatedShareAuditTrail.php` (gate 23 rules: 2)
-- `lib/Service/FederationPartnerAuditTrail.php` (gate 23 rules: 2)
 - `lib/Listener/AuditListener.php` (gate 23 rules: 2)
 - `lib/Service/ShareAuthorizationService.php` (gate 23 rules: 6)
 
 These classes log identifiers only, never a value, login or ciphertext, and the
 share checks decide who may receive a re-wrapped key, which no row-level ACL can
 express.
+
+Added 25 November 2026, signed off by Robert (keepiq lead functional designer)
+in keepiq#1966, on the same condition. It writes the federation partner re-pin
+and value-field events (`FEDERATION_PARTNER_REPINNED`,
+`FEDERATION_PARTNER_VALUE_FIELDS_CHANGED`), which hold the administrator, the
+partner id and host, root fingerprints and the value-field setting only:
+
+- `lib/Service/FederationPartnerAuditTrail.php` (gate 23 rules: 2)
 
 ### Drift boundary — what Keepiq still consumes org-wide
 
