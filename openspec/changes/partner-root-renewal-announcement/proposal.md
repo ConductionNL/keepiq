@@ -32,11 +32,14 @@ Issue: #1283. This is the second of two changes for it; the first is `partner-sh
 
 ## Impact
 
-- **Renewing side:** `CertificateAuthorityService::renewRoot` signs the new root with the old root key, and the result is kept. `DiscoveryController` publishes the renewal, and `FederatedCertificateService::answer` adds it to lookup answers next to the chain. A new OCM notification type is sent to partners with inbound sharing on, with retries.
+- **Renewing side:**
+  - `CertificateAuthorityService::renewRoot` has `RootRenewalSignature` sign the new root's DER with the old root key, and `RootRenewalRecorder` stores that signature with the new root (`predecessor_signature` on `keepiq_ca_certs`) in the renewal's transaction, then dispatches `RootRenewedEvent`. When the old root key cannot be read, the root is renewed without a signature and nothing is announced; the renew response says so, and the CA health section tells the admin that partners must re-pin by hand.
+  - `FederationRootService::localRootRenewal` gives the announcement for 30 days: `DiscoveryController` publishes it, and `FederatedCertificateService::answer` adds it to lookup answers next to the chain.
+  - `RootRenewedListener` queues one notice per partner with inbound sharing on through `RootRenewalNoticeDelivery` (`renewal_notice_attempts` and `renewal_notice_next_at` on `keepiq_federation_partners`), and `RetryFederatedNotificationsJob` sends them with `RootRenewalNoticeSender`, retrying as share notifications are.
 - **Receiving side:**
-  - `KeepiqSecretFederationProvider::notificationReceived` takes the notification, and `FederatedCertificateService::lookup` notices an announcement in a lookup answer.
-  - `FederationPartnerService` verifies it and stores a pending renewal per partner, which needs new columns on `keepiq_federation_partners` or a new table, with a migration.
-  - `KeepiqNotifier` gets a new subject for the members of the `admin` group, and a background job sends the reminders.
-  - The admin settings show a pending renewal on the partner row.
+  - `KeepiqSecretFederationProvider::notificationReceived` takes the notice, whose signature `PartnerRootRenewalNoticeSigner` ties to a listed partner, and `FederatedCertificateService::lookup` notices an announcement in a lookup answer.
+  - `PartnerRootRenewalService` runs the checks through `PartnerRootRenewalVerifier`, and `PartnerRootRenewalOffers` stores, replaces and withdraws the offer in new columns on `keepiq_federation_partners` (`pending_root_fingerprint`, `pending_root_verified_at`, `pending_root_window_ends_at`, `pending_root_reminded`). The migration is `Version001023Date20261125120000`, nullable columns only.
+  - `KeepiqNotifier` gets two subjects, `partner_root_renewal` and `partner_root_renewal_reminder`. `PartnerRootRenewalNotifier` sends them to the members of the `admin` group and of the groups delegated Keepiq's general admin settings, each once, and removes them once the offer is gone. The hourly `PartnerRootRenewalRemindersJob` sends the reminders and expires the offer.
+  - Accepting goes through `FederationPartnerChanges::repin` and the re-pin route. The admin settings (`FederationPartnersSection.vue`) show the offer on the partner row, with both fingerprints, the date until which it can be accepted and what accepting replaces.
 - **Security:** a valid announcement proves only that whoever holds the old root key approves the new root. Leaving every acceptance to an admin, and closing the window after 30 days, limits what a leaked old root key can do. The signature replaces the out-of-band comparison only inside the window. Roots and fingerprints are public and stored in plain text; no secret value is involved. OpenConnector is not affected.
 - **Depends on** `partner-share-temporary-refusals` (the re-pin route and its audit entry), which is archived first.
