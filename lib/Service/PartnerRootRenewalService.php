@@ -43,7 +43,7 @@ class PartnerRootRenewalService {
 	/**
 	 * Partners checked in this process, so a batch of lookups starts one check per partner.
 	 *
-	 * @var array<string,true>
+	 * @var array<array-key,true>
 	 */
 	private array $checked = [];
 
