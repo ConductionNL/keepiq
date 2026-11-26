@@ -218,19 +218,44 @@ describe('an announced partner root renewal', () => {
 		expect(get).toHaveBeenCalledTimes(1)
 	})
 
-	it('scrolls to the partner a notification links to', async () => {
+	it('scrolls to the partner a notification links to and focuses its Accept', async () => {
 		window.location.hash = '#federation-partner-p%201'
 		const original = Element.prototype.scrollIntoView
 		const scroll = vi.fn()
 		Element.prototype.scrollIntoView = scroll
 		try {
 			const { wrapper } = await mountWith([PARTNER])
-			await wrapper.vm.$nextTick()
+			await flush()
 
 			expect(scroll).toHaveBeenCalledTimes(1)
 			expect(scroll.mock.contexts[0].id).toBe('federation-partner-p 1')
+			expect(document.activeElement).toBe(
+				wrapper.find('[data-testid="federation-renewal-accept"]').element,
+			)
 		} finally {
 			Element.prototype.scrollIntoView = original
 		}
+	})
+
+	it('focuses Re-pin root when the linked offer is gone', async () => {
+		window.location.hash = '#federation-partner-p%201'
+		const { wrapper } = await mountWith([{ ...PARTNER, pendingRenewal: null }])
+		await flush()
+
+		expect(document.activeElement).toBe(
+			wrapper.find('[data-testid="federation-repin"]').element,
+		)
+	})
+
+	it('ignores a malformed link', async () => {
+		window.location.hash = '#federation-partner-%E0%A4%A'
+		const { wrapper } = await mountWith([PARTNER])
+		await flush()
+
+		await expect(
+			Promise.resolve().then(() => wrapper.vm.revealLinkedPartner()),
+		).resolves.toBeUndefined()
+		expect(offered(wrapper)).toBe(true)
+		expect(document.activeElement).toBe(document.body)
 	})
 })

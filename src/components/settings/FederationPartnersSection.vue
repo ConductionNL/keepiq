@@ -576,19 +576,31 @@ export default {
 		},
 
 		/**
-		 * Scroll to the partner a notification linked to (`#federation-partner-<id>`).
+		 * Scroll to the partner a notification linked to (`#federation-partner-<id>`),
+		 * and move focus to its "Accept renewed certificate", or to its
+		 * "Re-pin root" when no offer is left. A malformed hash is ignored.
 		 *
-		 * @return {void}
+		 * @return {Promise<void>}
 		 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 		 */
-		revealLinkedPartner() {
+		async revealLinkedPartner() {
 			const hash = window.location?.hash || ''
-			if (!hash.startsWith('#federation-partner-')) {
+			const prefix = '#federation-partner-'
+			if (!hash.startsWith(prefix)) {
 				return
 			}
-			document
-				.getElementById(decodeURIComponent(hash.slice(1)))
-				?.scrollIntoView?.()
+			let partnerId
+			try {
+				partnerId = decodeURIComponent(hash.slice(prefix.length))
+			} catch {
+				return
+			}
+			const row = document.getElementById('federation-partner-' + partnerId)
+			if (!row) {
+				return
+			}
+			row.scrollIntoView?.()
+			await this.focusButton('accept:' + partnerId, 'repin:' + partnerId)
 		},
 
 		/**
