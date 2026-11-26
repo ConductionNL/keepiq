@@ -125,7 +125,8 @@ final class CertificatePem {
 	}//end publicKey()
 
 	/**
-	 * Whether the certificate is a CA certificate valid at the given time.
+	 * Whether the certificate is a CA certificate valid at the given time. As the browser's chain check does
+	 * (RFC 5280 4.2.1.3), a keyUsage, when there is one, must allow signing certificates.
 	 *
 	 * @param int $now The time, as a Unix timestamp
 	 *
@@ -140,9 +141,12 @@ final class CertificatePem {
 		}
 
 		$constraints = (string)($parsed['extensions']['basicConstraints'] ?? '');
+		$keyUsage = $parsed['extensions']['keyUsage'] ?? null;
 		$from = (int)($parsed['validFrom_time_t'] ?? PHP_INT_MAX);
 		$until = (int)($parsed['validTo_time_t'] ?? 0);
 
-		return preg_match('/\bCA:TRUE\b/i', $constraints) === 1 && $from <= $now && $now <= $until;
+		return preg_match('/\bCA:TRUE\b/i', $constraints) === 1
+			&& ($keyUsage === null || str_contains((string)$keyUsage, 'Certificate Sign') === true)
+			&& $from <= $now && $now <= $until;
 	}//end isCaValidAt()
 }//end class

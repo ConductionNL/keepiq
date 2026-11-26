@@ -1,0 +1,6 @@
+# A CA certificate whose keyUsage does not allow signing certificates, for PartnerRootRenewalTest.
+
+[ca_without_keycertsign]
+basicConstraints = critical,CA:true
+keyUsage = critical,digitalSignature,cRLSign
+subjectKeyIdentifier = hash

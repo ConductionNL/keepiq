@@ -31,16 +31,22 @@ trait RootRenewalFixtures {
 	 * A self-signed root, made once per name.
 	 *
 	 * @param string $name The root's name
-	 * @param string $extensions The section of certificate-extensions.cnf: `keepiq_root` or `keepiq_leaf`
+	 * @param string $extensions The section of `$config`: `keepiq_root` or `keepiq_leaf` in certificate-extensions.cnf
 	 * @param int $days Its lifetime from now
+	 * @param string $config The OpenSSL config holding that section
 	 *
 	 * @return array{key:\OpenSSLAsymmetricKey,pem:string}
 	 */
-	private static function root(string $name, string $extensions = 'keepiq_root', int $days = 365): array {
+	private static function root(
+		string $name,
+		string $extensions = 'keepiq_root',
+		int $days = 365,
+		string $config = CertificateIssuanceService::OPENSSL_CONFIG,
+	): array {
 		if (isset(self::$roots[$name]) === false) {
 			$key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
 			$csr = openssl_csr_new(['commonName' => $name], $key, ['digest_alg' => 'sha256']);
-			$options = ['digest_alg' => 'sha256', 'config' => CertificateIssuanceService::OPENSSL_CONFIG, 'x509_extensions' => $extensions];
+			$options = ['digest_alg' => 'sha256', 'config' => $config, 'x509_extensions' => $extensions];
 			openssl_x509_export(openssl_csr_sign($csr, null, $key, $days, $options, random_int(1, PHP_INT_MAX)), $pem);
 			self::$roots[$name] = ['key' => $key, 'pem' => $pem];
 		}

@@ -493,6 +493,13 @@ class PartnerRootRenewalTest extends TestCase {
 				},
 				'not_a_valid_ca',
 			],
+			'the new root is a CA whose keyUsage does not allow signing certificates' => [
+				static function (self $t): mixed {
+					self::root('no-cert-sign', 'ca_without_keycertsign', 365, __DIR__ . '/ca-without-keycertsign.cnf');
+					return $t->discoveryOf('no-cert-sign', self::announcement('previous', 'no-cert-sign', $t->at('-1 day')));
+				},
+				'not_a_valid_ca',
+			],
 			'the new fingerprint is the pin' => [
 				static fn (self $t): mixed => $t->discoveryOf('previous', self::announcement('previous', 'previous', $t->at('-1 day'))),
 				'already_pinned',
