@@ -4873,7 +4873,7 @@
             "post": {
                 "operationId": "c-a-certificate-renew-root",
                 "summary": "Trigger root renewal",
-                "description": "Trigger root renewal.",
+                "description": "Trigger root renewal. `announced` is false when the old root's key could not be read: partners are not told, and each has to re-pin the new root by hand after comparing `rootFingerprint` out of band.",
                 "tags": [
                     "c-a-certificate"
                 ],

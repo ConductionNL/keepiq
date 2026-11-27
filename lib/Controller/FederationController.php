@@ -97,6 +97,8 @@ class FederationController extends Controller {
 		try {
 			return new JSONResponse(data: $this->certificates->lookup(cloudId: $cloudId, userId: $user->getUID()));
 		} catch (InvalidArgumentException | RuntimeException $exception) {
+			// For scripts/generate-openapi.php: refusalStatus() answers Http::STATUS_FORBIDDEN, Http::STATUS_NOT_FOUND,
+			// Http::STATUS_CONFLICT or Http::STATUS_BAD_GATEWAY.
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],
 				statusCode: PartnerCertificateBatchService::refusalStatus(exception: $exception)
