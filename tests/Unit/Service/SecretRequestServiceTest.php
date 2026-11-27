@@ -1217,6 +1217,40 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFillLeavesTheRequestPendingWhenTheSecretMovesTwice()
 
 	/**
+	 * On an application-owned secret the application's update makes the
+	 * second attempt itself: its refusal is called once, not retried on top,
+	 * and refuses the fill with 409 like the user's, leaving the request pending.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testAnApplicationFillThatMovesTwiceIsRefusedOnceAndStaysPending(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('application');
+		$secret->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretService->expects($this->once())->method('updateByApplication')
+			->with('sec-1', ['key' => 'CIPHER'], 'app-1')
+			->willThrowException(new StaleWriteException(current: $secret));
+		$this->secretService->expects($this->never())->method('update');
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+			$this->fail('A secret that moved twice must refuse the fill');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(409, $e->getCode());
+			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+		}
+	}//end testAnApplicationFillThatMovesTwiceIsRefusedOnceAndStaysPending()
+
+	/**
 	 * fill rejects payloads that omit a required field.
 	 *
 	 * @return void
