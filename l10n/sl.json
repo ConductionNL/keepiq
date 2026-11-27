@@ -2103,6 +2103,17 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Map ni mogoče priložiti. Namesto tega spustite datoteke v njih.",
         "Files cannot be added while you are offline. Remove them to save.": "Datotek ni mogoče dodati, ko ste brez povezave. Odstranite jih, da shranite.",
         "Files can only be added to a secret you own. Remove them to save.": "Datoteke je mogoče dodati le skrivnosti, ki je vaša. Odstranite jih, da shranite.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nič ni bilo shranjeno: deljenje te skrivnosti s partnersko organizacijo še vedno pripada njenemu prejšnjemu lastniku. Skrbnik mora popraviti deljenja s partnerskimi organizacijami, preden je mogoče shraniti to spremembo.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Shranjeno, vendar je %n prejemnik v partnerski organizaciji to skrivnost prejel iz kopije in te spremembe ni prejel.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Shranjeno, vendar je %n prejemnikov v partnerskih organizacijah to skrivnost prejelo iz kopije in te spremembe ni prejelo.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Shranjeno, vendar je %n prejemnik v partnerski organizaciji to skrivnost prejel iz kopije in te spremembe ni prejel.",
+            "Shranjeno, vendar sta %n prejemnika v partnerskih organizacijah to skrivnost prejela iz kopije in te spremembe nista prejela.",
+            "Shranjeno, vendar so %n prejemniki v partnerskih organizacijah to skrivnost prejeli iz kopije in te spremembe niso prejeli.",
+            "Shranjeno, vendar je %n prejemnikov v partnerskih organizacijah to skrivnost prejelo iz kopije in te spremembe ni prejelo."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ta skrivnost čaka na preverjanje svojih skupnih rab, ki še ni končano. Nič ni bilo deljeno; poskusite znova pozneje ali prosite skrbnika, naj preveri, ali se opravila v ozadju izvajajo.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ta skrivnost je bila deljena z vami, zato je ni mogoče deliti s partnersko organizacijo. Nič ni bilo deljeno.",
         "Sharing options could not be loaded.": "Možnosti souporabe ni bilo mogoče naložiti.",
         "Sharing options still could not be loaded.": "Možnosti souporabe še vedno ni bilo mogoče naložiti.",
         "Sharing is not available for this secret.": "Souporaba za to skrivnost ni na voljo."

@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Tämä kohde odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen.
   shareScanPendingOpen: Tämä kohde odottaa jakojensa tarkistusta, eikä sitä voi vielä muokata. Yritä myöhemmin uudelleen.
   shareScanPendingDelete: Tämä kohde odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei poistettu; yritä myöhemmin uudelleen.
+  partnerShareOwnerMismatch: "Mitään ei tallennettu: tämän kohteen jako kumppaniorganisaatiolle kuuluu yhä sen edelliselle omistajalle. Ylläpitäjän on korjattava jaot kumppaniorganisaatioille, ennen kuin tämän muutoksen voi tallentaa."
   sendInvalid: Keepiq ei hyväksynyt tätä lähetystä. Mitään ei lähetetty; tarkista kentät ja yritä uudelleen.
   sendOffline: Palvelimeen ei saatu yhteyttä, mitään ei lähetetty
   argon2Unavailable: Salasanasuojaus ei ole käytettävissä tässä selaimessa
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Tallennettu. Kumppaniorganisaatioiden vastaanottajat saavat muutoksen, kun omistaja seuraavan kerran tallentaa kohteen.
   suspended: Jakaminen vastaanottajille {cloudIds} on keskeytetty, koska heidän varmennettaan ei voitu vahvistaa tai heidän organisaationsa ei enää hyväksy sitä. Keepiq-verkkosovellus näyttää jaon.
   paused: Jakaminen vastaanottajille {cloudIds} on keskeytetty, kunnes jaat kohteen heille uudelleen.
+  notReached:
+    1: Tallennettu, mutta 1 kumppaniorganisaation vastaanottaja sai tämän kohteen kopiosta eikä saanut tätä muutosta.
+    n: Tallennettu, mutta $1 kumppaniorganisaatioiden vastaanottajaa sai tämän kohteen kopiosta eikä saanut tätä muutosta.
 
 folders:
   add: Lisää kansio

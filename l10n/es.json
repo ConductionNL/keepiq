@@ -2051,6 +2051,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "No se pueden adjuntar carpetas. Suelte los archivos que contienen.",
         "Files cannot be added while you are offline. Remove them to save.": "No se pueden añadir archivos sin conexión. Quítelos para guardar.",
         "Files can only be added to a secret you own. Remove them to save.": "Solo se pueden añadir archivos a un secreto que sea suyo. Quítelos para guardar.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "No se ha guardado nada: una compartición de este secreto con una organización asociada todavía pertenece a su propietario anterior. Un administrador debe reparar las comparticiones con organizaciones asociadas antes de que se pueda guardar este cambio.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Guardado, pero %n destinatario de una organización asociada recibió este secreto a partir de una copia y no ha recibido este cambio.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Guardado, pero %n destinatario de una organización asociada recibió este secreto a partir de una copia y no ha recibido este cambio.",
+            "Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Este secreto está esperando una comprobación de sus comparticiones que aún no ha terminado. No se ha compartido nada; inténtelo de nuevo más tarde o pida a un administrador que compruebe que se ejecutan las tareas en segundo plano.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Este secreto se ha compartido contigo, así que no se puede compartir con una organización asociada. No se ha compartido nada.",
         "Sharing options could not be loaded.": "No se pudieron cargar las opciones para compartir.",
         "Sharing options still could not be loaded.": "Todavía no se pudieron cargar las opciones para compartir.",
         "Sharing is not available for this secret.": "Compartir no está disponible para este secreto."

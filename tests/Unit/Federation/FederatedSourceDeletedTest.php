@@ -55,6 +55,8 @@ use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
 use OCA\Keepiq\Service\AttachmentService;
 use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\DelegateCopyKeeper;
+use OCA\Keepiq\Service\DelegatedSecretTransfer;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
@@ -74,6 +76,7 @@ use OCA\Keepiq\Service\SecretSharingRevoker;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
@@ -341,15 +344,24 @@ class FederatedSourceDeletedTest extends TestCase {
 				secretMapper: $secretMapper,
 				shareMapper: $this->createMock(ShareTargetMapper::class),
 				groupShareMapper: $this->createMock(GroupShareMapper::class),
-				delegationMapper: $delegations,
 				stageMapper: $this->createMock(ShareSaveStageMapper::class),
-				ownerTransfer: new SecretOwnerTransferService(
-					db: $this->createMock(IDBConnection::class),
-					secretMapper: $secretMapper,
-					federatedShares: $shares,
-					linkShares: $links,
+				delegatedTransfer: new DelegatedSecretTransfer(
+					delegationMapper: $delegations,
+					ownerTransfer: new SecretOwnerTransferService(
+						db: $this->createMock(IDBConnection::class),
+						secretMapper: $secretMapper,
+						federatedShares: $shares,
+						linkShares: $links,
+					),
 				),
 				quarantineScan: $this->clearedQuarantineScan(),
+				// Carol holds no copy of the delegated secret, so none is kept.
+				delegateCopies: new DelegateCopyKeeper(
+					rowJudge: $this->shareRowJudge(),
+					grants: $this->createMock(ShareGrantReader::class),
+					secretMapper: $secretMapper,
+					shareMapper: $this->createMock(ShareTargetMapper::class),
+				),
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),

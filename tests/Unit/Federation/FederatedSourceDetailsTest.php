@@ -40,6 +40,7 @@ use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\LinkShareService;
@@ -63,6 +64,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -71,6 +73,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedSourceDetailsTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private Secret $source;
 
@@ -168,7 +171,7 @@ class FederatedSourceDetailsTest extends TestCase {
 		$delivery = new FederatedNotificationDelivery($shareMapper, $messenger, $audit, $secrets);
 		$federated = new FederatedShareService(
 			shareMapper: $shareMapper,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: new FederationPartnerService(
 				$this->partnerMapper([$this->partner('cloud.partner.example', true, true), $this->partner('cloud.other.example', true, true)]),
 				$this->createMock(IClientService::class),

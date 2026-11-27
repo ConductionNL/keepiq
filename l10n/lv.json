@@ -2077,6 +2077,16 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Mapes nevar pievienot. Tā vietā nometiet tajās esošos failus.",
         "Files cannot be added while you are offline. Remove them to save.": "Bezsaistē failus nevar pievienot. Noņemiet tos, lai saglabātu.",
         "Files can only be added to a secret you own. Remove them to save.": "Failus var pievienot tikai jums piederošam noslēpumam. Noņemiet tos, lai saglabātu.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nekas netika saglabāts: šī noslēpuma kopīgojums ar partneru organizāciju joprojām pieder tā iepriekšējam īpašniekam. Administratoram ir jāsalabo kopīgojumi ar partneru organizācijām, pirms šīs izmaiņas var saglabāt.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Saglabāts, bet %n saņēmējs partneru organizācijā saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Saglabāts, bet %n saņēmēji partneru organizācijās saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Saglabāts, bet %n saņēmēji partneru organizācijās saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.",
+            "Saglabāts, bet %n saņēmējs partneru organizācijā saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.",
+            "Saglabāts, bet %n saņēmēji partneru organizācijās saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika kopīgots; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Šis noslēpums tika kopīgots ar jums, tāpēc to nevar kopīgot ar partneru organizāciju. Nekas netika kopīgots.",
         "Sharing options could not be loaded.": "Neizdevās ielādēt koplietošanas opcijas.",
         "Sharing options still could not be loaded.": "Joprojām neizdevās ielādēt koplietošanas opcijas.",
         "Sharing is not available for this secret.": "Koplietošana šim noslēpumam nav pieejama."

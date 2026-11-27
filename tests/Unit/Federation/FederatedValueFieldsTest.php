@@ -46,6 +46,7 @@ use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedSharePuller;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederatedValueFields;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
@@ -69,6 +70,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -77,6 +79,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedValueFieldsTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const SHARE_ID = '6d1f6c1e-0000-4000-8000-000000000001';
 	private const SHARED_SECRET = 'the-shared-secret';
@@ -204,7 +207,7 @@ class FederatedValueFieldsTest extends TestCase {
 		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit, $secrets);
 		$this->service = new FederatedShareService(
 			shareMapper: $mapper,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: new FederationPartnerService(
 				$partnerMapper,
 				$this->createMock(IClientService::class),

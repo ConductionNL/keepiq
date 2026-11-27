@@ -53,6 +53,7 @@ const FAILURES = {
 	},
 	'partner lookup limit': { code: 'partner_lookup_limit', message: 'ignored' },
 	'view only': { code: 'view_only' },
+	'partner share not the owner\'s': { code: 'partner_share_owner_mismatch' },
 	'upgrade required': {
 		code: 'partner_upgrade_required',
 		partners: ['a@x'],

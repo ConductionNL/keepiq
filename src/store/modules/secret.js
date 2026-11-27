@@ -6,7 +6,7 @@ import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
 import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
 import {
 	encryptSparse,
-	notifyOwnerOnly,
+	notifyPartnerNotes,
 	saveShared,
 	VALUE_FIELDS,
 } from '../../services/shareSave.js'
@@ -763,7 +763,7 @@ async function saveValueChange(store, change) {
 		onWait: options.onWait ?? null,
 	})
 	options.onSourceSaved?.(result.sourceUpdatedAt ?? null)
-	await notifyOwnerOnly(result)
+	await notifyPartnerNotes(result)
 	return result.secret
 }
 

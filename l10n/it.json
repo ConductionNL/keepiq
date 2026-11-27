@@ -2051,6 +2051,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Le cartelle non possono essere allegate. Trascina invece i file al loro interno.",
         "Files cannot be added while you are offline. Remove them to save.": "Non è possibile aggiungere file mentre sei offline. Rimuovili per salvare.",
         "Files can only be added to a secret you own. Remove them to save.": "I file possono essere aggiunti solo a un segreto di tua proprietà. Rimuovili per salvare.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Non è stato salvato nulla: una condivisione di questo segreto con un'organizzazione partner appartiene ancora al suo proprietario precedente. Un amministratore deve riparare le condivisioni con i partner prima che questa modifica possa essere salvata.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Salvato, ma %n destinatario di un'organizzazione partner ha ricevuto questo segreto da una copia e non ha ricevuto questa modifica.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Salvato, ma %n destinatari di organizzazioni partner hanno ricevuto questo segreto da una copia e non hanno ricevuto questa modifica.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Salvato, ma %n destinatario di un'organizzazione partner ha ricevuto questo segreto da una copia e non ha ricevuto questa modifica.",
+            "Salvato, ma %n destinatari di organizzazioni partner hanno ricevuto questo segreto da una copia e non hanno ricevuto questa modifica."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Questo segreto è in attesa di un controllo delle sue condivisioni che non è ancora terminato. Non è stato condiviso nulla; riprova più tardi o chiedi a un amministratore di verificare che i processi in background siano in esecuzione.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Questo segreto è stato condiviso con te, quindi non può essere condiviso con un'organizzazione partner. Non è stato condiviso nulla.",
         "Sharing options could not be loaded.": "Impossibile caricare le opzioni di condivisione.",
         "Sharing options still could not be loaded.": "Non è stato ancora possibile caricare le opzioni di condivisione.",
         "Sharing is not available for this secret.": "La condivisione non è disponibile per questo segreto."

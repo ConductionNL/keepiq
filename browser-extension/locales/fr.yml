@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Cet élément attend une vérification de ses partages qui n’est pas terminée. Rien n’a été enregistré ; réessayez plus tard.
   shareScanPendingOpen: Cet élément attend une vérification de ses partages et ne peut pas encore être modifié. Réessayez plus tard.
   shareScanPendingDelete: Cet élément attend une vérification de ses partages qui n’est pas terminée. Rien n’a été supprimé ; réessayez plus tard.
+  partnerShareOwnerMismatch: "Rien n’a été enregistré : un partage de cet élément avec une organisation partenaire appartient encore à son ancien propriétaire. Un administrateur doit réparer les partages avec les organisations partenaires avant que cette modification puisse être enregistrée."
   sendInvalid: Keepiq n’a pas accepté cet envoi. Rien n’a été envoyé ; vérifiez les champs et réessayez.
   sendOffline: Impossible de joindre le serveur, rien n’a été envoyé
   argon2Unavailable: La protection par mot de passe n’est pas disponible dans ce navigateur
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Enregistré. Les destinataires des organisations partenaires recevront cette modification au prochain enregistrement par le propriétaire.
   suspended: Le partage avec {cloudIds} est suspendu, car leur certificat n’a pas pu être vérifié ou leur organisation ne l’accepte plus. L’application web Keepiq affiche le partage.
   paused: Le partage avec {cloudIds} est suspendu jusqu’à ce que vous leur partagiez à nouveau cet élément.
+  notReached:
+    1: Enregistré, mais 1 destinataire d’une organisation partenaire a reçu cet élément à partir d’une copie et n’a pas reçu cette modification.
+    n: Enregistré, mais $1 destinataires d’organisations partenaires ont reçu cet élément à partir d’une copie et n’ont pas reçu cette modification.
 
 folders:
   add: Ajouter un dossier

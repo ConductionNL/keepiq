@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Dette element venter på et tjek af dets delinger, som ikke er færdigt. Intet blev gemt; prøv igen senere.
   shareScanPendingOpen: Dette element venter på et tjek af dets delinger og kan ikke redigeres endnu. Prøv igen senere.
   shareScanPendingDelete: Dette element venter på et tjek af dets delinger, som ikke er færdigt. Intet blev slettet; prøv igen senere.
+  partnerShareOwnerMismatch: "Intet blev gemt: en deling af dette element med en partnerorganisation tilhører stadig dets tidligere ejer. En administrator skal reparere delingerne med partnerorganisationer, før denne ændring kan gemmes."
   sendInvalid: Keepiq accepterede ikke denne forsendelse. Intet blev sendt; tjek felterne og prøv igen.
   sendOffline: Kunne ikke kontakte serveren, intet blev sendt
   argon2Unavailable: Adgangskodebeskyttelse er ikke tilgængelig i denne browser
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Gemt. Modtagere hos partnerorganisationer får ændringen, næste gang ejeren gemmer elementet.
   suspended: Deling med {cloudIds} er sat på pause, fordi deres certifikat ikke kunne bekræftes, eller deres organisation ikke længere accepterer det. Keepiq-webappen viser delingen.
   paused: Deling med {cloudIds} er sat på pause, indtil du deler dette element med dem igen.
+  notReached:
+    1: Gemt, men 1 modtager hos en partnerorganisation fik dette element fra en kopi og fik ikke denne ændring.
+    n: Gemt, men $1 modtagere hos partnerorganisationer fik dette element fra en kopi og fik ikke denne ændring.
 
 folders:
   add: Tilføj mappe

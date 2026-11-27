@@ -73,7 +73,7 @@ vi.mock('../../src/services/shareSave.js', () => ({
 		})
 		return { ok: 1 }
 	},
-	notifyOwnerOnly: async (result) => calls.push({ notify: result }),
+	notifyPartnerNotes: async (result) => calls.push({ notify: result }),
 	shareSaveErrorText: () => null,
 }))
 

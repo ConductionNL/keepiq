@@ -611,9 +611,11 @@ class GroupShareService implements GroupShareServiceInterface {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	private function assertShareableSource(Secret $secret, string $userId): void {
-		if ($this->isReceivedCopy(secret: $secret) === true) {
-			throw new InvalidArgumentException(message: 'A received copy cannot be shared onward');
-		}
+		$this->rowJudge->assertNotReceivedCopy(
+			secret: $secret,
+			pending: 'This secret waits for the share quarantine scan, so it cannot be shared yet',
+			refusal: 'A received copy cannot be shared onward'
+		);
 
 		$this->authorization()->assertMayShareOnward(source: $secret, userId: $userId);
 	}//end assertShareableSource()
@@ -738,31 +740,6 @@ class GroupShareService implements GroupShareServiceInterface {
 			rowJudge: $this->rowJudge,
 		));
 	}//end authorization()
-
-	/**
-	 * Whether the source is itself a received copy — a secret that is some share
-	 * target's recipient secret (ShareRowVerdict::countsAsCopy()). Fails open to
-	 * "original" only when no row names it, or the pending quarantine scan
-	 * quarantines the one that does; an ambiguous match, a row its target does
-	 * not hold and a row the scan cannot judge count as a copy.
-	 *
-	 * @param Secret $secret The source secret
-	 *
-	 * @return bool
-	 *
-	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming it
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
-	 */
-	private function isReceivedCopy(Secret $secret): bool {
-		$verdict = $this->rowJudge->forCopy(copy: $secret);
-		if ($verdict->awaitsTheScan() === true) {
-			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be shared yet');
-		}
-
-		return $verdict->countsAsCopy();
-	}//end isReceivedCopy()
 
 	/**
 	 * Return true when $userId is the owner of $secret or an active delegate.

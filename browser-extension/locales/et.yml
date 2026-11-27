@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: See kirje ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovi hiljem uuesti.
   shareScanPendingOpen: See kirje ootab oma jagamiste kontrolli ja seda ei saa veel muuta. Proovi hiljem uuesti.
   shareScanPendingDelete: See kirje ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei kustutatud; proovi hiljem uuesti.
+  partnerShareOwnerMismatch: "Midagi ei salvestatud: selle kirje jagamine partnerorganisatsiooniga kuulub endiselt selle eelmisele omanikule. Peakasutaja peab jagamised partnerorganisatsioonidega parandama, enne kui selle muudatuse saab salvestada."
   sendInvalid: Keepiq ei aktsepteerinud seda saadetist. Midagi ei saadetud; kontrolli välju ja proovi uuesti.
   sendOffline: Serveriga ei õnnestunud ühendust saada, midagi ei saadetud
   argon2Unavailable: Salasõnaga kaitsmine pole selles brauseris saadaval
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Salvestatud. Partnerorganisatsioonide saajad saavad selle muudatuse, kui omanik kirje järgmine kord salvestab.
   suspended: Jagamine saajatega {cloudIds} on peatatud, kuna nende sertifikaati ei õnnestunud kinnitada või nende organisatsioon ei aktsepteeri seda enam. Keepiqi veebirakendus näitab jagamist.
   paused: Jagamine saajatega {cloudIds} on peatatud, kuni jagad seda kirjet nendega uuesti.
+  notReached:
+    1: Salvestatud, kuid 1 partnerorganisatsiooni saaja sai selle kirje koopiast ega saanud seda muudatust.
+    n: Salvestatud, kuid $1 partnerorganisatsioonide saajat said selle kirje koopiast ega saanud seda muudatust.
 
 folders:
   add: Lisa kaust

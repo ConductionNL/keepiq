@@ -149,6 +149,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
 	public function save(string $id, ShareSaveRequest $request, string $userId): array {
 		$fields = array_keys((array)$request->patch);
@@ -205,6 +206,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 				'notified' => $notified,
 				'queued' => count($written['federatedRows']) - $notified,
 				'ownerOnly' => $written['ownerOnly'],
+				'notReached' => $written['notReached'],
 			],
 		];
 	}//end save()
@@ -252,30 +254,26 @@ class ShareSaveService implements ShareSaveServiceInterface {
 			}
 		);
 
+		// Before a stage's reach check too, so every call of a caller who does not own the source gets the one answer.
+		$this->scope->assertMayNamePartners(path: $path, entries: $entries, userId: $userId);
+
 		return [$path, $entries, $expiresAt, $chunks];
 	}//end open()
 
 	/**
-	 * A copy editor writes no partner shares and must name the source version
-	 * the edit was made from. Nothing to check for the owner.
+	 * A copy editor must name the source version the edit was made from.
+	 * Nothing to check for the owner saving the source itself.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveRequest $request The request
 	 *
-	 * @throws ShareSaveRefusal federated_owner_only or source_base_required
+	 * @throws ShareSaveRefusal source_base_required
 	 *
 	 * @return void
 	 */
 	private function assertCopyEditorRequest(ShareSavePath $path, ShareSaveRequest $request): void {
 		if ($path->isCopyEditor() === false) {
 			return;
-		}
-
-		if ($request->entries->federatedCount() > 0) {
-			throw new ShareSaveRefusal(
-				error: 'federated_owner_only',
-				message: 'Only the owner writes partner shares'
-			);
 		}
 
 		if ($request->sourceBaseUpdatedAt === null) {
@@ -329,7 +327,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 * @param SecretVersion|null $version The version a restore comes from
 	 * @param array<string,?string> $kept The head's value of each field a restore leaves out of the patch
 	 *
-	 * @return array{secret:Secret,copies:int,federatedRows:list<FederatedShare>,ownerOnly:bool}
+	 * @return array{secret:Secret,copies:int,federatedRows:list<FederatedShare>,ownerOnly:bool,notReached:int}
 	 */
 	private function write(
 		ShareSavePath $path,
@@ -388,11 +386,14 @@ class ShareSaveService implements ShareSaveServiceInterface {
 			$this->stages->drop(stageId: $request->stageId);
 		}
 
+		$writtenCopies = array_values(array_intersect(array_column($entries->copies, 'secretId'), array_keys($required['copies'])));
+
 		return [
 			'secret' => $secret,
 			'copies' => $copies,
 			'federatedRows' => $federatedRows,
 			'ownerOnly' => $required['ownerOnly'],
+			'notReached' => $this->scope->partnersNotReached(path: $path, copyIds: $writtenCopies, userId: $userId),
 		];
 	}//end write()
 

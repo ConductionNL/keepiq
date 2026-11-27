@@ -33,7 +33,9 @@ use OCP\IDBConnection;
  *
  * @template-extends QBMapper<FederatedShare>
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 13 against a threshold of 10: each is a single query on the partner shares table.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 14 against a threshold of 10: each is a single query on the partner shares table.
+ *   A mapper's public surface is its query set;
+ *   countActiveBySourceSecrets() lets a share-save count the partner shares of every copy it wrote in one query.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
@@ -107,6 +109,32 @@ class FederatedShareMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findBySourceOwnerUser()
+
+	/**
+	 * How many active federated shares have one of these secrets as their source.
+	 *
+	 * @param list<string> $sourceSecretIds The secrets
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+	 */
+	public function countActiveBySourceSecrets(array $sourceSecretIds): int {
+		$count = 0;
+		foreach (array_chunk(array_values(array_unique($sourceSecretIds)), 1000) as $chunk) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select($qb->func()->count('id', 'shares'))
+				->from($this->getTableName())
+				->where($qb->expr()->in('source_secret_id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_STR_ARRAY)))
+				->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(FederatedShare::STATUS_ACTIVE)));
+
+			$result = $qb->executeQuery();
+			$count += (int)$result->fetchOne();
+			$result->closeCursor();
+		}
+
+		return $count;
+	}//end countActiveBySourceSecrets()
 
 	/**
 	 * Every federated share to recipients of one partner.

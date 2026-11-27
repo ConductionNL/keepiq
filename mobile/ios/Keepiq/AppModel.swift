@@ -42,6 +42,7 @@ final class AppModel: ObservableObject {
     /// UI tests replace the browser: the replayed server grants on its own.
     private let noBrowser: Bool
 
+    /// @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
     init() {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-keepiq-reset") { KeychainStorage.deleteAll() }
@@ -65,8 +66,13 @@ final class AppModel: ObservableObject {
         NotificationCenter.default.addObserver(
             forName: UIApplication.protectedDataWillBecomeUnavailableNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            // The phone locked (design D4): lock the vault with it.
-            MainActor.assumeIsolated { self?.lock() }
+            // The phone locked (design D4): lock the vault with it, and the
+            // keys the AutoFill extension holds for any account (task 2.5).
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                for account in self.accounts { self.client.lockState.recordLock(accountId: account.id) }
+                self.lock()
+            }
         }
     }
 
@@ -178,6 +184,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
     private func withSuite(_ accountId: String, _ open: @escaping (Suite) async throws -> UnlockedVault) {
         perform {
             let current: UnlockGate
@@ -213,6 +220,8 @@ final class AppModel: ObservableObject {
             } else {
                 self.maxIdle = nil
             }
+            // The AutoFill extension caps its idle time with it (task 2.5).
+            self.client.lockState.recordOrganisationMax(accountId: accountId, maxMinutes: self.maxIdle.map { KotlinInt(int: Int32($0)) })
             self.touch()
             self.startIdleWatch()
         }
@@ -326,13 +335,17 @@ final class AppModel: ObservableObject {
 
     /// Locks now: the session forgets the private key, the unlock key is
     /// overwritten, and the unlock screen shows. `reason` is shown there, for
-    /// a lock the user did not ask for.
+    /// a lock the user did not ask for. The AutoFill extension forgets the
+    /// keys it opened before this lock (task 2.5).
+    ///
+    /// @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
     func lock(reason: String? = nil) {
         let vault: UnlockedVault
         switch screen {
         case .unlocked(let v, _), .settings(let v): vault = v
         default: return
         }
+        client.lockState.recordLock(accountId: vault.accountId)
         idleTask?.cancel()
         closeSession()
         vault.lock()

@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Šis vienums gaida kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vēlreiz.
   shareScanPendingOpen: Šis vienums gaida kopīgojumu pārbaudi, un to vēl nevar labot. Mēģiniet vēlāk vēlreiz.
   shareScanPendingDelete: Šis vienums gaida kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika izdzēsts; mēģiniet vēlāk vēlreiz.
+  partnerShareOwnerMismatch: "Nekas netika saglabāts: šī vienuma kopīgojums ar partnera organizāciju joprojām pieder tā iepriekšējam īpašniekam. Pārvaldītājam ir jālabo kopīgojumi ar partneru organizācijām, pirms šo izmaiņu var saglabāt."
   sendInvalid: Keepiq nepieņēma šo sūtījumu. Nekas netika nosūtīts; pārbaudiet laukus un mēģiniet vēlreiz.
   sendOffline: Nevarēja sasniegt serveri, nekas netika nosūtīts
   argon2Unavailable: Aizsardzība ar paroli šajā pārlūkā nav pieejama
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Saglabāts. Saņēmēji partneru organizācijās saņems šo izmaiņu, kad īpašnieks nākamreiz saglabās vienumu.
   suspended: Kopīgošana ar {cloudIds} ir apturēta, jo viņu sertifikātu nevarēja pārbaudīt vai viņu organizācija to vairs nepieņem. Kopīgojumu parāda Keepiq tīmekļa lietotne.
   paused: Kopīgošana ar {cloudIds} ir apturēta, līdz atkal kopīgosiet šo vienumu ar viņiem.
+  notReached:
+    1: Saglabāts, bet 1 saņēmējs partnera organizācijā saņēma šo vienumu no kopijas un nesaņēma šo izmaiņu.
+    n: Saglabāts, bet šo izmaiņu nesaņēma saņēmēji partneru organizācijās, kas šo vienumu saņēma no kopijas ($1).
 
 folders:
   add: Pievienot mapi

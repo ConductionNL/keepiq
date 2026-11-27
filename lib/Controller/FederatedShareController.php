@@ -29,6 +29,7 @@ use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
@@ -68,6 +69,9 @@ class FederatedShareController extends Controller {
 	/**
 	 * Share one of the user's secrets with a user of an outbound partner.
 	 *
+	 * A secret that was shared with the user, a received copy, is refused with the message `not_shareable`,
+	 * unless the user owns its source: their own copy of a secret they own is shared from that source.
+	 *
 	 * Every federated recipient is a new party, so the vault key proof of
 	 * user-sharing ("Sharing with a new party requires a verified key proof")
 	 * is always asked.
@@ -87,6 +91,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(binds: ['secretId', 'recipientCloudId'], purpose: VaultKeyProofServiceInterface::PURPOSE_SHARE_NEW_RECIPIENT)]
@@ -123,6 +128,11 @@ class FederatedShareController extends Controller {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		} catch (PartnerUpgradeRequiredException $exception) {
 			return $this->upgradeRequired(exception: $exception, shareId: null);
+		} catch (ShareScanPendingException $exception) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (RuntimeException $exception) {
 			return $this->refusal(exception: $exception);
 		}

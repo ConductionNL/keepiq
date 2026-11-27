@@ -2077,6 +2077,16 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Папки нельзя прикрепить. Перетащите вместо этого файлы из них.",
         "Files cannot be added while you are offline. Remove them to save.": "Нельзя добавлять файлы без подключения к сети. Удалите их, чтобы сохранить.",
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можно добавлять только к собственному секрету. Удалите их, чтобы сохранить.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ничего не сохранено: общий доступ к этому секрету для партнёрской организации всё ещё принадлежит его прежнему владельцу. Администратор должен исправить общий доступ для партнёрских организаций, прежде чем это изменение можно будет сохранить.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Сохранено, но %n получатель в партнёрской организации получил этот секрет из копии и не получил это изменение.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Сохранено, но %n получателей в партнёрских организациях получили этот секрет из копии и не получили это изменение.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Сохранено, но %n получатель в партнёрской организации получил этот секрет из копии и не получил это изменение.",
+            "Сохранено, но %n получателя в партнёрских организациях получили этот секрет из копии и не получили это изменение.",
+            "Сохранено, но %n получателей в партнёрских организациях получили этот секрет из копии и не получили это изменение."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не передано; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Этим секретом поделились с вами, поэтому им нельзя поделиться с партнёрской организацией. Доступ не предоставлен.",
         "Sharing options could not be loaded.": "Не удалось загрузить параметры общего доступа.",
         "Sharing options still could not be loaded.": "По-прежнему не удалось загрузить параметры общего доступа.",
         "Sharing is not available for this secret.": "Общий доступ к этому секрету недоступен."

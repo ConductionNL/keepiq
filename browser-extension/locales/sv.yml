@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Det här objektet väntar på en kontroll av sina delningar som inte är klar. Inget sparades; försök igen senare.
   shareScanPendingOpen: Det här objektet väntar på en kontroll av sina delningar och kan inte redigeras än. Försök igen senare.
   shareScanPendingDelete: Det här objektet väntar på en kontroll av sina delningar som inte är klar. Inget raderades; försök igen senare.
+  partnerShareOwnerMismatch: "Inget sparades: en delning av det här objektet med en partnerorganisation tillhör fortfarande dess tidigare ägare. En administratör måste reparera delningarna med partnerorganisationer innan den här ändringen kan sparas."
   sendInvalid: Keepiq godtog inte den här försändelsen. Inget skickades; kontrollera fälten och försök igen.
   sendOffline: Kunde inte nå servern, inget skickades
   argon2Unavailable: Lösenordsskydd är inte tillgängligt i den här webbläsaren
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Sparat. Mottagare hos partnerorganisationer får ändringen nästa gång ägaren sparar objektet.
   suspended: Delningen med {cloudIds} är pausad, eftersom deras certifikat inte kunde verifieras eller deras organisation inte längre godtar det. Keepiqs webbapp visar delningen.
   paused: Delningen med {cloudIds} är pausad tills du delar det här objektet med dem igen.
+  notReached:
+    1: Sparat, men 1 mottagare hos en partnerorganisation fick det här objektet från en kopia och fick inte den här ändringen.
+    n: Sparat, men $1 mottagare hos partnerorganisationer fick det här objektet från en kopia och fick inte den här ändringen.
 
 folders:
   add: Lägg till mapp

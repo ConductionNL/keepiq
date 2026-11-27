@@ -533,6 +533,31 @@ describe('SecretEditDialog — share save', () => {
 		).toBe(false)
 	})
 
+	it('shows a partner share an administrator must repair as translated text and stays open', async () => {
+		const wrapper = await mountEdited()
+		vi.spyOn(useSecretStore(), 'updateSecret').mockRejectedValue(
+			Object.assign(
+				httpError(409, {
+					error: 'partner_share_owner_mismatch',
+					message: 'x',
+				}),
+				{ fromShareSave: true },
+			),
+		)
+
+		await wrapper.vm.submit()
+		await wrapper.vm.$nextTick()
+
+		const card = wrapper.find('[data-testid="secret-edit-error"]')
+		expect(card.text()).toContain(
+			'An administrator must repair the partner shares',
+		)
+		expect(wrapper.emitted('saved')).toBeFalsy()
+		expect(
+			wrapper.find('[data-testid="save-without-unreachable"]').exists(),
+		).toBe(false)
+	})
+
 	it("shows a vault policy refusal with the server's own message", async () => {
 		const wrapper = await mountEdited()
 		const message =
