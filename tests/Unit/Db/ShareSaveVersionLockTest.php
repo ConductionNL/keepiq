@@ -224,18 +224,18 @@ class ShareSaveVersionLockTest extends TestCase {
 		$mapper = new FederatedShareMapper(db: $this->db);
 		$row = $this->committedShareSave(mapper: $mapper, attempts: $attempts);
 		$messenger = $this->createMock(FederatedShareMessenger::class);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 		$sent = [];
 		$messenger->method('notify')->willReturnCallback(
-			function (FederatedShare $notified, string $type) use (&$sent, $row, $mapper, $delivery, $updateArrives): bool {
+			function (FederatedShare $notified, string $type) use (&$sent, $row, $mapper, $delivery, $updateArrives): string {
 				// The retry job also sees this instance's other rows.
 				if ($notified->getId() !== $row->getId()) {
-					return false;
+					return FederatedShareMessenger::UNREACHABLE;
 				}
 
 				$sent[] = $type;
 				if ($type === FederatedNotificationDelivery::SHARE_UNSHARED) {
-					return false;
+					return FederatedShareMessenger::UNREACHABLE;
 				}
 
 				$other = $mapper->findById($notified->getId());
@@ -287,12 +287,12 @@ class ShareSaveVersionLockTest extends TestCase {
 		$messenger = $this->createMock(FederatedShareMessenger::class);
 		$sent = [];
 		$messenger->method('notify')->willReturnCallback(
-			function (FederatedShare $notified, string $type) use (&$sent): bool {
+			function (FederatedShare $notified, string $type) use (&$sent): string {
 				$sent[] = $type;
-				return false;
+				return FederatedShareMessenger::UNREACHABLE;
 			}
 		);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 
 		$this->shareService(mapper: $mapper, delivery: $delivery)->revoke(shareId: $row->getId(), userId: 'share-save-test');
 		$this->assertFalse($delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED));
@@ -313,12 +313,12 @@ class ShareSaveVersionLockTest extends TestCase {
 		$mapper = new FederatedShareMapper(db: $this->db);
 		$row = $mapper->findById($this->insertPartnerShare(status: FederatedShare::STATUS_ACTIVE, pending: null)->getId());
 		$messenger = $this->createMock(FederatedShareMessenger::class);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 		$sent = 0;
 		$messenger->method('notify')->willReturnCallback(
-			function (FederatedShare $notified) use (&$sent, $row, $delivery): bool {
+			function (FederatedShare $notified) use (&$sent, $row, $delivery): string {
 				if ($notified->getId() !== $row->getId()) {
-					return false;
+					return FederatedShareMessenger::UNREACHABLE;
 				}
 
 				$sent++;
@@ -326,7 +326,7 @@ class ShareSaveVersionLockTest extends TestCase {
 					$delivery->retryDue(now: new DateTime(), limit: 1000);
 				}
 
-				return false;
+				return FederatedShareMessenger::UNREACHABLE;
 			}
 		);
 
@@ -361,18 +361,18 @@ class ShareSaveVersionLockTest extends TestCase {
 		$sourceId = Uuid::uuid4()->toString();
 		$share = $mapper->findById($this->insertPartnerShare(status: FederatedShare::STATUS_ACTIVE, pending: null, sourceSecretId: $sourceId)->getId());
 		$messenger = $this->createMock(FederatedShareMessenger::class);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 		$service = $this->shareService(mapper: $mapper, delivery: $delivery);
 		$sent = [];
 		$messenger->method('notify')->willReturnCallback(
-			function (FederatedShare $notified, string $type) use (&$sent, $service, $sourceId): bool {
+			function (FederatedShare $notified, string $type) use (&$sent, $service, $sourceId): string {
 				$sent[] = $type;
 				if (count($sent) === 1) {
 					$service->detailsChanged(secretId: $sourceId, userId: 'share-save-test');
-					return true;
+					return FederatedShareMessenger::TAKEN;
 				}
 
-				return false;
+				return FederatedShareMessenger::UNREACHABLE;
 			}
 		);
 
@@ -398,8 +398,8 @@ class ShareSaveVersionLockTest extends TestCase {
 		$mapper = new FederatedShareMapper(db: $this->db);
 		$row = $this->committedShareSave(mapper: $mapper);
 		$messenger = $this->createMock(FederatedShareMessenger::class);
-		$messenger->method('notify')->willReturnOnConsecutiveCalls(false, true);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$messenger->method('notify')->willReturnOnConsecutiveCalls(FederatedShareMessenger::UNREACHABLE, FederatedShareMessenger::TAKEN);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 
 		$this->assertFalse($delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED));
 		$stored = $mapper->findById($row->getId());
@@ -419,6 +419,53 @@ class ShareSaveVersionLockTest extends TestCase {
 		$share->setPendingNotification(FederatedNotificationDelivery::SHARE_UNSHARED);
 		$mapper->update($share);
 		$this->assertSame(1, $mapper->deleteIfPending(share: $share, pending: FederatedNotificationDelivery::SHARE_UNSHARED));
+	}
+
+	/**
+	 * A deleted secret's unshare that still fails after 30 days drops the share only while the row is as the attempt read it:
+	 * one written while the partner was slow stays, with no failure recorded, and the next attempt drops it.
+	 */
+	public function testAnUnshareDroppedAfterThirtyDaysLeavesARowWrittenMeanwhile(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$now = new DateTime('2020-02-01T10:00:00+00:00');
+		// No secret row has this id: the secret is deleted for good.
+		$share = $this->insertPartnerShare(status: FederatedShare::STATUS_REVOKED, pending: FederatedNotificationDelivery::SHARE_UNSHARED, attempts: 40, sourceSecretId: Uuid::uuid4()->toString(), nextNotifyAt: $now);
+		$share->setUpdatedAt(new DateTime('2019-12-01T10:00:00+00:00'));
+		$mapper->update($share);
+
+		$writeMeanwhile = true;
+		$messenger = $this->createMock(FederatedShareMessenger::class);
+		$messenger->method('notify')->willReturnCallback(
+			function (FederatedShare $notified) use (&$writeMeanwhile, $share, $mapper): string {
+				if ($writeMeanwhile === true && $notified->getId() === $share->getId()) {
+					$written = $mapper->findById($share->getId());
+					$written->setUpdatedAt(new DateTime('2019-12-01T10:00:01+00:00'));
+					$mapper->update($written);
+				}
+
+				return FederatedShareMessenger::UNREACHABLE;
+			}
+		);
+		$failed = [];
+		$audit = $this->createMock(FederatedShareAuditTrail::class);
+		$audit->method('recordOutbound')->willReturnCallback(
+			function (string $eventType, FederatedShare $row) use (&$failed): void {
+				$failed[] = $row->getId();
+			}
+		);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit, new SecretMapper(db: $this->db));
+
+		$delivery->retryDue(now: $now, limit: 10000);
+
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $mapper->findById($share->getId())->getPendingNotification());
+		$this->assertNotContains($share->getId(), $failed);
+
+		$writeMeanwhile = false;
+		$delivery->retryDue(now: $now, limit: 10000);
+
+		$this->assertContains($share->getId(), $failed);
+		$this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
+		$mapper->findById($share->getId());
 	}
 
 	public function testAPartnerShareIsWrittenOnlyWhileActive(): void {
@@ -446,7 +493,7 @@ class ShareSaveVersionLockTest extends TestCase {
 	public function testASuspendClearsTheQueuedUpdate(): void {
 		$mapper = new FederatedShareMapper(db: $this->db);
 		$row = $this->committedShareSave(mapper: $mapper, attempts: 2);
-		$delivery = new FederatedNotificationDelivery($mapper, $this->createMock(FederatedShareMessenger::class), $this->createMock(FederatedShareAuditTrail::class));
+		$delivery = new FederatedNotificationDelivery($mapper, $this->createMock(FederatedShareMessenger::class), $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 
 		$this->shareService(mapper: $mapper, delivery: $delivery)->suspend(shareId: $row->getId(), userId: 'share-save-test', reason: 'partner_removed');
 
@@ -481,12 +528,12 @@ class ShareSaveVersionLockTest extends TestCase {
 		$messenger = $this->createMock(FederatedShareMessenger::class);
 		$sent = [];
 		$messenger->method('notify')->willReturnCallback(
-			function (FederatedShare $notified, string $type) use (&$sent): bool {
+			function (FederatedShare $notified, string $type) use (&$sent): string {
 				$sent[$notified->getId()] = $type;
-				return true;
+				return FederatedShareMessenger::TAKEN;
 			}
 		);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 		$delivery->retryDue(now: $due, limit: 10000);
 
 		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $sent[$revoked->getId()] ?? null);
@@ -532,8 +579,8 @@ class ShareSaveVersionLockTest extends TestCase {
 		$mapper->update($row);
 
 		$messenger = $this->createMock(FederatedShareMessenger::class);
-		$messenger->method('notify')->willReturn(false);
-		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class));
+		$messenger->method('notify')->willReturn(FederatedShareMessenger::UNREACHABLE);
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $this->createMock(FederatedShareAuditTrail::class), new SecretMapper(db: $this->db));
 		$service = $this->shareService(mapper: $mapper, delivery: $delivery);
 
 		$signed = $this->createMock(IIncomingSignedRequest::class);

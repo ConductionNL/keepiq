@@ -58,6 +58,7 @@ use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -66,6 +67,7 @@ use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareService;
@@ -498,6 +500,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 	 */
 	private function revocation(ShareQuarantineScanner $scanner): ShareRevocationService {
 		return new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: new ShareTargetMapper(db: $this->db),
 			secretMapper: new SecretMapper(db: $this->db),
 			db: $this->db,
@@ -1309,8 +1312,8 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			bulkGrantMapper: new BulkGrantShareTargetMapper(db: $this->db),
 			copies: new RecipientSecretCopyService(
 				secretMapper: new SecretMapper(db: $this->db),
-				suiteMapper: $suites,
-				typeService: $types
+				copies: new RecipientSecretCopyFactory(secretMapper: new SecretMapper(db: $this->db), suiteMapper: $suites, typeService: $types),
+				partnerShares: $this->createStub(PartnerShareRevoker::class),
 			),
 			notificationService: $this->createMock(NotificationService::class),
 			db: $this->db,

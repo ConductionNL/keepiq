@@ -42,7 +42,7 @@ interface FederatedRemoteChangeServiceInterface {
 	/**
 	 * Handle one notification from the sending instance.
 	 *
-	 * @param string $type `SHARE_UPDATED` or `SHARE_UNSHARED`; others are acknowledged and ignored
+	 * @param string $type `SHARE_UPDATED` or `SHARE_UNSHARED`; others are acknowledged and ignored while the share has not ended
 	 * @param string $providerId The share id on the sender
 	 * @param array<array-key,mixed> $notification The payload, `{sharedSecret}` (its SHA-256)
 	 *

@@ -74,6 +74,12 @@ class FederatedRemoteChangeTest extends TestCase {
 	/** @var array<int,string|null> The OCM addresses the signature check was asked with */
 	private array $askedWith = [];
 
+	/** The writes to the inbound share and the copy */
+	private int $writes = 0;
+
+	/** The signer origin that makes the signature check throw, as an invalid signature does */
+	private const INVALID_SIGNATURE = 'invalid signature';
+
 	protected function setUp(): void {
 		$this->skipWithoutFederation();
 		$this->row = new FederatedInbound();
@@ -112,8 +118,12 @@ class FederatedRemoteChangeTest extends TestCase {
 			$signed->method('getOrigin')->willReturn($signer);
 		}
 		$this->ocm->method('getIncomingSignedRequest')->willReturnCallback(
-			function (?string $address = null) use ($signed) {
+			function (?string $address = null) use ($signed, $signer) {
 				$this->askedWith[] = $address;
+				if ($signer === self::INVALID_SIGNATURE) {
+					throw new \RuntimeException('signature does not verify');
+				}
+
 				return $signed;
 			}
 		);
@@ -136,15 +146,26 @@ class FederatedRemoteChangeTest extends TestCase {
 		$inbound->method('findByRemoteShareId')->willReturnCallback(
 			fn (string $remoteId): array => ($remoteId === self::REMOTE_ID) ? [$this->row] : []
 		);
-		$inbound->method('update')->willReturnArgument(0);
+		$inbound->method('update')->willReturnCallback(
+			function (FederatedInbound $row): FederatedInbound {
+				$this->writes++;
+				return $row;
+			}
+		);
 
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturnCallback(
 			fn (string $id): Secret => ($this->copy !== null && $id === $this->copy->getId()) ? $this->copy : throw new DoesNotExistException('none')
 		);
-		$secrets->method('update')->willReturnArgument(0);
+		$secrets->method('update')->willReturnCallback(
+			function (Secret $secret): Secret {
+				$this->writes++;
+				return $secret;
+			}
+		);
 		$secrets->method('delete')->willReturnCallback(
 			function (Secret $secret): Secret {
+				$this->writes++;
 				$this->copy = null;
 				return $secret;
 			}
@@ -254,6 +275,7 @@ class FederatedRemoteChangeTest extends TestCase {
 	public static function refusals(): array {
 		return [
 			'unsigned' => [null, self::SHARED_SECRET, self::REMOTE_ID],
+			'an invalid signature' => [self::INVALID_SIGNATURE, self::SHARED_SECRET, self::REMOTE_ID],
 			'another partner' => ['cloud.other.example', self::SHARED_SECRET, self::REMOTE_ID],
 			'a stranger' => ['cloud.evil.example', self::SHARED_SECRET, self::REMOTE_ID],
 			'wrong secret' => ['cloud.city.example', 'guess', self::REMOTE_ID],
@@ -279,5 +301,132 @@ class FederatedRemoteChangeTest extends TestCase {
 		$this->assertSame('OLD-CIPHER-KEY-FOR-BOB', $this->copy->getKey());
 		$this->assertSame(FederatedInbound::STATUS_ACCEPTED, $this->row->getStatus());
 		$this->assertSame([], $this->audit);
+	}
+
+	/**
+	 * @return array<string,array{0:string}>
+	 */
+	public static function otherStatuses(): array {
+		return [
+			'pending' => [FederatedInbound::STATUS_PENDING],
+			'declined' => [FederatedInbound::STATUS_DECLINED],
+		];
+	}
+
+	/**
+	 * A first unshare ends a pending or declined share too: the share is revoked and unlinked, and there is no accepted copy to remove.
+	 *
+	 * @dataProvider otherStatuses
+	 */
+	public function testAFirstUnshareEndsAPendingOrDeclinedShare(string $status): void {
+		$this->row->setStatus($status);
+
+		$result = $this->bob('cloud.city.example')->notificationReceived('SHARE_UNSHARED', self::REMOTE_ID, $this->notification());
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedInbound::STATUS_REVOKED, $this->row->getStatus());
+		$this->assertNull($this->row->getSecretId());
+		$this->assertSame(1, $this->writes);
+		$this->assertNotNull($this->copy);
+		$this->assertSame([], $this->audit);
+	}
+
+	/**
+	 * Bob's server deleted the copy, but its answer never reached Alice's server: her repeated unshare is taken,
+	 * after the same hash and signature check, and changes nothing.
+	 */
+	public function testARepeatedUnshareIsTakenAndChangesNothing(): void {
+		$bob = $this->bob('cloud.city.example');
+		$bob->notificationReceived('SHARE_UNSHARED', self::REMOTE_ID, $this->notification());
+		$this->assertNull($this->copy);
+		$writes = $this->writes;
+		$audit = $this->audit;
+		$ended = clone $this->row;
+		$this->askedWith = [];
+
+		$result = $bob->notificationReceived('SHARE_UNSHARED', self::REMOTE_ID, $this->notification());
+
+		$this->assertSame([], $result);
+		$this->assertSame(['alice@cloud.city.example'], $this->askedWith);
+		$this->assertSame($writes, $this->writes);
+		$this->assertSame($audit, $this->audit);
+		$this->assertEquals($ended, $this->row);
+	}
+
+	/**
+	 * A share Bob's server ended because Alice's refused his restore keeps the restored copy with its last value;
+	 * her unshare for it is taken and leaves that copy alone.
+	 */
+	public function testAnUnshareForAShareEndedByARefusedRestoreIsTakenAndKeepsTheCopy(): void {
+		$this->row->setStatus(FederatedInbound::STATUS_REVOKED);
+		$ended = clone $this->row;
+
+		$result = $this->bob('cloud.city.example')->notificationReceived('SHARE_UNSHARED', self::REMOTE_ID, $this->notification());
+
+		$this->assertSame([], $result);
+		$this->assertSame(0, $this->writes);
+		$this->assertSame([], $this->audit);
+		$this->assertEquals($ended, $this->row);
+		$this->assertSame('OLD-CIPHER-KEY-FOR-BOB', $this->copy?->getKey());
+	}
+
+	/**
+	 * Every refusal of a live share, for either notification; and, verified, every notification but an unshare.
+	 * Each runs against a share unlinked by an unshare and against one still linked to its copy by a refused restore.
+	 *
+	 * @return array<string,array{0:bool,1:string,2:string|null,3:string,4:string}>
+	 */
+	public static function refusalsOfAnEndedShare(): array {
+		$refusals = [];
+		foreach (self::refusals() as $name => [$signer, $secret, $remoteId]) {
+			$refusals['unshare, ' . $name] = ['SHARE_UNSHARED', $signer, $secret, $remoteId];
+			$refusals['update, ' . $name] = ['SHARE_UPDATED', $signer, $secret, $remoteId];
+		}
+
+		$refusals['update, verified'] = ['SHARE_UPDATED', 'cloud.city.example', self::SHARED_SECRET, self::REMOTE_ID];
+		$refusals['a type this code does not know, verified'] = ['SHARE_RENAMED', 'cloud.city.example', self::SHARED_SECRET, self::REMOTE_ID];
+
+		$cases = [];
+		foreach ($refusals as $name => $refusal) {
+			$cases['unlinked by an unshare, ' . $name] = [false, ...$refusal];
+			$cases['linked by a refused restore, ' . $name] = [true, ...$refusal];
+		}
+
+		return $cases;
+	}
+
+	/**
+	 * A share that already ended, unlinked by an unshare or still linked to its copy by a refused restore,
+	 * is refused everything but a verified unshare, and a refusal changes nothing.
+	 *
+	 * @dataProvider refusalsOfAnEndedShare
+	 */
+	public function testAnEndedShareRefusesEverythingButAVerifiedUnshare(bool $linked, string $type, ?string $signer, string $secret, string $remoteId): void {
+		$this->row->setStatus(FederatedInbound::STATUS_REVOKED);
+		$this->row->setUpdatedAt(new DateTime('2026-10-02T00:00:00Z'));
+		if ($linked === false) {
+			$this->row->setSecretId(null);
+			$this->copy = null;
+		}
+
+		$ended = clone $this->row;
+		$copy = ($this->copy === null) ? null : clone $this->copy;
+
+		try {
+			$this->bob($signer)->notificationReceived($type, $remoteId, $this->notification($secret));
+			$this->fail('the notification was taken');
+		} catch (ShareNotFound) {
+			// The one answer for every refusal.
+		}
+
+		$this->assertSame(0, $this->writes);
+		$this->assertSame(0, $this->pulls);
+		$this->assertSame([], $this->audit);
+		$this->assertEquals($ended, $this->row);
+		$this->assertEquals($copy, $this->copy);
+		if ($linked === true) {
+			$this->assertSame('copy-1', $this->row->getSecretId());
+			$this->assertSame('OLD-CIPHER-KEY-FOR-BOB', $this->copy?->getKey());
+		}
 	}
 }

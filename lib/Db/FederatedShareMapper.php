@@ -33,9 +33,9 @@ use OCP\IDBConnection;
  *
  * @template-extends QBMapper<FederatedShare>
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 14 against a threshold of 10: each is a single query on the partner shares table.
  *   A mapper's public surface is its query set;
- *   the eleventh, countActiveBySourceSecrets(), lets a share-save count the partner shares of every copy it wrote in one query.
+ *   countActiveBySourceSecrets() lets a share-save count the partner shares of every copy it wrote in one query.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
@@ -87,6 +87,28 @@ class FederatedShareMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findBySourceSecret()
+
+	/**
+	 * Every federated share of the secrets a user owns now, whatever the share's own owner: the shares an account deletion ends.
+	 * Shares of a secret transferred away are not among them.
+	 *
+	 * @param string $ownerId The user whose secrets go
+	 *
+	 * @return FederatedShare[]
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
+	 */
+	public function findBySourceOwnerUser(string $ownerId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('f.*')
+			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'keepiq_secrets', 's', $qb->expr()->eq('s.id', 'f.source_secret_id'))
+			->where($qb->expr()->eq('s.owner_type', $qb->createNamedParameter('user')))
+			->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)))
+			->orderBy('f.created_at', 'ASC');
+
+		return $this->findEntities(query: $qb);
+	}//end findBySourceOwnerUser()
 
 	/**
 	 * How many active federated shares have one of these secrets as their source.
@@ -243,6 +265,43 @@ class FederatedShareMapper extends QBMapper {
 	 */
 	public function updateIfUnchanged(FederatedShare $share, string $pending, string $status, ?DateTime $updatedAt): int {
 		$qb = $this->changes(share: $share);
+		$this->whereUnchanged(qb: $qb, pending: $pending, status: $status, updatedAt: $updatedAt);
+
+		return $this->run(qb: $qb, share: $share);
+	}//end updateIfUnchanged()
+
+	/**
+	 * Delete a share only while it still holds the notification, status and version an attempt started from.
+	 *
+	 * @param FederatedShare $share The share
+	 * @param string $pending The notification that was attempted
+	 * @param string $status The status the attempt started from
+	 * @param DateTime|null $updatedAt The version the attempt started from
+	 *
+	 * @return int The rows deleted: 0 when the share changed meanwhile
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-an-unreachable-partner-is-retried-for-30-days
+	 */
+	public function deleteIfUnchanged(FederatedShare $share, string $pending, string $status, ?DateTime $updatedAt): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())));
+		$this->whereUnchanged(qb: $qb, pending: $pending, status: $status, updatedAt: $updatedAt);
+
+		return $qb->executeStatement();
+	}//end deleteIfUnchanged()
+
+	/**
+	 * Limit a write to the row while it holds the given notification, status and version.
+	 *
+	 * @param IQueryBuilder $qb The update or delete
+	 * @param string $pending The pending notification
+	 * @param string $status The status
+	 * @param DateTime|null $updatedAt The version
+	 *
+	 * @return void
+	 */
+	private function whereUnchanged(IQueryBuilder $qb, string $pending, string $status, ?DateTime $updatedAt): void {
 		$qb->andWhere($qb->expr()->eq('pending_notification', $qb->createNamedParameter($pending)))
 			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)));
 		$version = $qb->expr()->isNull('updated_at');
@@ -251,9 +310,7 @@ class FederatedShareMapper extends QBMapper {
 		}
 
 		$qb->andWhere($version);
-
-		return $this->run(qb: $qb, share: $share);
-	}//end updateIfUnchanged()
+	}//end whereUnchanged()
 
 	/**
 	 * Delete a share only while the notification is still pending on it.
@@ -273,6 +330,25 @@ class FederatedShareMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end deleteIfPending()
+
+	/**
+	 * Delete a share only while it still has the given status.
+	 *
+	 * @param FederatedShare $share The share
+	 * @param string $status The status it was read with
+	 *
+	 * @return int The rows deleted: 0 when the share changed meanwhile
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
+	 */
+	public function deleteIfStatus(FederatedShare $share, string $status): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($share->getId())))
+			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)));
+
+		return $qb->executeStatement();
+	}//end deleteIfStatus()
 
 	/**
 	 * An UPDATE of the share's changed fields, for its row.

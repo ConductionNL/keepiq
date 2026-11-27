@@ -241,6 +241,41 @@ class FederatedShareMapperQueriesTest extends TestCase {
 	}//end testUpdateIfUnchangedGuardsOnTheVersion()
 
 	/**
+	 * The unchanged-guarded delete compares the notification, status and version stamp, or its absence.
+	 *
+	 * @return void
+	 */
+	public function testDeleteIfUnchangedGuardsOnTheVersion(): void {
+		$stamp = new DateTime('2026-02-01T10:00:00+00:00');
+		$share = new FederatedShare();
+		$share->setId('f9');
+		$this->affected = [0, 1];
+		$mapper = $this->mapper();
+
+		$this->assertSame(
+			expected: 0,
+			actual: $mapper->deleteIfUnchanged(share: $share, pending: 'SHARE_UNSHARED', status: 'revoked', updatedAt: $stamp)
+		);
+		$this->assertSame(
+			expected: 1,
+			actual: $mapper->deleteIfUnchanged(share: $share, pending: 'SHARE_UNSHARED', status: 'revoked', updatedAt: null)
+		);
+
+		$this->assertSame(
+			expected: [
+				'delete(keepiq_federated_shares)', 'where(eq(id, :p0))', 'andWhere(eq(pending_notification, :p1))',
+				'andWhere(eq(status, :p2))', 'andWhere(eq(updated_at, :p3))',
+			],
+			actual: $this->opsOf(index: 0)
+		);
+		$this->assertSame(expected: [':p0' => 'f9', ':p1' => 'SHARE_UNSHARED', ':p2' => 'revoked', ':p3' => $stamp], actual: $this->paramsOf(index: 0));
+		$this->assertSame(expected: IQueryBuilder::PARAM_DATETIME_MUTABLE, actual: $this->queries[0]['types'][':p3']);
+		$this->assertSame(expected: 'statement', actual: $this->ranOf(index: 0));
+		$this->assertSame(expected: 'andWhere(isNull(updated_at))', actual: $this->opsOf(index: 1)[4]);
+		$this->assertCount(expectedCount: 5, haystack: $this->opsOf(index: 1));
+	}//end testDeleteIfUnchangedGuardsOnTheVersion()
+
+	/**
 	 * The delete happens only while the row still carries the pending notification.
 	 *
 	 * @return void

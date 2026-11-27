@@ -204,6 +204,7 @@ class FederatedValueFieldsTest extends TestCase {
 			}
 		);
 
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit, $secrets);
 		$this->service = new FederatedShareService(
 			shareMapper: $mapper,
 			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
@@ -216,7 +217,7 @@ class FederatedValueFieldsTest extends TestCase {
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $random,
-			delivery: new FederatedNotificationDelivery($mapper, $messenger, $audit),
+			delivery: $delivery,
 			audit: $audit,
 			logger: $this->warningLog(),
 		);

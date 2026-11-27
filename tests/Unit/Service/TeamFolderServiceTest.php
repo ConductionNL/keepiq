@@ -44,6 +44,8 @@ use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
@@ -183,8 +185,8 @@ class TeamFolderServiceTest extends TestCase {
 			bulkGrantMapper: $this->bulkGrantMapper,
 			copies: new RecipientSecretCopyService(
 				secretMapper: $this->secretMapper,
-				suiteMapper: $this->suiteMapper,
-				typeService: $this->typeService,
+				copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService),
+				partnerShares: $this->createStub(PartnerShareRevoker::class),
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),
@@ -2267,8 +2269,8 @@ class TeamFolderServiceTest extends TestCase {
 			bulkGrantMapper: $this->bulkGrantMapper,
 			copies: new RecipientSecretCopyService(
 				secretMapper: $this->secretMapper,
-				suiteMapper: $this->suiteMapper,
-				typeService: $this->typeService,
+				copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService),
+				partnerShares: $this->createStub(PartnerShareRevoker::class),
 			),
 			notificationService: $this->notificationService,
 			db: $this->createMock(originalClassName: IDBConnection::class),

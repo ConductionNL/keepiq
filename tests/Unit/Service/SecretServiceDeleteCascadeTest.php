@@ -39,6 +39,8 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Service\SecretDeleteCascade;
+use OCA\Keepiq\Service\SecretDeletion;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -49,6 +51,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests the cascade and audit of the two delete paths.
@@ -158,8 +161,32 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 			rotationService: $this->recorder(class: RotationPolicyService::class, methods: ['deleteForSecret']),
 			auditEvents: new AuditEventFactory(),
 			tagMapper: $this->recorder(class: SecretTagMapper::class, methods: ['deleteBySecret']),
+			deleteCascade: $this->partnerShareRecorder(),
 		);
 	}//end setUp()
+
+	/**
+	 * A delete cascade that records which secret's partner shares end, by whom, and whether for the retention job,
+	 * and whose extra website addresses go.
+	 *
+	 * @return SecretDeleteCascade
+	 */
+	private function partnerShareRecorder(): SecretDeleteCascade {
+		$cascade = $this->createMock(SecretDeleteCascade::class);
+		$cascade->method('endPartnerShares')->willReturnCallback(
+			function (string $secretId, SecretDeletion $deletion): void {
+				$by = $deletion->byRetention() === true ? 'retention' : $deletion->userId;
+				$this->calls[] = 'SecretDeleteCascade.endPartnerShares('.$secretId.','.$by.')';
+			}
+		);
+		$cascade->method('deleteUrls')->willReturnCallback(
+			function (string $secretId): void {
+				$this->calls[] = 'SecretDeleteCascade.deleteUrls('.$secretId.')';
+			}
+		);
+
+		return $cascade;
+	}//end partnerShareRecorder()
 
 	/**
 	 * A row with the given owner.
@@ -193,7 +220,7 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 	];
 
 	/**
-	 * An owner's delete removes the sharing graph, then the secret's own data, then the row.
+	 * An owner's delete revokes the partner shares, removes the sharing graph, then the secret's own data, then the row.
 	 *
 	 * @return void
 	 */
@@ -204,6 +231,7 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 
 		$this->assertSame(
 			array_merge(
+				['SecretDeleteCascade.endPartnerShares(s-1,bob)'],
 				self::SHARING_GRAPH,
 				[
 					'AttachmentService.deleteForSecret(s-1)',
@@ -211,6 +239,7 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 					'SecretVersionService.deleteForSecret(s-1)',
 					'RotationPolicyService.deleteForSecret(s-1)',
 					'SecretTagMapper.deleteBySecret(s-1)',
+					'SecretDeleteCascade.deleteUrls(s-1)',
 					'SecretMapper.delete(s-1)',
 				]
 			),
@@ -237,6 +266,11 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 		$this->service->delete(id: 's-1', userId: 'bob', purgeReason: 'owner');
 		$this->service->delete(id: 's-1', userId: 'bob', purgeReason: 'retention');
 
+		// The owner's purge tells the partners now; the retention job leaves that to the retry job.
+		$this->assertSame(
+			['SecretDeleteCascade.endPartnerShares(s-1,bob)', 'SecretDeleteCascade.endPartnerShares(s-1,retention)'],
+			array_values(array_filter($this->calls, static fn (string $call): bool => str_starts_with($call, 'SecretDeleteCascade.endPartnerShares')))
+		);
 		$this->assertCount(2, $this->audited);
 		[$owner, $retention] = $this->audited;
 		$this->assertSame('secret.purged', $owner->getEventType());
@@ -317,4 +351,41 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 		$this->assertSame([], $this->calls);
 		$this->assertSame([], $this->audited);
 	}//end testApplicationDeleteSkipsWhatIsNotItsOwn()
+
+	/**
+	 * Without the delete cascade, which ends the partner shares, a delete is refused before anything goes,
+	 * so no partner keeps a copy of a deleted secret unknowingly.
+	 *
+	 * @return void
+	 */
+	public function testADeleteWithoutTheDeleteCascadeIsRefusedBeforeAnythingGoes(): void {
+		$this->row(ownerType: 'user', ownerId: 'bob');
+		$mapper = $this->createMock(SecretMapper::class);
+		$mapper->method('findById')->willReturnCallback(fn (): Secret => $this->row);
+		$mapper->expects($this->never())->method('delete');
+		$service = new SecretService(
+			mapper: $mapper,
+			typeService: $this->createMock(SecretTypeService::class),
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			migrationService: $this->createMock(MigrationService::class),
+			linkShareService: $this->recorder(class: LinkShareService::class, methods: ['deleteBySecretId']),
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
+			shareService: $this->recorder(class: ShareService::class, methods: ['deleteAllForSecret']),
+			attachmentService: $this->recorder(class: AttachmentService::class, methods: ['deleteForSecret', 'deleteGrantsForSecretCopy']),
+		);
+
+		foreach (['owner', 'retention'] as $reason) {
+			try {
+				$service->delete(id: 's-1', userId: 'bob', purgeReason: $reason);
+				$this->fail('A delete without the delete cascade went ahead');
+			} catch (RuntimeException $e) {
+				$this->assertSame('The partner shares of a deleted secret cannot be ended', $e->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->calls);
+	}//end testADeleteWithoutTheDeleteCascadeIsRefusedBeforeAnythingGoes()
 }//end class

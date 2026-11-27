@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Service\RecipientCiphertext;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretUrlService;
 use PHPUnit\Framework\TestCase;
@@ -60,8 +61,8 @@ class RecipientSecretCopyServiceTest extends TestCase {
 		$this->secretMapper = $this->createMock(SecretMapper::class);
 		$this->service = new RecipientSecretCopyService(
 			secretMapper: $this->secretMapper,
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-			typeService: $this->createMock(SecretTypeService::class),
+			copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->createMock(EncryptionSuiteMapper::class), typeService: $this->createMock(SecretTypeService::class)),
+			partnerShares: $this->createStub(PartnerShareRevoker::class),
 		);
 	}//end setUp()
 
@@ -138,8 +139,8 @@ class RecipientSecretCopyServiceTest extends TestCase {
 	public function testCreateSetsEveryValueFieldOnTheCopy(): void {
 		$service = new RecipientSecretCopyService(
 			secretMapper: $this->secretMapper,
-			suiteMapper: $this->activeSuiteMapper(),
-			typeService: $this->createMock(SecretTypeService::class),
+			copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->activeSuiteMapper(), typeService: $this->createMock(SecretTypeService::class)),
+			partnerShares: $this->createStub(PartnerShareRevoker::class),
 		);
 		$withFields = $this->secret('src-1', 'user', 'alice');
 		$withFields->setTotp('SOURCE-T');

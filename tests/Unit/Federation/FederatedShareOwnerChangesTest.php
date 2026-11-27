@@ -195,7 +195,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		);
 		$audit = new FederatedShareAuditTrail($dispatcher);
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $this->createMock(IUserManager::class));
-		$this->delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit);
+		$this->delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit, $secrets);
 
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);

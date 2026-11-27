@@ -44,6 +44,27 @@ use Throwable;
  */
 class FederatedShareMessenger {
 	/**
+	 * The recipient's instance took the notification.
+	 *
+	 * @var string
+	 */
+	public const TAKEN = 'taken';
+
+	/**
+	 * The recipient's instance answered with a definite refusal: a 4xx other than 429. Sending it again changes nothing.
+	 *
+	 * @var string
+	 */
+	public const REFUSED = 'refused';
+
+	/**
+	 * The notification did not get through: no answer, a 5xx, a 429 or any other answer. A later try may.
+	 *
+	 * @var string
+	 */
+	public const UNREACHABLE = 'unreachable';
+
+	/**
 	 * Constructor for FederatedShareMessenger.
 	 *
 	 * @param ICloudFederationProviderManager $providerManager OCM delivery
@@ -106,16 +127,18 @@ class FederatedShareMessenger {
 
 	/**
 	 * Tell the recipient's instance that a share changed or ended. Returns
-	 * whether it took the notification.
+	 * whether it took the notification, refused it, or could not be reached.
 	 *
 	 * @param FederatedShare $row The stored share
 	 * @param string $type `SHARE_UPDATED` or `SHARE_UNSHARED`
 	 *
-	 * @return bool
+	 * @return string self::TAKEN, self::REFUSED or self::UNREACHABLE
+	 *
+	 * @psalm-return self::TAKEN|self::REFUSED|self::UNREACHABLE
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
-	public function notify(FederatedShare $row, string $type): bool {
+	public function notify(FederatedShare $row, string $type): string {
 		$notification = $this->factory->getCloudFederationNotification();
 		$notification->setMessage(
 			$type,
@@ -135,9 +158,32 @@ class FederatedShareMessenger {
 			$remote = $this->cloudIdManager->resolveCloudId($row->getRecipientCloudId())->getRemote();
 			$response = $this->providerManager->sendCloudNotification($remote, $notification);
 		} catch (Throwable) {
-			return false;
+			return self::UNREACHABLE;
 		}
 
-		return $response->getStatusCode() === 201;
+		return $this->outcome(status: $response->getStatusCode());
 	}//end notify()
+
+	/**
+	 * What a notification's answer means for the sender.
+	 *
+	 * @param int $status The HTTP status the recipient's instance answered
+	 *
+	 * @return string
+	 *
+	 * @psalm-return self::TAKEN|self::REFUSED|self::UNREACHABLE
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-partner-that-refuses-the-unshare-is-not-retried-for-30-days
+	 */
+	private function outcome(int $status): string {
+		if ($status === 201) {
+			return self::TAKEN;
+		}
+
+		if ($status >= 400 && $status < 500 && $status !== 429) {
+			return self::REFUSED;
+		}
+
+		return self::UNREACHABLE;
+	}//end outcome()
 }//end class
