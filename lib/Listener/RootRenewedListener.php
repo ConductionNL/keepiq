@@ -4,7 +4,7 @@
  * Keepiq Root Renewed Listener
  *
  * Queues the renewal notices to partners once a renewed root is committed (partner-root-renewal-announcement D2).
- * RetryFederatedNotificationsJob sends them.
+ * RetryRootRenewalNoticesJob sends them.
  *
  * @category Listener
  * @package  OCA\Keepiq\Listener

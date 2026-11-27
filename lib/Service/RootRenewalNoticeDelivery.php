@@ -6,7 +6,7 @@
  * The renewing side's notification (partner-root-renewal-announcement D2): after this instance renews its root, every
  * partner with inbound sharing on gets a signed OCM notification of its own type, tied to no share. It says only that
  * this server announced a renewal; the partner reads the announcement from the discovery document. The renewal only
- * queues the notices on the partner rows; RetryFederatedNotificationsJob sends them, and retries a failed one on the
+ * queues the notices on the partner rows; RetryRootRenewalNoticesJob sends them, and retries a failed one on the
  * schedule of FederatedNotificationDelivery.
  *
  * @category Service

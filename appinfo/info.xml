@@ -126,6 +126,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
         <job>OCA\Keepiq\BackgroundJob\RetryFederatedNotificationsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\RetryRootRenewalNoticesJob</job>
         <job>OCA\Keepiq\BackgroundJob\PartnerRootRenewalRemindersJob</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanExpiringSecretsJob</job>
