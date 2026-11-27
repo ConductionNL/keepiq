@@ -128,6 +128,10 @@
 			"add": "Something went wrong",
 			"update": "Something went wrong"
 		},
+		"partner_share_owner_mismatch": {
+			"add": "Nothing was saved: a share of this item with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.",
+			"update": "Nothing was saved: a share of this item with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved."
+		},
 		"a_code_from_a_newer_background": {
 			"add": "Something went wrong",
 			"update": "Something went wrong"
@@ -273,6 +277,10 @@
 		"argon2_unavailable": {
 			"add": "Er ging iets mis",
 			"update": "Er ging iets mis"
+		},
+		"partner_share_owner_mismatch": {
+			"add": "Er is niets opgeslagen: een deling van dit item met een partnerorganisatie is nog van de vorige eigenaar. Een beheerder moet de partnerdelingen herstellen voordat deze wijziging kan worden opgeslagen.",
+			"update": "Er is niets opgeslagen: een deling van dit item met een partnerorganisatie is nog van de vorige eigenaar. Een beheerder moet de partnerdelingen herstellen voordat deze wijziging kan worden opgeslagen."
 		},
 		"a_code_from_a_newer_background": {
 			"add": "Er ging iets mis",

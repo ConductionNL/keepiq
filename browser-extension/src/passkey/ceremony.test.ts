@@ -11,6 +11,7 @@ import { envelope, suiteRow } from '@/src/testing/vectors'
 import { hasKey, putKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
+import { savePasskeyCounter } from '@/src/vault/write'
 import { lock, unlock } from '@/src/vault/unlock'
 import { ceremonyKey, CLOSE_MS, endForAccountChange, FOCUS_MS, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies, type Ceremony } from './ceremony'
 import { FLAGS } from './webauthn'
@@ -21,6 +22,10 @@ vi.mock('@/src/crypto', async (importOriginal) => {
 })
 vi.mock('@/src/vault/unlock', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/vault/unlock')>(), unlock: vi.fn() }))
 vi.mock('@/src/vault/sync', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/vault/sync')>(), sync: vi.fn(async () => ({})) }))
+vi.mock('@/src/vault/write', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@/src/vault/write')>()
+	return { ...actual, savePasskeyCounter: vi.fn(actual.savePasskeyCounter) }
+})
 
 const TAB = 7
 const PAGE_WINDOW = 3
@@ -465,6 +470,17 @@ describe('the passkey window', () => {
 		expect(await window({ kind: 'passkey.state', ceremonyId }, windowOf(ceremonyId!))).toEqual({
 			ok: true, view: { ...view, locked: false, rows: [{ itemId: 'work', credentialId: 'QQ', name: 'Work', userName: 'alice' }] },
 		})
+	})
+
+	it('signs a pick whose counter save left partner recipients behind for the frame first, and keeps the window for the note', async () => {
+		vi.mocked(savePasskeyCounter).mockResolvedValueOnce({ ok: true, value: { counter: 1, shareSave: { notReached: 1 } } })
+		const { ceremonyId } = await start()
+		expect(await window({ kind: 'passkey.pick', ceremonyId, itemId: 'work', credentialId: 'QQ' }, windowOf(ceremonyId!))).toEqual({ ok: true, shareSave: { notReached: 1 } })
+		await settle()
+		expect(results).toHaveLength(1)
+		expect(results[0]).toMatchObject({ tabId: TAB, frameId: 0, message: { ceremonyId, origin: ORIGIN, result: { type: 'credential', credential: { id: 'QQ' } } } })
+		expect(removed).toEqual([])
+		expect(await record()).toBeUndefined()
 	})
 
 	it('shows a create the page’s RP name and user name', async () => {

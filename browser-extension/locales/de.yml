@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Dieser Eintrag wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gespeichert; versuche es später erneut.
   shareScanPendingOpen: Dieser Eintrag wartet auf eine Prüfung seiner Freigaben und kann noch nicht bearbeitet werden. Versuche es später erneut.
   shareScanPendingDelete: Dieser Eintrag wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gelöscht; versuche es später erneut.
+  partnerShareOwnerMismatch: "Es wurde nichts gespeichert: Eine Freigabe dieses Eintrags für eine Partnerorganisation gehört noch dem vorherigen Eigentümer. Die Administration muss die Freigaben für Partnerorganisationen reparieren, bevor diese Änderung gespeichert werden kann."
   sendInvalid: Keepiq hat diese Sendung nicht akzeptiert. Es wurde nichts gesendet; prüfe die Felder und versuche es erneut.
   sendOffline: Der Server ist nicht erreichbar, es wurde nichts gesendet
   argon2Unavailable: Passwortschutz ist in diesem Browser nicht verfügbar
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Gespeichert. Empfänger in Partnerorganisationen erhalten diese Änderung, wenn der Eigentümer den Eintrag das nächste Mal speichert.
   suspended: Das Teilen mit {cloudIds} ist pausiert, weil ihr Zertifikat nicht überprüft werden konnte oder ihre Organisation es nicht mehr akzeptiert. Die Keepiq-Web-App zeigt die Freigabe.
   paused: Das Teilen mit {cloudIds} ist pausiert, bis du diesen Eintrag erneut mit ihnen teilst.
+  notReached:
+    1: Gespeichert, aber 1 Empfänger bei einer Partnerorganisation hat diesen Eintrag aus einer Kopie erhalten und diese Änderung nicht erhalten.
+    n: Gespeichert, aber $1 Empfänger bei Partnerorganisationen haben diesen Eintrag aus einer Kopie erhalten und diese Änderung nicht erhalten.
 
 folders:
   add: Ordner hinzufügen

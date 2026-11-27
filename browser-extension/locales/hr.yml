@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Ova stavka čeka provjeru dijeljenja koja još nije završena. Ništa nije spremljeno; pokušajte ponovno kasnije.
   shareScanPendingOpen: Ova stavka čeka provjeru dijeljenja i još je nije moguće urediti. Pokušajte ponovno kasnije.
   shareScanPendingDelete: Ova stavka čeka provjeru dijeljenja koja još nije završena. Ništa nije izbrisano; pokušajte ponovno kasnije.
+  partnerShareOwnerMismatch: "Ništa nije spremljeno: dijeljenje ove stavke s partnerskom organizacijom i dalje pripada njezinu prethodnom vlasniku. Administrator mora popraviti dijeljenja s partnerskim organizacijama prije nego što se ova promjena može spremiti."
   sendInvalid: Keepiq nije prihvatio ovu pošiljku. Ništa nije poslano; provjerite polja i pokušajte ponovno.
   sendOffline: Poslužitelj nije dostupan, ništa nije poslano
   argon2Unavailable: Zaštita lozinkom nije dostupna u ovom pregledniku
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Spremljeno. Primatelji u partnerskim organizacijama dobit će ovu promjenu kad vlasnik sljedeći put spremi stavku.
   suspended: Dijeljenje s {cloudIds} pauzirano je jer njihov certifikat nije bilo moguće provjeriti ili ga njihova organizacija više ne prihvaća. Dijeljenje je prikazano u web-aplikaciji Keepiq.
   paused: Dijeljenje s {cloudIds} pauzirano je dok ovu stavku ponovno ne podijelite s njima.
+  notReached:
+    1: Spremljeno, ali 1 primatelj u partnerskoj organizaciji dobio je ovu stavku iz kopije i nije dobio ovu promjenu.
+    n: "Spremljeno, ali ova promjena nije stigla do primatelja u partnerskim organizacijama koji su ovu stavku dobili iz kopije: $1"
 
 folders:
   add: Dodaj mapu

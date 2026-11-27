@@ -155,6 +155,7 @@ function refusalOf(error: unknown, cloudIds: ReadonlyMap<string, string>): unkno
 
 function conflictRefusal(error: ApiError, cloudIds: ReadonlyMap<string, string>): unknown {
 	if (error.code === 'stale_source') return new WriteFailure({ code: 'stale_source' })
+	if (error.code === 'partner_share_owner_mismatch') return new WriteFailure({ code: 'partner_share_owner_mismatch' })
 	if (error.code === 'partner_upgrade_required') return partnerUpgradeRefusal(error, cloudIds)
 	return error.refused && error.code === 'not_allowed' ? new WriteFailure({ code: 'forbidden' }) : error
 }
@@ -340,7 +341,15 @@ const isStageUnknown = (error: unknown) => error instanceof ApiError && error.st
 
 const isIncomplete = (error: unknown) => error instanceof ApiError && error.status === 409 && error.code === 'incomplete'
 
-const copyNote = (answer: unknown): ShareSaveNote | undefined => ((answer as { federated?: { ownerOnly?: unknown } } | null)?.federated?.ownerOnly === true ? { ownerOnly: true } : undefined)
+/** What the answer says about partner shares the save did not write: those only the owner reaches, and those made from a copy. */
+function answerNote(answer: unknown, copyPath: boolean): ShareSaveNote {
+	const federated = (answer as { federated?: { ownerOnly?: unknown; notReached?: unknown } } | null)?.federated
+	const notReached = federated?.notReached
+	return {
+		...(copyPath && federated?.ownerOnly === true && { ownerOnly: true as const }),
+		...(typeof notReached === 'number' && Number.isInteger(notReached) && notReached > 0 && { notReached }),
+	}
+}
 
 /** A certificate row of the recipient lookup, for a user who can be shared with. */
 function certificateRow(row: unknown): { userId: string; certificate: string } | null {
@@ -389,7 +398,8 @@ class ShareSaveRun {
 
 	async run(): Promise<ShareSaveNote | undefined> {
 		const answer = await this.sendUntilComplete()
-		return this.copyPath ? copyNote(answer) : this.partnerNote()
+		const note = { ...answerNote(answer, this.copyPath), ...this.partnerNote() }
+		return Object.keys(note).length > 0 ? note : undefined
 	}
 
 	private async sendUntilComplete(): Promise<unknown> {
@@ -465,11 +475,12 @@ class ShareSaveRun {
 		return { baseUpdatedAt: this.input.baseUpdatedAt, ...(this.copyPath ? { sourceBaseUpdatedAt: this.sourceBaseUpdatedAt } : {}) }
 	}
 
+	/** A save through a copy names partner shares only when the server required them, which it does only of the item's owner. */
 	private lists(localPart: Pending[], remotePart: Pending[]): Record<string, object[]> {
 		return {
 			copies: pick(localPart, 'c:'),
 			skipped: pick(localPart, 's:'),
-			...(this.copyPath ? {} : { federated: pick(remotePart, 'f:'), suspend: pick(remotePart, 'p:') }),
+			...(this.copyPath && remotePart.length === 0 ? {} : { federated: pick(remotePart, 'f:'), suspend: pick(remotePart, 'p:') }),
 		}
 	}
 
@@ -507,7 +518,7 @@ class ShareSaveRun {
 		const todo = required.copies.filter((copy) => !this.copies.entries.has(copy.secretId) && !this.skipped.entries.has(copy.secretId))
 		await this.lookUpCertificates(todo)
 		await this.sealCopies(todo)
-		if (!this.copyPath) await this.fillPartners(required.shares)
+		await this.fillPartners(required.shares)
 		if (this.restage) this.stage = { id: null, sent: new Set() }
 	}
 

@@ -29,9 +29,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\GroupShareMapper;
-use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
@@ -53,10 +53,10 @@ class AccountShareCleanupService {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param ShareTargetMapper $shareMapper The share-target mapper
 	 * @param GroupShareMapper $groupShareMapper The group-share mapper
-	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
 	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
-	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
+	 * @param DelegatedSecretTransfer $delegatedTransfer Hands the user's delegated secrets to their delegates
 	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
+	 * @param DelegateCopyKeeper $delegateCopies Decides whether the delegate of a secret handed over keeps their copy linked
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user tombstones)
 	 *
 	 * @return void
@@ -67,10 +67,10 @@ class AccountShareCleanupService {
 		private SecretMapper $secretMapper,
 		private ShareTargetMapper $shareMapper,
 		private GroupShareMapper $groupShareMapper,
-		private SecretDelegationMapper $delegationMapper,
 		private ShareSaveStageMapper $stageMapper,
-		private SecretOwnerTransferService $ownerTransfer,
+		private DelegatedSecretTransfer $delegatedTransfer,
 		private ShareQuarantineScanner $quarantineScan,
+		private DelegateCopyKeeper $delegateCopies,
 		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
@@ -90,34 +90,12 @@ class AccountShareCleanupService {
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 * @param DeletionReport $report The running report
 	 *
-	 * @return void
+	 * @return array<string,string> The new owner of each secret handed over, by secret id
 	 *
 	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
-	public function transferDelegatedSecrets(string $userId, array $ownedSecrets, DeletionReport $report): void {
-		$ownedIds = [];
-		foreach ($ownedSecrets as $secret) {
-			$ownedIds[$secret->getId()] = true;
-		}
-
-		foreach ($this->delegationMapper->findByOriginalOwner(originalOwnerId: $userId) as $delegation) {
-			$secretId = $delegation->getSecretId();
-			// Only transfer secrets the departing user actually owns now.
-			if (isset($ownedIds[$secretId]) === false) {
-				continue;
-			}
-
-			$this->ownerTransfer->transfer(
-				secretId: $secretId,
-				fromOwnerId: $userId,
-				newOwnerId: $delegation->getDelegatedTo(),
-			);
-			$report->secretsTransferred++;
-		}
-
-		// Promote every temporary delegation by this owner to permanent. The
-		// mapper call is idempotent (already-permanent rows are not matched).
-		$this->delegationMapper->makePermanentByOriginalOwner(originalOwnerId: $userId);
+	public function transferDelegatedSecrets(string $userId, array $ownedSecrets, DeletionReport $report): array {
+		return $this->delegatedTransfer->transfer(userId: $userId, ownedSecrets: $ownedSecrets, report: $report);
 	}//end transferDelegatedSecrets()
 
 	/**
@@ -130,48 +108,34 @@ class AccountShareCleanupService {
 	 * written to the recipient copy. GroupShares the user created are deleted
 	 * the same way (their per-member ShareTarget rows carry the groupShareId).
 	 *
+	 * A secret handed to a delegate keeps the delegate's own share row and copy linked when DelegateCopyKeeper keeps it:
+	 * the delegate now owns the secret and saves it through that copy.
+	 *
+	 * @param string $userId The departing user
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 * @param DeletionReport $report The running report
+	 * @param array<string,string> $handedTo The new owner of each secret handed over, by secret id
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/gdpr-compliance/spec.md
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
-	public function detachGrantedShares(array $ownedSecrets, DeletionReport $report): void {
+	public function detachGrantedShares(string $userId, array $ownedSecrets, DeletionReport $report, array $handedTo): void {
 		foreach ($ownedSecrets as $secret) {
+			$kept = $this->delegateCopies->keptRow(
+				secretId: $secret->getId(),
+				fromUserId: $userId,
+				newOwnerId: ($handedTo[$secret->getId()] ?? null)
+			);
 			foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $share) {
-				// Tombstone the recipient's copy (display metadata only).
-				// Defence in depth: a copy that exists but is not genuinely held
-				// by the share's target (a poisoned or drifted `secret_id`) is
-				// left untouched, so erasing one owner never tombstones another
-				// user's secret, and so is the copy of a row the pending
-				// quarantine scan holds back. The link row is severed either way
-				// below.
-				try {
-					$copy = $this->secretMapper->findById($share->getSecretId());
-				} catch (DoesNotExistException) {
-					$copy = null;
+				if ($share->getId() !== $kept?->getId()) {
+					$this->tombstoneCopy(share: $share, report: $report);
 				}
-
-				if ($copy !== null
-					&& ($share->isHeldByTarget(copy: $copy) === false || $this->quarantineScan->heldBack(row: $share) !== null)
-				) {
-					$this->logger?->warning(
-						'Kept a secret its detached share target does not hold, or the pending quarantine scan holds back',
-						['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
-					);
-					continue;
-				}
-
-				$this->secretMapper->tombstone(
-					secretId: $share->getSecretId(),
-					reason: self::TOMBSTONE_REASON,
-				);
-				$report->sharesDetached++;
 			}
 
-			// Sever every link from this source secret (sync stops).
-			$this->shareMapper->deleteBySourceSecret(sourceSecretId: $secret->getId());
+			// Sever every other link from this source secret (sync stops).
+			$this->severLinks(sourceSecretId: $secret->getId(), kept: $kept);
 
 			// Remove the group-share definitions for this secret.
 			foreach ($this->groupShareMapper->findBySecret(secretId: $secret->getId()) as $groupShare) {
@@ -179,6 +143,60 @@ class AccountShareCleanupService {
 			}
 		}
 	}//end detachGrantedShares()
+
+	/**
+	 * Tombstone a recipient's copy (display metadata only).
+	 * Defence in depth: a copy that exists but is not genuinely held by the share's target (a poisoned or drifted `secret_id`) is left untouched,
+	 * so erasing one owner never tombstones another user's secret,
+	 * and so is the copy of a row the pending quarantine scan holds back.
+	 * The link row is severed either way.
+	 *
+	 * @param ShareTarget $share The share row
+	 * @param DeletionReport $report The running report
+	 *
+	 * @return void
+	 */
+	private function tombstoneCopy(ShareTarget $share, DeletionReport $report): void {
+		try {
+			$copy = $this->secretMapper->findById($share->getSecretId());
+		} catch (DoesNotExistException) {
+			$copy = null;
+		}
+
+		if ($copy !== null
+			&& ($share->isHeldByTarget(copy: $copy) === false || $this->quarantineScan->heldBack(row: $share) !== null)
+		) {
+			$this->logger?->warning(
+				'Kept a secret its detached share target does not hold, or the pending quarantine scan holds back',
+				['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
+			);
+			return;
+		}
+
+		$this->secretMapper->tombstone(
+			secretId: $share->getSecretId(),
+			reason: self::TOMBSTONE_REASON,
+		);
+		$report->sharesDetached++;
+	}//end tombstoneCopy()
+
+	/**
+	 * Delete every share row of a source secret, quarantined ones included,
+	 * but the delegate's row that is kept.
+	 *
+	 * @param string $sourceSecretId The source secret
+	 * @param ShareTarget|null $kept The delegate's row to keep, if any
+	 *
+	 * @return void
+	 */
+	private function severLinks(string $sourceSecretId, ?ShareTarget $kept): void {
+		if ($kept === null) {
+			$this->shareMapper->deleteBySourceSecret(sourceSecretId: $sourceSecretId);
+			return;
+		}
+
+		$this->shareMapper->deleteBySourceSecretExcept(sourceSecretId: $sourceSecretId, keepId: $kept->getId());
+	}//end severLinks()
 
 	/**
 	 * Step 3 — remove shares the user received.

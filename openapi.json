@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Keepiq",
-        "version": "0.3.35-unstable.20261127092030",
+        "version": "0.3.36-unstable.20261127101951",
         "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json, and as application/problem+json when the request's Accept header asks for it.",
         "contact": {
             "name": "Conduction B.V.",
@@ -17282,7 +17282,7 @@
             "put": {
                 "operationId": "share-save-save",
                 "summary": "Save the caller's row `{id}`, every local copy and, for the owner, every partner share; or add a chunk to a stage (202)",
-                "description": "Save the caller's row `{id}`, every local copy and, for the owner, every partner share; or add a chunk to a stage (202).",
+                "description": "Save the caller's row `{id}`, every local copy and, for the owner, every partner share; or add a chunk to a stage (202). The secret's owner writes its partner shares whether `{id}` is the source or their own copy of it. A 409 with `error: partner_share_owner_mismatch` refuses a save that would write partner shares while one of them is not the secret owner's; nothing is written until an administrator runs `occ maintenance:repair`. The 200 body's `federated.notReached` counts the active partner shares made from a copy the save wrote, which no save writes: for the secret's owner from every copy written, for anyone else only from their own copy. `federated.ownerOnly` says whether partner shares exist that only the owner's save reaches.",
                 "tags": [
                     "share-save"
                 ],
@@ -18276,7 +18276,7 @@
             "get": {
                 "operationId": "federated-share-index",
                 "summary": "The federated shares of one of the user's own secrets",
-                "description": "The federated shares of one of the user's own secrets.",
+                "description": "The federated shares of one of the user's own secrets. For the user's own received copy of a secret they own, the source's federated shares are listed first, followed by those of the copy.",
                 "tags": [
                     "federated-share"
                 ],
@@ -18356,7 +18356,7 @@
             "post": {
                 "operationId": "federated-share-create",
                 "summary": "Share one of the user's secrets with a user of an outbound partner",
-                "description": "Share one of the user's secrets with a user of an outbound partner. Every federated recipient is a new party, so the vault key proof of user-sharing (\"Sharing with a new party requires a verified key proof\") is always asked.",
+                "description": "Share one of the user's secrets with a user of an outbound partner. A secret that was shared with the user, a received copy, is refused with the message `not_shareable`, unless the user owns its source: their own copy of a secret they own is shared from that source, which the response's `sourceSecretId` names. Every federated recipient is a new party, so the vault key proof of user-sharing (\"Sharing with a new party requires a verified key proof\") is always asked.",
                 "tags": [
                     "federated-share"
                 ],
@@ -18443,6 +18443,28 @@
                     },
                     "401": {
                         "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict with the current state",
                         "content": {
                             "application/problem+json": {
                                 "schema": {

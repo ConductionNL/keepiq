@@ -10,7 +10,7 @@ import { envelope, suiteRow } from '@/src/testing/vectors'
 import { clearKey, putKey } from '@/src/vault/key-store'
 import { writeSnapshot } from '@/src/vault/store'
 import { lock } from '@/src/vault/unlock'
-import { createItem } from '@/src/vault/write'
+import { createItem, updateItem } from '@/src/vault/write'
 import {
 	CAPTURE_LIFESPAN_MS, captureSubmitted, dropAllCaptures, focusBar, handleNotification, registerCaptureQueue, reshow, SAVED_CLOSE_MS, SHOW_DELAY_MS, showPending,
 } from './capture-queue'
@@ -19,7 +19,7 @@ import { rememberedItem, rememberItem } from './tab-items'
 
 vi.mock('@/src/vault/write', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/vault/write')>()
-	return { ...actual, createItem: vi.fn(actual.createItem) }
+	return { ...actual, createItem: vi.fn(actual.createItem), updateItem: vi.fn(actual.updateItem) }
 })
 
 const TAB = 7
@@ -1104,6 +1104,33 @@ describe('capture.update', () => {
 		vi.advanceTimersByTime(SAVED_CLOSE_MS)
 		expect(kinds()).toEqual([['capture.verify', 0], ['capture.hide', 0]])
 		expect(await state()).toBeNull()
+	})
+
+	it('hands the bar what the save left to partner shares, and keeps the bar until Close', async () => {
+		routes['PUT /api/v1/secrets/a/share-save'] = () => json({ secret: row, federated: { ownerOnly: false, notReached: 1 } })
+		expect(await update()).toEqual({ ok: true, value: { shareSave: { notReached: 1 } } })
+		vi.advanceTimersByTime(SAVED_CLOSE_MS)
+		expect(kinds()).toEqual([['capture.verify', 0]])
+		expect(await ask({ kind: 'capture.expand' })).toBeNull()
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.expand', 0]])
+		expect(await ask({ kind: 'capture.dismiss', never: false })).toBeNull()
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.expand', 0], ['capture.hide', 0]])
+	})
+
+	it('relays no capture.expand for a key it no longer keeps, on a bar kept for its note', async () => {
+		routes['PUT /api/v1/secrets/a/share-save'] = () => json({ secret: row, federated: { ownerOnly: false, notReached: 1 } })
+		await update()
+		expect(await ask({ kind: 'capture.expand', key: 'f'.repeat(32) })).toBeNull()
+		expect(await ask({ kind: 'capture.dismiss', never: false })).toBeNull()
+		expect(await ask({ kind: 'capture.expand' })).toBeNull()
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.hide', 0]])
+	})
+
+	it('closes the bar after three seconds for a note with nothing the bar can word, which it then never gets', async () => {
+		vi.mocked(updateItem).mockResolvedValueOnce({ ok: true, value: { id: 'a', shareSave: { notReached: 0, suspended: [] } } })
+		expect(await update()).toEqual({ ok: true, value: null })
+		vi.advanceTimersByTime(SAVED_CLOSE_MS)
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.hide', 0]])
 	})
 
 	it('does nothing for a press the host could not confirm', async () => {

@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw.
   shareScanPendingOpen: Dit item wacht op een controle van zijn delingen en kan nog niet worden bewerkt. Probeer het later opnieuw.
   shareScanPendingDelete: Dit item wacht op een controle van zijn delingen die nog niet klaar is. Er is niets verwijderd; probeer het later opnieuw.
+  partnerShareOwnerMismatch: "Er is niets opgeslagen: een deling van dit item met een partnerorganisatie is nog van de vorige eigenaar. Een beheerder moet de partnerdelingen herstellen voordat deze wijziging kan worden opgeslagen."
   sendInvalid: Keepiq heeft deze verzending niet geaccepteerd. Er is niets verzonden; controleer de velden en probeer het opnieuw.
   sendOffline: De server is niet bereikbaar, er is niets verzonden
   argon2Unavailable: Wachtwoordbeveiliging is niet beschikbaar in deze browser
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Opgeslagen. Ontvangers bij partnerorganisaties krijgen deze wijziging zodra de eigenaar het item weer opslaat.
   suspended: Delen met {cloudIds} is gepauzeerd, omdat hun certificaat niet kon worden geverifieerd of hun organisatie de deling niet meer accepteert. De Keepiq-webapp toont de deling.
   paused: Delen met {cloudIds} is gepauzeerd tot je dit item opnieuw met hen deelt.
+  notReached:
+    1: Opgeslagen, maar 1 ontvanger bij een partnerorganisatie kreeg dit item via een kopie en heeft deze wijziging niet gekregen.
+    n: Opgeslagen, maar $1 ontvangers bij partnerorganisaties kregen dit item via een kopie en hebben deze wijziging niet gekregen.
 
 folders:
   add: Map toevoegen

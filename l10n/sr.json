@@ -2077,6 +2077,16 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Фасцикле се не могу приложити. Уместо тога превуците датотеке из њих.",
         "Files cannot be added while you are offline. Remove them to save.": "Датотеке се не могу додати док сте ван мреже. Уклоните их да бисте сачували.",
         "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ништа није сачувано: једно дељење ове тајне са партнерском организацијом и даље припада њеном претходном власнику. Администратор мора да поправи дељења са партнерским организацијама пре него што ова измена може да се сачува.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Сачувано, али %n прималац у партнерској организацији добио је ову тајну из копије и није добио ову измену.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Сачувано, али %n прималаца у партнерским организацијама добило је ову тајну из копије и није добило ову измену.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Сачувано, али %n прималац у партнерској организацији добио је ову тајну из копије и није добио ову измену.",
+            "Сачувано, али %n примаоца у партнерским организацијама добила су ову тајну из копије и нису добила ову измену.",
+            "Сачувано, али %n прималаца у партнерским организацијама добило је ову тајну из копије и није добило ову измену."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ова тајна чека проверу својих дељења која још није завршена. Ништа није подељено; покушајте поново касније или замолите администратора да провери да ли раде позадински послови.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ова тајна је подељена са вама, па не може да се подели са партнерском организацијом. Ништа није подељено.",
         "Sharing options could not be loaded.": "Опције дељења није било могуће учитати.",
         "Sharing options still could not be loaded.": "Опције дељења и даље није било могуће учитати.",
         "Sharing is not available for this secret.": "Дељење није доступно за ову тајну."
