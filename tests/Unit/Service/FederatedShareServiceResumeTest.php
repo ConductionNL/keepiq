@@ -26,13 +26,13 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
-use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCP\Federation\ICloudIdManager;
@@ -87,7 +87,7 @@ class FederatedShareServiceResumeTest extends TestCase {
 
 		return new FederatedShareService(
 			shareMapper: $this->mapper,
-			secretMapper: $this->createMock(originalClassName: SecretMapper::class),
+			sources: $this->createMock(originalClassName: FederatedShareSources::class),
 			partners: $this->createMock(originalClassName: FederationPartnerService::class),
 			root: $this->createMock(originalClassName: FederationRootService::class),
 			cloudIdManager: $this->createMock(originalClassName: ICloudIdManager::class),

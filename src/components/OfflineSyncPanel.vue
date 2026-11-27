@@ -56,6 +56,7 @@
 								'partner_unreachable',
 								'partner_lookup_limit',
 								'share_scan_pending',
+								'partner_share_owner_mismatch',
 							].includes(entry.failure?.code)
 						"
 						variant="secondary"

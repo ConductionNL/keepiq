@@ -21,7 +21,6 @@ namespace OCA\Keepiq\Service\ShareSave;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
-use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
@@ -40,7 +39,7 @@ use OCP\AppFramework\Http;
  * @psalm-type Requirement = array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,federated:array<string,FederatedShare>,ownerOnly:bool}
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads the sharing graph from
- *   copies, share targets and partner shares, each through its mapper.
+ *   copies, share targets and partner shares.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
@@ -51,7 +50,7 @@ class ShareSaveScope {
 	 *
 	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets
-	 * @param FederatedShareMapper $federatedShares Outbound partner shares
+	 * @param ShareSavePartners $partners The source's partner shares, and whether they are its owner's
 	 * @param ShareSyncService $sync Who may write for every copy
 	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
 	 *
@@ -62,7 +61,7 @@ class ShareSaveScope {
 	public function __construct(
 		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
-		private FederatedShareMapper $federatedShares,
+		private ShareSavePartners $partners,
 		private ShareSyncService $sync,
 		private ShareSyncGuards $guards,
 	) {
@@ -141,7 +140,8 @@ class ShareSaveScope {
 	 * another folder does not change its version, so the lock does not see it.
 	 * A caller who still writes, but now another way (a delegation granted or
 	 * revoked next to a write grade), saves and is audited as they write now.
-	 * The owner path has nothing to check.
+	 * On the owner path the source is read again too,
+	 * and a caller who no longer owns it (an ownership transfer committed meanwhile) is refused as a save of another user's row is.
 	 *
 	 * @param ShareSavePath $path The path resolve() returned
 	 * @param string $userId The caller
@@ -149,20 +149,26 @@ class ShareSaveScope {
 	 * @return ShareSavePath The path with the way the caller writes now
 	 *
 	 * @throws NotFoundException When the source was deleted meanwhile
-	 * @throws ForbiddenException When the source became a read-only or use-only copy
+	 * @throws ForbiddenException When the source became a read-only or use-only copy, or another user's secret
 	 * @throws ShareSaveRefusal `not_allowed` for a copy holder who lost the right to write every copy
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function assertStillWriter(ShareSavePath $path, string $userId): ShareSavePath {
-		if ($path->isCopyEditor() === false) {
-			return $path;
-		}
-
 		try {
 			$source = $this->secrets->findById($path->source->getId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		// The source as resolve() read it stays the path's source: its version is what a refusal reports.
+		// Its owner is read again, so who writes partner shares is decided under the lock.
+		if ($path->isCopyEditor() === false) {
+			if ($source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+				throw new ForbiddenException(message: 'Secret belongs to another user');
+			}
+
+			return new ShareSavePath(row: $path->row, source: $path->source, current: $source);
 		}
 
 		$this->assertWritable(source: $source);
@@ -172,8 +178,7 @@ class ShareSaveScope {
 			refusal: 'Your access to this secret changed while saving; reload and try again'
 		);
 
-		// The source as resolve() read it: its version is what a refusal reports.
-		return new ShareSavePath(row: $path->row, source: $path->source, writesOn: $writesOn);
+		return new ShareSavePath(row: $path->row, source: $path->source, writesOn: $writesOn, current: $source);
 	}//end assertStillWriter()
 
 	/**
@@ -216,10 +221,34 @@ class ShareSaveScope {
 	}//end writerOn()
 
 	/**
-	 * Refuse lists that are not exactly the rows to write: every live copy
-	 * (on the copy-editor path the source and every other copy) and, on the
-	 * owner path, every active partner share of the caller. A copy may be
-	 * left out only when its holder has no vault key.
+	 * Answer partner entries from a caller who does not own the source as the check under the lock does:
+	 * `incomplete`, requiring no partner share and echoing only the ids they sent, so their client drops them and saves again.
+	 * Only the secret's owner writes partner shares, through the source or their own copy.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param ShareSaveEntries $entries The lists, staged ones included
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @throws IncompleteShareSaveException When a caller who does not own the source names partner entries
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function assertMayNamePartners(ShareSavePath $path, ShareSaveEntries $entries, string $userId): void {
+		if ($entries->federatedCount() === 0 || $path->ownsSource(userId: $userId) === true) {
+			return;
+		}
+
+		$this->assertComplete(path: $path, entries: $entries, userId: $userId);
+	}//end assertMayNamePartners()
+
+	/**
+	 * Refuse lists that are not exactly the rows to write:
+	 * every live copy (on the copy-editor path the source and every other copy) and,
+	 * when the caller owns the source, every active partner share of it.
+	 * A copy may be left out only when its holder has no vault key.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveEntries $entries The lists, staged ones included
@@ -230,9 +259,11 @@ class ShareSaveScope {
 	 * @psalm-return Requirement
 	 *
 	 * @throws IncompleteShareSaveException With the current lists
-	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row,
+	 *   `partner_share_owner_mismatch` when a partner share to write is not the source owner's
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertComplete(ShareSavePath $path, ShareSaveEntries $entries, string $userId): array {
 		$required = $this->requirement(path: $path, userId: $userId);
@@ -298,7 +329,7 @@ class ShareSaveScope {
 	 *
 	 * @return void
 	 *
-	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, or `share_scan_pending`
+	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, `share_scan_pending` or `partner_share_owner_mismatch`
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
@@ -316,8 +347,8 @@ class ShareSaveScope {
 	}//end assertWithinReach()
 
 	/**
-	 * The rows the save must name, the copies it may name but that are not
-	 * written (access ended), and the partner shares only the owner reaches.
+	 * The rows the save must name, the copies it may name but that are not written (access ended),
+	 * and the partner shares only the source's owner reaches, through the source or through their own copy.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param string $userId The caller
@@ -326,7 +357,10 @@ class ShareSaveScope {
 	 *
 	 * @psalm-return Requirement
 	 *
-	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row,
+	 *   `partner_share_owner_mismatch` when a partner share to write is not the source owner's
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
@@ -339,33 +373,43 @@ class ShareSaveScope {
 			$copies = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $copies;
 		}
 
-		$federated = $this->activePartnerShares(source: $source);
-		if ($path->isCopyEditor() === true) {
+		$federated = $this->partners->active(source: $source);
+		if ($path->ownsSource(userId: $userId) === false) {
 			// Whether there are any, not how many: the copy editor never saw the partner list.
 			return ['copies' => $copies, 'ignored' => $ignored, 'federated' => [], 'ownerOnly' => $federated !== []];
 		}
 
-		$federated = array_filter($federated, static fn (FederatedShare $share): bool => $share->getOwnerId() === $userId);
+		$this->partners->assertOwnedBySourceOwner(path: $path, federated: $federated);
 		return ['copies' => $copies, 'ignored' => $ignored, 'federated' => $federated, 'ownerOnly' => false];
 	}//end requirement()
 
 	/**
-	 * The source's active partner shares, keyed by id.
+	 * How many active partner shares hang off a row the save writes other than the source.
+	 * For the source's owner, on the owner path or through their own copy: their copy and every copy written.
+	 * For a caller who does not own the source: only their own copy,
+	 * since the other copies' partner shares are other holders' to know, as the source's are (`ownerOnly`).
+	 * Such a share was made from a copy and no save writes it.
 	 *
-	 * @param Secret $source The source
+	 * @param ShareSavePath $path The path assertStillWriter() returned
+	 * @param list<string> $copyIds The copies the save wrote
+	 * @param string $userId The caller
 	 *
-	 * @return array<string,FederatedShare>
+	 * @return int
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
-	private function activePartnerShares(Secret $source): array {
-		$active = [];
-		foreach ($this->federatedShares->findBySourceSecret(sourceSecretId: $source->getId()) as $share) {
-			if ($share->getStatus() === FederatedShare::STATUS_ACTIVE) {
-				$active[$share->getId()] = $share;
-			}
+	public function partnersNotReached(ShareSavePath $path, array $copyIds, string $userId): int {
+		if ($path->ownsSource(userId: $userId) === false) {
+			$copyIds = [];
 		}
 
-		return $active;
-	}//end activePartnerShares()
+		$rowIds = array_diff([$path->row->getId(), ...$copyIds], [$path->source->getId()]);
+		if ($rowIds === []) {
+			return 0;
+		}
+
+		return $this->partners->countActive(sourceSecretIds: array_values($rowIds));
+	}//end partnersNotReached()
 
 	/**
 	 * The skipped copies whose holder does have a vault key: those must be written.

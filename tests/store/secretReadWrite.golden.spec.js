@@ -122,7 +122,7 @@ vi.mock('../../src/services/shareSave.js', async (importOriginal) => ({
 			}
 		)
 	}),
-	notifyOwnerOnly: vi.fn(async (result) => {
+	notifyPartnerNotes: vi.fn(async (result) => {
 		trace.push(['notify', plain(result)])
 	}),
 }))

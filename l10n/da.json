@@ -2051,6 +2051,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Mapper kan ikke vedhæftes. Slip i stedet filerne i dem.",
         "Files cannot be added while you are offline. Remove them to save.": "Filer kan ikke tilføjes, mens du er offline. Fjern dem for at gemme.",
         "Files can only be added to a secret you own. Remove them to save.": "Filer kan kun tilføjes til en hemmelighed, du ejer. Fjern dem for at gemme.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Intet blev gemt: en deling af denne hemmelighed med en partnerorganisation tilhører stadig dens tidligere ejer. En administrator skal reparere partnerdelingerne, før denne ændring kan gemmes.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Gemt, men %n modtager hos en partnerorganisation fik denne hemmelighed fra en kopi og fik ikke denne ændring.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Gemt, men %n modtagere hos partnerorganisationer fik denne hemmelighed fra en kopi og fik ikke denne ændring.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Gemt, men %n modtager hos en partnerorganisation fik denne hemmelighed fra en kopi og fik ikke denne ændring.",
+            "Gemt, men %n modtagere hos partnerorganisationer fik denne hemmelighed fra en kopi og fik ikke denne ændring."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Denne hemmelighed venter på en kontrol af dens delinger, som ikke er færdig endnu. Intet blev delt; prøv igen senere, eller bed en administrator om at kontrollere, at baggrundsjob kører.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Denne hemmelighed blev delt med dig, så den kan ikke deles med en partnerorganisation. Intet blev delt.",
         "Sharing options could not be loaded.": "Delingsindstillingerne kunne ikke indlæses.",
         "Sharing options still could not be loaded.": "Delingsindstillingerne kunne stadig ikke indlæses.",
         "Sharing is not available for this secret.": "Deling er ikke tilgængelig for denne hemmelighed."

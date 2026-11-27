@@ -22,6 +22,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareRowVerdict;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSavePath;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
@@ -179,16 +180,48 @@ final class ShareSaveScopeRefusalsTest extends TestCase {
 	}//end testAnEditorWhoMayNotWriteIsRefused()
 
 	/**
-	 * An owner's path is not re-checked.
+	 * An owner's path reads the source again: the owner still owning it keeps the path, its version as resolve()
+	 * read it, and writes as owner.
 	 *
 	 * @return void
 	 */
-	public function testAnOwnersPathIsNotRechecked(): void {
-		$path = new ShareSavePath(row: $this->source, source: $this->source);
-		$this->secrets->expects($this->never())->method('findById');
+	public function testAnOwnersPathIsReadAgain(): void {
+		$this->source->setOwnerType('user');
+		$this->source->setOwnerId('alice');
+		$this->secrets->expects($this->once())->method('findById')->with('src-1')->willReturn(clone $this->source);
 
-		$this->assertSame($path, $this->scope()->assertStillWriter($path, 'alice'));
-	}//end testAnOwnersPathIsNotRechecked()
+		$path = $this->scope()->assertStillWriter(new ShareSavePath(row: $this->source, source: $this->source), 'alice');
+
+		$this->assertSame($this->source, $path->source);
+		$this->assertFalse($path->isCopyEditor());
+		$this->assertNull($path->writesOn);
+		$this->assertTrue($path->ownsSource(userId: 'alice'));
+	}//end testAnOwnersPathIsReadAgain()
+
+	/**
+	 * An owner's path whose source changed hands, or went away, since resolve() is refused as a save of another user's row,
+	 * or of a missing one, would be.
+	 *
+	 * @return void
+	 */
+	public function testAnOwnersPathRefusesASourceTransferredOrGoneMeanwhile(): void {
+		$this->source->setOwnerType('user');
+		$this->source->setOwnerId('alice');
+		$transferred = clone $this->source;
+		$transferred->setOwnerId('bob');
+		$this->secrets->method('findById')->willReturnOnConsecutiveCalls($transferred, $this->throwException(new DoesNotExistException('gone')));
+		$path = new ShareSavePath(row: $this->source, source: $this->source);
+
+		try {
+			$this->scope()->assertStillWriter($path, 'alice');
+			$this->fail('A transferred source was saved by its previous owner');
+		} catch (ForbiddenException $refusal) {
+			$this->assertSame('Secret belongs to another user', $refusal->getMessage());
+		}
+
+		$this->expectException(NotFoundException::class);
+		$this->scope()->assertStillWriter($path, 'alice');
+	}//end testAnOwnersPathRefusesASourceTransferredOrGoneMeanwhile()
 
 	/**
 	 * A copy editor's path is re-read: a source gone since is not found.
@@ -292,7 +325,7 @@ final class ShareSaveScopeRefusalsTest extends TestCase {
 		return new ShareSaveScope(
 			rowJudge: $this->judge,
 			secrets: $this->secrets,
-			federatedShares: $this->createMock(FederatedShareMapper::class),
+			partners: new ShareSavePartners(federatedShares: $this->createMock(FederatedShareMapper::class)),
 			sync: $this->sync,
 			guards: $this->guards,
 		);

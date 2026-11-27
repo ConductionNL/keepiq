@@ -188,6 +188,43 @@ describe('signIn', () => {
 		expect(await signIn(call)).toBe('stale')
 	})
 
+	it('hands on what the counter save left to partner shares, and keeps the window for it', async () => {
+		await login(41)
+		server({ [SHARE_SAVE]: () => json({ secret: row, federated: { ownerOnly: false, notReached: 1 } }) })
+		const deliver = vi.fn<(result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>>(async () => true)
+		expect(await signIn(input({ deliver }))).toEqual({ shareSave: { notReached: 1 } })
+		expect(deliver).toHaveBeenCalledWith(expect.objectContaining({ type: 'credential' }), true)
+	})
+
+	/** A write-grade editor's own copy of the owner's `src`, whose share-save answers with `federated`. */
+	const asCopyEditor = (federated: object) => server({
+		'GET /api/v1/secrets/work/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'write', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: row.updatedAt }),
+		[SHARE_SAVE]: ({ body }) => ((body!.copies as object[]).length === 1
+			? json({ secret: row, federated })
+			: json({ error: 'incomplete', copies: { required: [{ secretId: 'src', holder: 'owner', targetUserId: null }], skipRefused: [] }, federated: { required: [] } }, 409)),
+	})
+
+	it('lets the window close on a counter save whose only note is the owner\'s next save', async () => {
+		await login(41)
+		asCopyEditor({ ownerOnly: true })
+		const deliver = vi.fn<(result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>>(async () => true)
+		expect(await signIn(input({ deliver }))).toBe('delivered')
+		expect(deliver).toHaveBeenCalledWith(expect.objectContaining({ type: 'credential' }), false)
+	})
+
+	it('leaves the owner\'s next save out of a counter save\'s note that also names partner recipients left behind', async () => {
+		await login(41)
+		asCopyEditor({ ownerOnly: true, notReached: 2 })
+		expect(await signIn(input())).toEqual({ shareSave: { notReached: 2 } })
+	})
+
+	it('lets the window close on a counter save that reached everyone', async () => {
+		await login(41)
+		const deliver = vi.fn<(result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>>(async () => true)
+		expect(await signIn(input({ deliver }))).toBe('delivered')
+		expect(deliver).toHaveBeenCalledWith(expect.objectContaining({ type: 'credential' }), false)
+	})
+
 	it('records nothing when the ceremony ended before delivery', async () => {
 		const deliver = vi.fn(async () => false)
 		expect(await signIn(input({ deliver }))).toBe('ended')

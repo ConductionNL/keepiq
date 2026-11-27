@@ -9,12 +9,17 @@
  * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
  */
 import axios from '@nextcloud/axios'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { importPrivateKey, rsaDecrypt } from '../../src/crypto/rsa.js'
 import {
 	encryptSparse,
+	forgetVerifiedPartners,
 	MAX_INCOMPLETE_ROUNDS,
+	notifyPartnerNotes,
+	notReachedText,
 	PARTNER_LIMIT_WAIT_CAP_MS,
 	saveShared,
 	ShareSaveError,
@@ -37,7 +42,11 @@ import {
 } from '../vitest/fixtures/rsa-fixtures.js'
 
 const showInfo = vi.fn()
-vi.mock('@nextcloud/dialogs', () => ({ showInfo: (...a) => showInfo(...a) }))
+const showWarning = vi.fn()
+vi.mock('@nextcloud/dialogs', () => ({
+	showInfo: (...a) => showInfo(...a),
+	showWarning: (...a) => showWarning(...a),
+}))
 
 const BASE = '2026-10-01T10:00:00+00:00'
 const OWNER_CERT = RSA4096_PUBLIC_KEY_SPKI_PEM
@@ -143,6 +152,8 @@ beforeEach(async () => {
 	setActivePinia(createPinia())
 	vi.restoreAllMocks()
 	showInfo.mockReset()
+	showWarning.mockReset()
+	forgetVerifiedPartners()
 	const session = useSessionStore()
 	session.cryptoKey = await importPrivateKey(RSA4096_PRIVATE_KEY_PKCS8_PEM)
 	session.certificate = OWNER_CERT
@@ -1275,5 +1286,263 @@ describe('updateSecret', () => {
 
 		expect(log.saves).toHaveLength(0)
 		expect(log.plainPuts[0][1]).toEqual({ name: 'Renamed' })
+	})
+})
+
+describe("saveShared by the secret's owner through their own copy", () => {
+	const F = JSON.parse(
+		readFileSync(
+			resolve(__dirname, '../fixtures/federation-chain.json'),
+			'utf8',
+		),
+	)
+	const PARTNER = 'bob@cloud.partner.example'
+	const VALID = {
+		cloudId: PARTNER,
+		certificate: F.bob,
+		chain: [F.intermediateA, F.rootA],
+		partnerRootFingerprint: F.rootAFingerprint,
+	}
+	// The source is still encrypted for the previous owner; the caller owns it.
+	const context = {
+		sourceSecretId: 'src',
+		effectiveGrade: 'owner',
+		ownerCertificate: OWNER_CERT,
+		sourceUpdatedAt: BASE,
+	}
+	const required = [{ secretId: 'src', holder: 'owner', targetUserId: null }]
+	const save = () =>
+		saveShared({
+			id: 'copy-me',
+			plainDiff: { key: 'new-pw' },
+			patch: { key: 'MINE' },
+			baseUpdatedAt: BASE,
+			sourceBaseUpdatedAt: BASE,
+			loadFull: async () => ({
+				key: 'old',
+				login: 'dave',
+				additionalFields: null,
+				updatedAt: BASE,
+			}),
+		})
+
+	it('looks up and verifies the partner certificates the server requires and sends their ciphertext', async () => {
+		const log = shareSaveServer({
+			id: 'copy-me',
+			context,
+			required,
+			partners: [{ shareId: 'fs-1', recipientCloudId: PARTNER }],
+			lookup: { [PARTNER]: VALID },
+		})
+
+		const result = await save()
+
+		expect(result.federated.written).toBe(1)
+		expect(log.partnerBatches).toEqual([['fs-1']])
+		const final = log.saves.at(-1)
+		expect(final.sourceBaseUpdatedAt).toBe(BASE)
+		expect(final.copies.map((c) => c.secretId)).toEqual(['src'])
+		expect(final.federated).toHaveLength(1)
+		expect(final.federated[0]).toMatchObject({ shareId: 'fs-1' })
+		expect(final.federated[0].certFingerprint).toMatch(/^[0-9a-f]{64}$/)
+		// The whole value, encrypted: the unchanged login travels too.
+		expect(final.federated[0].login).toBeTruthy()
+		expect(JSON.stringify(log.saves)).not.toContain('new-pw')
+		expect(final.suspend).toEqual([])
+	})
+
+	it('suspends a partner share whose certificate does not verify', async () => {
+		const log = shareSaveServer({
+			id: 'copy-me',
+			context,
+			required,
+			partners: [{ shareId: 'fs-1', recipientCloudId: PARTNER }],
+			lookup: {
+				[PARTNER]: {
+					...VALID,
+					certificate: F.bobOtherRoot,
+					chain: [F.intermediateB, F.rootB],
+				},
+			},
+		})
+
+		await save()
+
+		expect(log.saves.at(-1).federated).toEqual([])
+		expect(log.saves.at(-1).suspend).toEqual([
+			{ shareId: 'fs-1', reason: 'untrusted_root' },
+		])
+	})
+
+	it('sends no partner lists and looks no partner up when the server requires none', async () => {
+		const log = shareSaveServer({ id: 'copy-me', context, required })
+
+		await save()
+
+		expect(log.partnerBatches).toEqual([])
+		expect(log.partnerLookups).toEqual([])
+		for (const body of log.saves) {
+			expect('federated' in body).toBe(false)
+			expect('suspend' in body).toBe(false)
+		}
+	})
+
+	describe('once the secret passed on between two attempts', () => {
+		// Required of the owner on the first answer only; the server answers the next attempt as it answers any copy editor.
+		const partners = (n) =>
+			n === 1 ? [{ shareId: 'fs-1', recipientCloudId: PARTNER }] : []
+
+		it('drops the partner shares the server no longer requires and saves again as a copy editor', async () => {
+			const log = shareSaveServer({
+				id: 'copy-me',
+				context,
+				required,
+				partners,
+				lookup: { [PARTNER]: VALID },
+				// As ShareSaveScope answers a copy editor who doesn't own the secret while partner shares exist.
+				ownerOnly: (n) => n > 1,
+			})
+
+			const result = await save()
+			await notifyPartnerNotes(result)
+
+			expect(result.federated.written).toBe(0)
+			expect(result.federated.ownerOnly).toBe(true)
+			expect(showInfo).toHaveBeenCalledTimes(1)
+			expect(showInfo.mock.calls[0][0]).toContain('when the owner next saves')
+			expect(log.saves).toHaveLength(3)
+			expect(log.saves[1].federated.map((f) => f.shareId)).toEqual(['fs-1'])
+			expect('federated' in log.saves[2]).toBe(false)
+			expect('suspend' in log.saves[2]).toBe(false)
+			expect(log.saves[2].copies.map((c) => c.secretId)).toEqual(['src'])
+		})
+
+		it('drops them when a stage chunk is answered incomplete, and stages the copies without them', async () => {
+			const users = Array.from({ length: 150 }, (_, i) => `user-${i}`)
+			const all = [...required, ...users.map((u) => recipient(`copy-${u}`, u))]
+			const log = shareSaveServer({
+				id: 'copy-me',
+				context,
+				required: all,
+				partners,
+				suites: Object.fromEntries(users.map((u) => [u, BOB_CERT])),
+				lookup: { [PARTNER]: VALID },
+				ownerOnly: (n) => n > 1,
+				onSave: (body, n) => {
+					const named = [
+						...(body.federated ?? []),
+						...(body.suspend ?? []),
+					]
+					if (
+						body.stage?.final === false
+						&& named.length > 0
+						&& partners(n).length === 0
+					) {
+						throw httpError(409, {
+							error: 'incomplete',
+							copies: {
+								required: all,
+								missing: [],
+								unexpected: [],
+								skipRefused: [],
+							},
+							federated: {
+								required: [],
+								missing: [],
+								unexpected: named.map((e) => e.shareId),
+							},
+						})
+					}
+				},
+			})
+
+			const result = await save()
+
+			expect(result.federated.ownerOnly).toBe(true)
+			expect(log.saves.map((s) => s.stage)).toEqual([
+				undefined,
+				{ final: false },
+				{ final: false },
+				{ id: 'stage-1', final: true },
+			])
+			expect(log.saves[1].federated.map((f) => f.shareId)).toEqual(['fs-1'])
+			for (const body of log.saves.slice(2)) {
+				expect('federated' in body).toBe(false)
+				expect('suspend' in body).toBe(false)
+			}
+			expect(log.saves.slice(2).flatMap((s) => s.copies)).toHaveLength(151)
+		}, 60000)
+	})
+})
+
+describe('what a save tells about partner shares it did not write', () => {
+	it('names a partner share an administrator must repair before the change saves', () => {
+		const text = shareSaveErrorText(
+			httpError(409, { error: 'partner_share_owner_mismatch' }),
+		)
+
+		expect(text).toContain('Nothing was saved')
+		expect(text).toContain('administrator must repair the partner shares')
+	})
+
+	it.each([
+		[
+			1,
+			'Saved, but 1 recipient at a partner organisation got this secret from a copy and did not get this change.',
+		],
+		[
+			3,
+			'Saved, but 3 recipients at partner organisations got this secret from a copy and did not get this change.',
+		],
+	])(
+		'counts %i recipient(s) at partner organisations who got the secret from a copy',
+		(count, text) => {
+			expect(notReachedText(count)).toBe(text)
+		},
+	)
+
+	it.each([
+		['the owner', { id: 's1' }],
+		[
+			'a copy editor',
+			{
+				id: 'copy-me',
+				context: {
+					sourceSecretId: 'src',
+					effectiveGrade: 'write',
+					ownerCertificate: OWNER_CERT,
+					sourceUpdatedAt: BASE,
+				},
+				required: [{ secretId: 'src', holder: 'owner', targetUserId: null }],
+			},
+		],
+	])(
+		'warns %s when partner shares hang off a copy the save wrote',
+		async (_, server) => {
+			shareSaveServer({ ...server, notReached: 2 })
+
+			await useSecretStore().updateSecret(
+				server.id,
+				{ key: 'x' },
+				{ baseUpdatedAt: BASE },
+			)
+
+			expect(showWarning).toHaveBeenCalledTimes(1)
+			expect(showWarning.mock.calls[0][0]).toContain('2 recipients at partner organisations')
+			expect(showInfo).not.toHaveBeenCalled()
+		},
+	)
+
+	it('says nothing when every partner share was reached', async () => {
+		shareSaveServer({ id: 's1', notReached: 0 })
+
+		await useSecretStore().updateSecret(
+			's1',
+			{ key: 'x' },
+			{ baseUpdatedAt: BASE },
+		)
+
+		expect(showWarning).not.toHaveBeenCalled()
+		expect(showInfo).not.toHaveBeenCalled()
 	})
 })

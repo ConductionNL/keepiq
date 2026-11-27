@@ -2051,6 +2051,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Ekki er hægt að hengja möppur við. Slepptu frekar skránum í þeim.",
         "Files cannot be added while you are offline. Remove them to save.": "Ekki er hægt að bæta við skrám án nettengingar. Fjarlægðu þær til að vista.",
         "Files can only be added to a secret you own. Remove them to save.": "Aðeins er hægt að bæta skrám við leyndarmál sem þú átt. Fjarlægðu þær til að vista.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ekkert var vistað: deiling þessa leyndarmáls með samstarfsfyrirtæki tilheyrir enn fyrri eiganda þess. Kerfisstjóri þarf að lagfæra deilingarnar með samstarfsfyrirtækjum áður en hægt er að vista þessa breytingu.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Vistað, en %n viðtakandi hjá samstarfsfyrirtæki fékk þetta leyndarmál úr afriti og fékk ekki þessa breytingu.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Vistað, en %n viðtakendur hjá samstarfsfyrirtækjum fengu þetta leyndarmál úr afriti og fengu ekki þessa breytingu.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Vistað, en %n viðtakandi hjá samstarfsfyrirtæki fékk þetta leyndarmál úr afriti og fékk ekki þessa breytingu.",
+            "Vistað, en %n viðtakendur hjá samstarfsfyrirtækjum fengu þetta leyndarmál úr afriti og fengu ekki þessa breytingu."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Engu var deilt; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Þessu leyndarmáli var deilt með þér, svo ekki er hægt að deila því með samstarfsfyrirtæki. Engu var deilt.",
         "Sharing options could not be loaded.": "Ekki tókst að hlaða inn deilingarvalkostum.",
         "Sharing options still could not be loaded.": "Enn tókst ekki að hlaða inn deilingarvalkostum.",
         "Sharing is not available for this secret.": "Deiling er ekki í boði fyrir þetta leyndarmál."

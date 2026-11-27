@@ -163,7 +163,8 @@ async function handBack(ceremony: Ceremony, activate: boolean): Promise<void> {
  * Ends the tab's ceremony while it is still `id`; `result` goes to its frame. False when it had ended already.
  * `activateTab` is for the user's own fallback only, so no other path brings a hidden tab forward.
  */
-function end(tabId: number, id: string, result: PasskeyResult | null, activateTab = false): Promise<boolean> {
+/** `keepWindow`: the window shows what the delivered save left to partner shares, and the user closes it. */
+function end(tabId: number, id: string, result: PasskeyResult | null, { activateTab = false, keepWindow = false }: { activateTab?: boolean; keepWindow?: boolean } = {}): Promise<boolean> {
 	return inTab(tabId, async () => {
 		const ceremony = await store.get(tabId)
 		if (ceremony?.id !== id) return false
@@ -171,7 +172,7 @@ function end(tabId: number, id: string, result: PasskeyResult | null, activateTa
 		if (result?.type === 'fallback') void handBack(ceremony, activateTab).catch(log('hand back')).then(() => toFrame(ceremony, result))
 		else {
 			if (result) toFrame(ceremony, result)
-			closeWindow(ceremony)
+			if (!keepWindow) closeWindow(ceremony)
 		}
 		return true
 	})
@@ -444,6 +445,7 @@ async function settled(ceremony: Ceremony, outcome: SaveOutcome | SignOutcome, s
 	if (outcome === 'delivered') return { ok: true }
 	if (outcome === 'ended') return ENDED
 	if (typeof outcome === 'string') return refusedStep(ceremony, outcome)
+	if ('shareSave' in outcome) return { ok: true, shareSave: outcome.shareSave }
 	return keepFailed(ceremony, failedStep(outcome, step))
 }
 
@@ -454,7 +456,7 @@ async function refusedStep(ceremony: Ceremony, code: Refusal): Promise<PasskeyWi
 	return !ceremony.failed || (await update(ceremony, { failed: undefined })) ? { ok: false, code } : ENDED
 }
 
-function failedStep(outcome: Exclude<Outcome, string>, step: Step): FailedStep {
+function failedStep(outcome: Extract<Outcome, { error: VaultWriteError }>, step: Step): FailedStep {
 	return step.action === 'save' && 'attempt' in outcome ? { ...step, attempt: outcome.attempt, error: outcome.error } : { ...step, error: outcome.error }
 }
 
@@ -489,7 +491,7 @@ async function pick(ceremony: Ceremony, itemId: unknown, credentialId: unknown):
 	const acting = await pickingKey(ceremony)
 	if ('refused' in acting) return acting.refused
 	const { key } = acting
-	const outcome = await signIn({ ceremony, key, itemId, credentialId, deliver: (result) => end(ceremony.tabId, ceremony.id, result) })
+	const outcome = await signIn({ ceremony, key, itemId, credentialId, deliver: (result, keepWindow) => end(ceremony.tabId, ceremony.id, result, { keepWindow }) })
 	return settled(ceremony, outcome, { action: 'pick', itemId, credentialId })
 }
 
@@ -504,7 +506,7 @@ async function save(ceremony: Ceremony, request: SaveRequest | null, attempt?: S
 	const { key } = acting
 	// Checked again here, so no save gets past an excluded credential the view showed.
 	if (await alreadySaved(ceremony, key)) return markAlreadySaved(ceremony)
-	const outcome = await savePasskey({ ceremony, key, request, attempt, deliver: (result) => end(ceremony.tabId, ceremony.id, result) })
+	const outcome = await savePasskey({ ceremony, key, request, attempt, deliver: (result, keepWindow) => end(ceremony.tabId, ceremony.id, result, { keepWindow }) })
 	return settled(ceremony, outcome, { action: 'save', request })
 }
 
@@ -556,7 +558,7 @@ async function fallbackOrCancel(ceremony: Ceremony, kind: 'passkey.fallback' | '
 	// A conditional request has no fallback (spec § Sign in with a passkey), so its window offers none and this acts as Cancel.
 	const closed = ceremony.conditional
 		? release(ceremony)
-		: kind === 'passkey.fallback' ? end(ceremony.tabId, ceremony.id, { type: 'fallback' }, true) : end(ceremony.tabId, ceremony.id, cancelled(ceremony))
+		: kind === 'passkey.fallback' ? end(ceremony.tabId, ceremony.id, { type: 'fallback' }, { activateTab: true }) : end(ceremony.tabId, ceremony.id, cancelled(ceremony))
 	return await closed ? { ok: true } : ENDED
 }
 

@@ -32,6 +32,7 @@ use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
@@ -39,6 +40,7 @@ use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -48,6 +50,8 @@ use Ramsey\Uuid\Uuid;
  * rolled back after each test.
  */
 class PartnerShareOwnerTransferTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	private const BASE = '2026-10-01T10:00:00+00:00';
 
 	private ?IDBConnection $db = null;
@@ -111,7 +115,7 @@ class PartnerShareOwnerTransferTest extends TestCase {
 	private function shareService(FederatedShareMapper $mapper): FederatedShareService {
 		return new FederatedShareService(
 			shareMapper: $mapper,
-			secretMapper: new SecretMapper(db: $this->db),
+			sources: new FederatedShareSources(secretMapper: new SecretMapper(db: $this->db), rowJudge: $this->shareRowJudge()),
 			partners: $this->createMock(FederationPartnerService::class),
 			root: $this->createMock(FederationRootService::class),
 			cloudIdManager: $this->createMock(ICloudIdManager::class),

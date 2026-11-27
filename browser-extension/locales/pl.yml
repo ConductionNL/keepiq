@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Ten element czeka na niezakończone sprawdzenie udostępnień. Nic nie zapisano; spróbuj ponownie później.
   shareScanPendingOpen: Ten element czeka na sprawdzenie udostępnień i nie można go jeszcze edytować. Spróbuj ponownie później.
   shareScanPendingDelete: Ten element czeka na niezakończone sprawdzenie udostępnień. Nic nie usunięto; spróbuj ponownie później.
+  partnerShareOwnerMismatch: "Nic nie zapisano: udostępnienie tego elementu organizacji partnerskiej nadal należy do jego poprzedniego właściciela. Administrator musi naprawić udostępnienia organizacjom partnerskim, zanim będzie można zapisać tę zmianę."
   sendInvalid: Keepiq nie przyjął tej wysyłki. Nic nie wysłano; sprawdź pola i spróbuj ponownie.
   sendOffline: Nie można połączyć się z serwerem, nic nie wysłano
   argon2Unavailable: Ochrona hasłem nie jest dostępna w tej przeglądarce
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Zapisano. Odbiorcy w organizacjach partnerskich otrzymają tę zmianę, gdy właściciel następnym razem zapisze element.
   suspended: Udostępnianie dla {cloudIds} jest wstrzymane, ponieważ nie udało się zweryfikować ich certyfikatu lub ich organizacja już go nie akceptuje. Udostępnienie jest widoczne w aplikacji webowej Keepiq.
   paused: Udostępnianie dla {cloudIds} jest wstrzymane, dopóki ponownie nie udostępnisz im tego elementu.
+  notReached:
+    1: Zapisano, ale 1 odbiorca w organizacji partnerskiej dostał ten element z kopii i nie otrzymał tej zmiany.
+    n: "Zapisano, ale tej zmiany nie otrzymali odbiorcy w organizacjach partnerskich, którzy dostali ten element z kopii: $1"
 
 folders:
   add: Dodaj folder

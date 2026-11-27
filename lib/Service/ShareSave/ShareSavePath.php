@@ -29,11 +29,19 @@ use OCA\Keepiq\Db\Secret;
  */
 final class ShareSavePath {
 	/**
+	 * The source as last read, whose owner decides who writes partner shares.
+	 *
+	 * @var Secret
+	 */
+	private readonly Secret $current;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Secret $row The caller's own row, `{id}`
 	 * @param Secret $source The source: `$row` itself on the owner path
 	 * @param string|null $writesOn The audit label of the copy holder's write; null for the owner or a delegate
+	 * @param Secret|null $current The source as read again inside the transaction; `$source` when not read again
 	 *
 	 * @return void
 	 */
@@ -41,8 +49,35 @@ final class ShareSavePath {
 		public readonly Secret $row,
 		public readonly Secret $source,
 		public readonly ?string $writesOn = null,
+		?Secret $current = null,
 	) {
+		$this->current = ($current ?? $source);
 	}//end __construct()
+
+	/**
+	 * Whether the caller owns the source, so the save writes its partner shares;
+	 * on the copy-editor path as the source was last read.
+	 *
+	 * @param string $userId The caller
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function ownsSource(string $userId): bool {
+		return $this->current->getOwnerType() === 'user' && $this->current->getOwnerId() === $userId;
+	}//end ownsSource()
+
+	/**
+	 * The source's owner, as the source was last read.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+	 */
+	public function sourceOwnerId(): string {
+		return (string)$this->current->getOwnerId();
+	}//end sourceOwnerId()
 
 	/**
 	 * Whether `{id}` is a recipient copy.
