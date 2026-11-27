@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Promjena poslana drugoj organizaciji",
         "Share with another organisation revoked": "Dijeljenje s drugom organizacijom ukinuto",
         "Sharing with another organisation stopped": "Dijeljenje s drugom organizacijom zaustavljeno",
+        "Resume": "Nastavi",
+        "Sharing with another organisation resumed": "Dijeljenje s drugom organizacijom nastavljeno",
         "Another organisation did not get a change": "Druga organizacija nije dobila promjenu",
         "Secret received from another organisation": "Tajna primljena iz druge organizacije",
         "Secret from another organisation accepted": "Tajna iz druge organizacije prihvaćena",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Spremljeno, ali %n primatelja u partnerskim organizacijama dobilo je ovu tajnu iz kopije i nije dobilo ovu promjenu.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Spremljeno, ali %n primatelj u partnerskoj organizaciji dobio je ovu tajnu iz kopije i nije dobio ovu promjenu.","Spremljeno, ali %n primatelja u partnerskim organizacijama dobila su ovu tajnu iz kopije i nisu dobila ovu promjenu.","Spremljeno, ali %n primatelja u partnerskim organizacijama dobilo je ovu tajnu iz kopije i nije dobilo ovu promjenu."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ova tajna čeka provjeru svojih dijeljenja koja još nije završena. Ništa nije podijeljeno; pokušajte ponovno kasnije ili zamolite administratora da provjeri rade li pozadinski poslovi.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ova je tajna podijeljena s vama, pa se ne može podijeliti s partnerskom organizacijom. Ništa nije podijeljeno."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ova je tajna podijeljena s vama, pa se ne može podijeliti s partnerskom organizacijom. Ništa nije podijeljeno.",
+        "Sharing options could not be loaded.": "Opcije dijeljenja nije bilo moguće učitati.",
+        "Sharing options still could not be loaded.": "Opcije dijeljenja i dalje nije bilo moguće učitati.",
+        "Sharing is not available for this secret.": "Dijeljenje nije dostupno za ovu tajnu."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

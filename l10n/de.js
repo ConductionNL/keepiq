@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Änderung an eine andere Organisation gesendet",
         "Share with another organisation revoked": "Freigabe für eine andere Organisation widerrufen",
         "Sharing with another organisation stopped": "Freigabe für eine andere Organisation gestoppt",
+        "Resume": "Fortsetzen",
+        "Sharing with another organisation resumed": "Teilen mit einer anderen Organisation fortgesetzt",
         "Another organisation did not get a change": "Eine andere Organisation hat eine Änderung nicht erhalten",
         "Secret received from another organisation": "Geheimnis von einer anderen Organisation erhalten",
         "Secret from another organisation accepted": "Geheimnis von einer anderen Organisation angenommen",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Gespeichert, aber %n Empfänger bei Partnerorganisationen haben dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Gespeichert, aber %n Empfänger bei einer Partnerorganisation hat dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten.","Gespeichert, aber %n Empfänger bei Partnerorganisationen haben dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts geteilt; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dieses Geheimnis wurde mit Ihnen geteilt, daher kann es nicht mit einer Partnerorganisation geteilt werden. Es wurde nichts geteilt."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dieses Geheimnis wurde mit Ihnen geteilt, daher kann es nicht mit einer Partnerorganisation geteilt werden. Es wurde nichts geteilt.",
+        "Sharing options could not be loaded.": "Die Optionen zum Teilen konnten nicht geladen werden.",
+        "Sharing options still could not be loaded.": "Die Optionen zum Teilen konnten weiterhin nicht geladen werden.",
+        "Sharing is not available for this secret.": "Teilen ist für dieses Geheimnis nicht verfügbar."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -638,7 +638,7 @@ class ShareSaveServiceTest extends TestCase {
 	 * Only the copy moved; the source is still at the edit's base, which the
 	 * refusal names.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testAStaleCopyWhoseSourceStayedNamesTheSourceBase(): void {
 		$this->bobWritesOnAGrade();
@@ -656,7 +656,7 @@ class ShareSaveServiceTest extends TestCase {
 	 * The source moved alone past the edit's base, so the conflict never
 	 * showed that change: the refusal names the edit's own source base.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testAStaleCopyDoesNotNameASourceVersionThatMovedAlone(): void {
 		$this->bobWritesOnAGrade();
@@ -675,7 +675,7 @@ class ShareSaveServiceTest extends TestCase {
 	 * A save stamps the source and the copy with one version, so the copy
 	 * shown in the conflict carries the source's current version.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testAStaleCopyNamesTheSourceVersionItWasWrittenWith(): void {
 		$this->bobWritesOnAGrade();
@@ -693,7 +693,7 @@ class ShareSaveServiceTest extends TestCase {
 	 * The source was locked and moved before the copy refused, but that move
 	 * rolls back, so the version named is the one the source keeps.
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function testACopyThatMovesOnBeforeTheLockNamesTheSourceVersionItKeeps(): void {
 		$this->bobWritesOnAGrade();

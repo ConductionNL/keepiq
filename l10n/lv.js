@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Izmaiņas nosūtītas citai organizācijai",
         "Share with another organisation revoked": "Kopīgošana ar citu organizāciju atsaukta",
         "Sharing with another organisation stopped": "Kopīgošana ar citu organizāciju pārtraukta",
+        "Resume": "Atsākt",
+        "Sharing with another organisation resumed": "Kopīgošana ar citu organizāciju atsākta",
         "Another organisation did not get a change": "Cita organizācija nesaņēma izmaiņas",
         "Secret received from another organisation": "Saņemts noslēpums no citas organizācijas",
         "Secret from another organisation accepted": "Noslēpums no citas organizācijas pieņemts",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Saglabāts, bet %n saņēmēji partneru organizācijās saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Saglabāts, bet %n saņēmēji partneru organizācijās saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.","Saglabāts, bet %n saņēmējs partneru organizācijā saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas.","Saglabāts, bet %n saņēmēji partneru organizācijās saņēma šo noslēpumu no kopijas un nesaņēma šīs izmaiņas."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika kopīgots; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Šis noslēpums tika kopīgots ar jums, tāpēc to nevar kopīgot ar partneru organizāciju. Nekas netika kopīgots."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Šis noslēpums tika kopīgots ar jums, tāpēc to nevar kopīgot ar partneru organizāciju. Nekas netika kopīgots.",
+        "Sharing options could not be loaded.": "Neizdevās ielādēt koplietošanas opcijas.",
+        "Sharing options still could not be loaded.": "Joprojām neizdevās ielādēt koplietošanas opcijas.",
+        "Sharing is not available for this secret.": "Koplietošana šim noslēpumam nav pieejama."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

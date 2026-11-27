@@ -393,23 +393,6 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->assertAuditWithoutValues();
 	}
 
-	public function testAnUpdateWithTheNewFieldsToAnOldPartnerIsRefusedAndNothingIsWritten(): void {
-		$this->alice(valueFields: null);
-		$this->existingShare(totp: null, passkeys: null);
-
-		$response = $this->controller(['totp' => self::TOTP])
-			->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, self::TOTP);
-
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		$this->assertSame('partner_upgrade_required', $response->getData()['error']);
-		$this->assertSame(Application::TOTP_PASSKEYS_FIELDS_SINCE, $response->getData()['requiredVersion']);
-		$this->assertSame(self::SHARE_ID, $response->getData()['shareId']);
-		$this->assertSame('OLD-KEY', $this->rows[self::SHARE_ID]->getKey());
-		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
-		$this->assertSame([], $this->sent);
-		$this->assertSame([], $this->audit);
-	}
-
 	public function testAShareSaveWriteToAnOldPartnerThrowsBeforeWriting(): void {
 		$this->alice(valueFields: null);
 		$this->existingShare(totp: null, passkeys: null);
@@ -431,80 +414,46 @@ class FederatedValueFieldsTest extends TestCase {
 		$this->assertSame([], $this->audit);
 	}
 
-	public function testAnUpdateFromAnOldClientToAnOldPartnerWorksAsBefore(): void {
-		$this->alice(valueFields: null);
-		$this->existingShare(totp: null, passkeys: null);
-
-		$response = $this->controller()->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', 'NEW-LOGIN');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame('NEW-KEY', $this->rows[self::SHARE_ID]->getKey());
-		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
-	}
-
 	/**
 	 * A field the client did not send stays while the certificate is the same, and goes with a new certificate:
-	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it. The source no
-	 * longer holds the fields the update drops or clears, or the update would not mirror it.
+	 * nothing stays encrypted for a key the recipient no longer holds. A null that was sent clears it. A share-save
+	 * writes the share through writeCiphertext(), which owns this rule.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-sharing-atomic-share-save/tasks.md#3.3
 	 */
 	public function testAnAbsentFieldIsKeptOnlyUnderTheSameCertificate(): void {
 		$this->alice(valueFields: '["totp","passkeys"]');
 		$this->existingShare(totp: self::TOTP, passkeys: self::PASSKEYS);
 
-		$this->controller()->update(self::SHARE_ID, strtoupper(self::FINGERPRINT), 'NEW-KEY');
+		$this->writeShare(fingerprint: strtoupper(self::FINGERPRINT), ciphertext: ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null]);
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::PASSKEYS, $this->rows[self::SHARE_ID]->getPasskeys());
 
-		$this->source->setPasskeys(null);
-		$this->controller(['passkeys' => null])->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, null, null);
+		$cleared = ['key' => 'NEW-KEY', 'login' => null, 'additionalFields' => null, 'passkeys' => null];
+		$this->writeShare(fingerprint: self::FINGERPRINT, ciphertext: $cleared);
 		$this->assertSame(self::TOTP, $this->rows[self::SHARE_ID]->getTotp());
 		$this->assertNull($this->rows[self::SHARE_ID]->getPasskeys());
 
-		$this->source->setTotp(null);
-		$this->controller()->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'KEY-FOR-NEW-CERT');
+		$this->writeShare(fingerprint: self::NEW_FINGERPRINT, ciphertext: ['key' => 'KEY-FOR-NEW-CERT', 'login' => null, 'additionalFields' => null]);
 		$this->assertNull($this->rows[self::SHARE_ID]->getTotp());
 		$this->assertSame(self::NEW_FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
 	}
 
 	/**
-	 * An update for a partner that stores the fields mirrors the source like a new share does: leaving out a field
-	 * the source holds under a new certificate would drop it from the partner's copy, and carrying one the source
-	 * does not hold would add it. Left out under the same certificate it keeps the stored value, so it is accepted.
-	 * Nothing is written or sent when it is refused.
+	 * Write the live share's ciphertext as a share-save does, outside a patch.
+	 *
+	 * @param string $fingerprint The certificate fingerprint the browser verified
+	 * @param array<string,?string> $ciphertext The ciphertext, without the fields a client did not send
+	 *
+	 * @return void
 	 */
-	public function testAnUpdateThatDoesNotMirrorTheSourceIsRefused(): void {
-		$this->alice(valueFields: '["totp","passkeys"]');
-		$this->existingShare(totp: self::TOTP, passkeys: self::PASSKEYS);
-
-		$response = $this->controller()->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'KEY-FOR-NEW-CERT');
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(['message' => 'copy_fields_mismatch'], $response->getData());
-
-		$this->source->setPasskeys(null);
-		$carried = $this->controller(['totp' => self::TOTP, 'passkeys' => self::PASSKEYS])
-			->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY', null, null, self::TOTP, self::PASSKEYS);
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $carried->getStatus());
-
-		$this->assertSame('OLD-KEY', $this->rows[self::SHARE_ID]->getKey());
-		$this->assertSame(self::FINGERPRINT, $this->rows[self::SHARE_ID]->getRecipientCertFingerprint());
-		$this->assertSame([], $this->sent);
-		$this->assertSame([], $this->audit);
-
-		$sameCertificate = $this->controller()->update(self::SHARE_ID, self::FINGERPRINT, 'NEW-KEY');
-		$this->assertSame(Http::STATUS_OK, $sameCertificate->getStatus());
-	}
-
-	public function testAnUpdateToANewPartnerReplacesBothFields(): void {
-		$this->alice(valueFields: '["totp","passkeys"]');
-		$this->existingShare(totp: 'OLD-TOTP', passkeys: null);
-
-		$response = $this->controller(['totp' => 'NEW-TOTP', 'passkeys' => self::PASSKEYS])
-			->update(self::SHARE_ID, self::NEW_FINGERPRINT, 'NEW-KEY', null, null, 'NEW-TOTP', self::PASSKEYS);
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame('NEW-TOTP', $this->rows[self::SHARE_ID]->getTotp());
-		$this->assertSame(self::PASSKEYS, $this->rows[self::SHARE_ID]->getPasskeys());
-		$this->assertAuditWithoutValues();
+	private function writeShare(string $fingerprint, array $ciphertext): void {
+		$this->service->writeCiphertext(
+			row: clone $this->rows[self::SHARE_ID],
+			certFingerprint: $fingerprint,
+			ciphertext: $ciphertext,
+			savedAt: new DateTime(),
+		);
 	}
 
 	/**

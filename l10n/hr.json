@@ -1781,6 +1781,8 @@
         "Change sent to another organisation": "Promjena poslana drugoj organizaciji",
         "Share with another organisation revoked": "Dijeljenje s drugom organizacijom ukinuto",
         "Sharing with another organisation stopped": "Dijeljenje s drugom organizacijom zaustavljeno",
+        "Resume": "Nastavi",
+        "Sharing with another organisation resumed": "Dijeljenje s drugom organizacijom nastavljeno",
         "Another organisation did not get a change": "Druga organizacija nije dobila promjenu",
         "Secret received from another organisation": "Tajna primljena iz druge organizacije",
         "Secret from another organisation accepted": "Tajna iz druge organizacije prihvaćena",
@@ -2084,7 +2086,10 @@
             "Spremljeno, ali %n primatelja u partnerskim organizacijama dobilo je ovu tajnu iz kopije i nije dobilo ovu promjenu."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ova tajna čeka provjeru svojih dijeljenja koja još nije završena. Ništa nije podijeljeno; pokušajte ponovno kasnije ili zamolite administratora da provjeri rade li pozadinski poslovi.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ova je tajna podijeljena s vama, pa se ne može podijeliti s partnerskom organizacijom. Ništa nije podijeljeno."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ova je tajna podijeljena s vama, pa se ne može podijeliti s partnerskom organizacijom. Ništa nije podijeljeno.",
+        "Sharing options could not be loaded.": "Opcije dijeljenja nije bilo moguće učitati.",
+        "Sharing options still could not be loaded.": "Opcije dijeljenja i dalje nije bilo moguće učitati.",
+        "Sharing is not available for this secret.": "Dijeljenje nije dostupno za ovu tajnu."
     },
     "plurals": null
 }

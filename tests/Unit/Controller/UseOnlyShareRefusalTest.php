@@ -263,20 +263,6 @@ class UseOnlyShareRefusalTest extends TestCase {
 		$this->assertSame('restricted', $batch->getData()['items'][0]['status']);
 	}
 
-	/**
-	 * Bob cannot overwrite his use-only copy through the sync route.
-	 *
-	 * @return void
-	 */
-	public function testAUseOnlyCopyCannotBeSynced(): void {
-		$this->rows['copy']->setUseOnly(true);
-		$this->secrets->expects($this->never())->method('update');
-
-		$response = $this->shareController('bob')->sync('copy', [['secretId' => 'copy', 'key' => 'NEW']]);
-
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-	}
-
 	private function useController(string $uid, IEventDispatcher $dispatcher): UseOnlyController {
 		return new UseOnlyController(
 			$this->createMock(IRequest::class),

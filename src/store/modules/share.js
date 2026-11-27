@@ -433,7 +433,7 @@ export const useShareStore = defineStore('share', {
 		 * @param {(stale: Array<object>) => Promise<Array<object>>} [options.rebuild] Encrypts the given rows again from the source's current version.
 		 * @return {Promise<{items: Array<object>, masterPassword: string}>} One item per row, in row order.
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 		 */
 		async registerBatch(rows, { masterPassword = '', rebuild = null } = {}) {
 			const keyOf = (row) => `${row.sourceSecretId}\u0000${row.targetUserId}`

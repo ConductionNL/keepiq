@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Cambio enviado a otra organización",
         "Share with another organisation revoked": "Acceso compartido con otra organización revocado",
         "Sharing with another organisation stopped": "Acceso compartido con otra organización detenido",
+        "Resume": "Reanudar",
+        "Sharing with another organisation resumed": "Se reanudó el uso compartido con otra organización",
         "Another organisation did not get a change": "Otra organización no recibió un cambio",
         "Secret received from another organisation": "Secreto recibido de otra organización",
         "Secret from another organisation accepted": "Secreto de otra organización aceptado",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Guardado, pero %n destinatario de una organización asociada recibió este secreto a partir de una copia y no ha recibido este cambio.","Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Este secreto está esperando una comprobación de sus comparticiones que aún no ha terminado. No se ha compartido nada; inténtelo de nuevo más tarde o pida a un administrador que compruebe que se ejecutan las tareas en segundo plano.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Este secreto se ha compartido contigo, así que no se puede compartir con una organización asociada. No se ha compartido nada."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Este secreto se ha compartido contigo, así que no se puede compartir con una organización asociada. No se ha compartido nada.",
+        "Sharing options could not be loaded.": "No se pudieron cargar las opciones para compartir.",
+        "Sharing options still could not be loaded.": "Todavía no se pudieron cargar las opciones para compartir.",
+        "Sharing is not available for this secret.": "Compartir no está disponible para este secreto."
     },
     "nplurals=2; plural=(n != 1);"
 )

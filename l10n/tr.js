@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Değişiklik başka bir kuruluşa gönderildi",
         "Share with another organisation revoked": "Başka bir kuruluşla paylaşım kaldırıldı",
         "Sharing with another organisation stopped": "Başka bir kuruluşla paylaşım durduruldu",
+        "Resume": "Sürdür",
+        "Sharing with another organisation resumed": "Başka bir kuruluşla paylaşım sürdürüldü",
         "Another organisation did not get a change": "Başka bir kuruluş bir değişikliği almadı",
         "Secret received from another organisation": "Başka bir kuruluştan gizli alındı",
         "Secret from another organisation accepted": "Başka bir kuruluştan gelen gizli kabul edildi",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Bu gizli bilgi, paylaşımlarının henüz tamamlanmamış bir denetimini bekliyor. Hiçbir şey paylaşılmadı; daha sonra yeniden deneyin ya da bir yöneticiden arka plan görevlerinin çalıştığını denetlemesini isteyin.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Bu gizli sizinle paylaşıldı, bu nedenle bir ortak kuruluşla paylaşılamaz. Hiçbir şey paylaşılmadı."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Bu gizli sizinle paylaşıldı, bu nedenle bir ortak kuruluşla paylaşılamaz. Hiçbir şey paylaşılmadı.",
+        "Sharing options could not be loaded.": "Paylaşım seçenekleri yüklenemedi.",
+        "Sharing options still could not be loaded.": "Paylaşım seçenekleri hâlâ yüklenemedi.",
+        "Sharing is not available for this secret.": "Bu gizli için paylaşım kullanılamıyor."
     },
     "nplurals=1; plural=0;"
 )

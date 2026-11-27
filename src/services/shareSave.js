@@ -12,7 +12,7 @@
  * each holder. Partner certificates are verified in this browser
  * (`federatedShare.lookup()`); the server only ever receives ciphertext.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 
 import axios from '@nextcloud/axios'
@@ -95,7 +95,7 @@ let lockEpoch = 0
  * Forget every kept partner certificate; runs on every vault lock.
  *
  * @return {void}
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function forgetVerifiedPartners() {
 	verifiedPartners.clear()
@@ -163,7 +163,7 @@ export class ShareSaveError extends Error {
 	 * @param {string} code The reason.
 	 * @param {Array<{shareId: string, recipientCloudId: string, reason: string}>} [partners] Unreachable partner shares.
 	 * @param {{cause?: Error}} [options] The error this one stands for.
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
+	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
 	 */
 	constructor(code, partners = [], options = undefined) {
 		super(code, options)
@@ -181,7 +181,7 @@ export class ShareSaveError extends Error {
  * @param {object} plainDiff Changed fields as strings, `null` for cleared (`''` too for `totp` and `passkeys`).
  * @param {string} certificate The holder's PEM certificate.
  * @return {Promise<object>}
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 export async function encryptSparse(plainDiff, certificate) {
 	const publicKey = await importPublicKey(certificate)
@@ -207,7 +207,7 @@ export async function encryptSparse(plainDiff, certificate) {
  *
  * @param {object} row A secret row with ciphertext.
  * @return {Promise<object>} `{ key, login, additionalFields, totp, passkeys }`, `null` where empty.
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 export async function plainOf(row) {
 	const session = useSessionStore()
@@ -229,7 +229,7 @@ export async function plainOf(row) {
  *
  * @param {string} id The secret.
  * @return {Promise<object>} The plain value fields plus `updatedAt`.
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
  */
 async function loadRow(id) {
 	const row = (await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`)))
@@ -242,7 +242,7 @@ async function loadRow(id) {
  *
  * @param {Array<string>} userIds The holders.
  * @return {Promise<Map<string, string|null>>} userId to certificate, `null` when not shareable.
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 async function fetchCertificates(userIds) {
 	const found = new Map()
@@ -297,12 +297,12 @@ function idsOf(list, key) {
  * @return {Promise<object>} The 200 body; `secret` is the saved row.
  * @throws {ShareSaveError|Error} Nothing was written. An error the share-save
  *   request itself answered carries `fromShareSave`.
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
- * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
  * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
  */
 export async function saveShared({
@@ -337,7 +337,7 @@ export async function saveShared({
 	 *
 	 * @param {() => Promise<object>} lookup The lookup request.
 	 * @return {Promise<object>} The lookup's answer.
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-many-partner-shares-wait-out-the-lookup-limit
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-many-partner-shares-wait-out-the-lookup-limit
 	 */
 	const withinLookupLimit = async (lookup) => {
 		for (;;) {
@@ -389,7 +389,7 @@ export async function saveShared({
 	 *
 	 * @param {Array<{shareId: string, recipientCloudId: string}>} shares The partner shares to fill.
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
 	 */
 	const prefetchPartners = async (shares) => {
 		const ask = shares.filter(
@@ -837,7 +837,7 @@ async function encryptWhole(value, recipient) {
  *
  * @param {object} result A share-save answer.
  * @return {Promise<void>}
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
  * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
  */
 export async function notifyPartnerNotes(result) {
@@ -1037,8 +1037,8 @@ function isShareSaveRefusal(error) {
  *
  * @param {Error|object} error The thrown error.
  * @return {string|null}
- * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 export function shareSaveErrorText(error) {

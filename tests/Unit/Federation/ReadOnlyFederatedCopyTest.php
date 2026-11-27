@@ -55,6 +55,7 @@ use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderQueryService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -212,23 +213,13 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 
 		$response = (new SecretUpdateController($request, $service, $this->session()))->update('copy');
 
 		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 		$this->assertSame('A copy from another organisation is read-only', $response->getData()['message']);
-	}
-
-	/**
-	 * PUT /api/v1/secrets/{id}/sync: Bob cannot push new values through it.
-	 *
-	 * @return void
-	 */
-	public function testSyncIsForbidden(): void {
-		$response = $this->shareController()->sync('copy', [['secretId' => 'copy', 'encryptedKey' => 'NEW']]);
-
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 	}
 
 	/**

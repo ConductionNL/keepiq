@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Ndryshimi u dërgua te një organizatë tjetër",
         "Share with another organisation revoked": "Ndarja me një organizatë tjetër u revokua",
         "Sharing with another organisation stopped": "Ndarja me një organizatë tjetër u ndal",
+        "Resume": "Rifillo",
+        "Sharing with another organisation resumed": "Ndarja me një organizatë tjetër rifilloi",
         "Another organisation did not get a change": "Një organizatë tjetër nuk e mori një ndryshim",
         "Secret received from another organisation": "U mor një sekret nga një organizatë tjetër",
         "Secret from another organisation accepted": "Sekreti nga një organizatë tjetër u pranua",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "U ruajt, por %n marrës në organizata partnere e morën këtë sekret nga një kopje dhe nuk e morën këtë ndryshim.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["U ruajt, por %n marrës në një organizatë partnere e mori këtë sekret nga një kopje dhe nuk e mori këtë ndryshim.","U ruajt, por %n marrës në organizata partnere e morën këtë sekret nga një kopje dhe nuk e morën këtë ndryshim."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ky sekret po pret një kontroll të ndarjeve të tij që nuk ka përfunduar ende. Asgjë nuk u nda; provoni përsëri më vonë ose kërkojini një administratori të kontrollojë që punët në sfond po ekzekutohen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ky sekret u nda me ju, prandaj nuk mund të ndahet me një organizatë partnere. Nuk u nda asgjë."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ky sekret u nda me ju, prandaj nuk mund të ndahet me një organizatë partnere. Nuk u nda asgjë.",
+        "Sharing options could not be loaded.": "Opsionet e ndarjes nuk mund të ngarkoheshin.",
+        "Sharing options still could not be loaded.": "Opsionet e ndarjes ende nuk mund të ngarkoheshin.",
+        "Sharing is not available for this secret.": "Ndarja nuk është e disponueshme për këtë sekret."
     },
     "nplurals=2; plural=(n != 1);"
 )

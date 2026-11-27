@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Pakeitimas išsiųstas kitai organizacijai",
         "Share with another organisation revoked": "Bendrinimas su kita organizacija atšauktas",
         "Sharing with another organisation stopped": "Bendrinimas su kita organizacija sustabdytas",
+        "Resume": "Atnaujinti",
+        "Sharing with another organisation resumed": "Bendrinimas su kita organizacija atnaujintas",
         "Another organisation did not get a change": "Kita organizacija negavo pakeitimo",
         "Secret received from another organisation": "Gauta paslaptis iš kitos organizacijos",
         "Secret from another organisation accepted": "Paslaptis iš kitos organizacijos priimta",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Išsaugota, bet %n gavėjų partnerių organizacijose gavo šią paslaptį iš kopijos ir negavo šio pakeitimo.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Išsaugota, bet %n gavėjas partnerių organizacijoje gavo šią paslaptį iš kopijos ir negavo šio pakeitimo.","Išsaugota, bet %n gavėjai partnerių organizacijose gavo šią paslaptį iš kopijos ir negavo šio pakeitimo.","Išsaugota, bet %n gavėjų partnerių organizacijose gavo šią paslaptį iš kopijos ir negavo šio pakeitimo."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ši paslaptis laukia savo bendrinimų patikros, kuri dar nebaigta. Niekas nebuvo bendrinta; bandykite vėliau arba paprašykite administratoriaus patikrinti, ar veikia foninės užduotys.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ši paslaptis buvo bendrinta su jumis, todėl jos negalima bendrinti su partnerių organizacija. Niekas nebuvo bendrinta."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ši paslaptis buvo bendrinta su jumis, todėl jos negalima bendrinti su partnerių organizacija. Niekas nebuvo bendrinta.",
+        "Sharing options could not be loaded.": "Nepavyko įkelti bendrinimo parinkčių.",
+        "Sharing options still could not be loaded.": "Bendrinimo parinkčių vis dar nepavyko įkelti.",
+        "Sharing is not available for this secret.": "Šios paslapties bendrinti negalima."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

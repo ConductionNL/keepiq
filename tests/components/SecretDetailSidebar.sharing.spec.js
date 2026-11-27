@@ -19,6 +19,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
+import { useOfflineStore } from '../../src/store/modules/offline.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
@@ -40,6 +41,7 @@ const stubAll = {
 	GroupShareList: { template: '<div data-testid="stub-group-share-list" />' },
 	DelegationManager: { template: '<div data-testid="stub-delegation-manager" />' },
 	ShareRequestForm: { template: '<div data-testid="stub-share-request-form" />' },
+	AdminHandoverPanel: { template: '<div />' },
 	SecretRequestList: { template: '<div data-testid="stub-request-list" />' },
 	SecretRequestCreateDialog: {
 		template: '<div data-testid="stub-request-dialog" />',
@@ -48,7 +50,73 @@ const stubAll = {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-async function mountDetail({ secret, currentUser }) {
+/**
+ * Answer the write-context with `context` (or fail with it when it is an
+ * Error), and every other GET with an empty list.
+ *
+ * @param {object|Error} context The write-context.
+ * @return {void}
+ */
+function serveWriteContext(context) {
+	axios.get.mockImplementation(async (url) => {
+		if (!url.endsWith('/write-context')) {
+			return { data: [] }
+		}
+		if (context instanceof Error) {
+			throw context
+		}
+		return { data: context }
+	})
+}
+
+/**
+ * Hold the write-context of `id` until the test settles it; any other
+ * secret's write-context fails.
+ *
+ * @param {string} id The secret whose write-context waits.
+ * @return {{resolve: Function, reject: Function}} Settles the held request.
+ */
+function holdWriteContext(id) {
+	const held = {}
+	axios.get.mockClear()
+	axios.get.mockImplementation((url) => {
+		if (!url.endsWith('/write-context')) {
+			return Promise.resolve({ data: [] })
+		}
+		if (!url.includes(`/secrets/${id}/`)) {
+			return Promise.reject(new Error('offline'))
+		}
+		return new Promise((resolve, reject) => {
+			held.resolve = resolve
+			held.reject = reject
+		})
+	})
+	return held
+}
+
+/**
+ * How often the write-context was read since the last mockClear().
+ *
+ * @return {number}
+ */
+function writeContextReads() {
+	return axios.get.mock.calls.filter(([url]) => url.endsWith('/write-context'))
+		.length
+}
+
+const has = (wrapper, testId) => wrapper.find(`[data-testid="${testId}"]`).exists()
+
+/**
+ * The sharing note's Try again button.
+ *
+ * @param {object} wrapper The mounted sidebar.
+ * @return {object} Its wrapper.
+ */
+function retryButton(wrapper) {
+	return wrapper.find('[data-testid="secret-detail-sharing-retry"]')
+}
+
+async function mountDetail({ secret, currentUser, attachTo }) {
 	window.OC = { currentUser }
 	// Pre-seed the secret store so the component's mounted hook resolves
 	// `fetchSecret` to our fixture rather than going through the live
@@ -63,6 +131,7 @@ async function mountDetail({ secret, currentUser }) {
 	// this must stay nested.
 	const wrapper = mount(SecretDetailSidebar, {
 		props: { secretId: secret?.id ?? 's-1' },
+		attachTo,
 		global: {
 			stubs: stubAll,
 		},
@@ -85,6 +154,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 	})
 
 	it('renders the recipient list + delegation manager for the secret owner', async () => {
+		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'owner' })
 		const wrapper = await mountDetail({
 			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
 			currentUser: 'alice',
@@ -111,6 +181,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 	})
 
 	it('renders the share-request form for a non-owner recipient', async () => {
+		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'read' })
 		const wrapper = await mountDetail({
 			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
 			currentUser: 'bob',
@@ -136,6 +207,282 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		).toBe(true)
 	})
 
+	it('treats the recipient of a received copy as a recipient, not its owner (#1298)', async () => {
+		// The copy is owned by its recipient; the write-context names its source.
+		serveWriteContext({ sourceSecretId: 'src-1', effectiveGrade: 'read' })
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		for (const testId of [
+			'secret-detail-share-list',
+			'secret-detail-group-share-list',
+			'secret-detail-delegation-manager',
+		]) {
+			expect(has(wrapper, testId), testId).toBe(false)
+		}
+		// The request and the admin handover go to the source.
+		const form = wrapper.find('[data-testid="secret-detail-share-request"]')
+		expect(form.attributes('secretid')).toBe('src-1')
+		const handover = wrapper.find('[data-testid="secret-detail-admin-handover"]')
+		expect(handover.attributes('secretid')).toBe('src-1')
+	})
+
+	it('shows neither the owner controls nor the request form while the write-context is unknown', async () => {
+		// 409 while the copy's row waits for the quarantine scan.
+		serveWriteContext(
+			Object.assign(new Error('scan'), { response: { status: 409 } }),
+		)
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		for (const testId of [
+			'secret-detail-share-list',
+			'secret-detail-group-share-list',
+			'secret-detail-delegation-manager',
+			'secret-detail-share-request',
+			'secret-detail-admin-handover',
+		]) {
+			expect(has(wrapper, testId), testId).toBe(false)
+		}
+	})
+
+	it("says a copy's sharing waits for the scan, and shows the owner controls once a retry answers", async () => {
+		serveWriteContext(
+			Object.assign(new Error('scan'), {
+				response: {
+					status: 409,
+					data: {
+						error: 'share_scan_pending',
+						message: 'Waits for the scan',
+					},
+				},
+			}),
+		)
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		const note = wrapper.find(
+			'[data-testid="secret-detail-sharing-unavailable"]',
+		)
+		expect(note.text()).toContain('Waits for the scan')
+		// A status message, so a retry's outcome is announced (WCAG 4.1.3).
+		expect(note.attributes('role')).toBe('status')
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+
+		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'owner' })
+		await wrapper
+			.find('[data-testid="secret-detail-sharing-retry"]')
+			.trigger('click')
+		await flush()
+
+		expect(has(wrapper, 'secret-detail-sharing-unavailable')).toBe(false)
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(true)
+	})
+
+	it('says sharing could not be loaded after a network error', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toContain('Sharing options could not be loaded.')
+	})
+
+	it('re-announces the status on every retry that fails again', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+		const note = () =>
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]')
+
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		expect(note().text()).toBe('Sharing options still could not be loaded.')
+		const shown = note().find('span').element
+
+		// The same words again: the text is inserted anew, so it is announced.
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		expect(note().text()).toBe('Sharing options still could not be loaded.')
+		expect(note().find('span').element).not.toBe(shown)
+	})
+
+	it('keeps focus on Try again while a retry runs and when it fails again', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+			attachTo: document.body,
+		})
+		const held = holdWriteContext('s-1')
+		retryButton(wrapper).element.focus()
+
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		// A disabled button loses focus in a browser (jsdom keeps it), so it
+		// is only marked disabled.
+		expect(retryButton(wrapper).attributes('disabled')).toBeUndefined()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(retryButton(wrapper).element)
+
+		// A press while the retry runs asks nothing more.
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		expect(writeContextReads()).toBe(1)
+
+		held.reject(new Error('offline'))
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+		expect(document.activeElement).toBe(retryButton(wrapper).element)
+		wrapper.unmount()
+	})
+
+	it.each([
+		['answers', { sourceSecretId: 's-1', effectiveGrade: 'owner' }],
+		['names no source', { sourceSecretId: null, effectiveGrade: 'none' }],
+	])(
+		'moves focus to the Sharing heading when a retry %s',
+		async (label, context) => {
+			serveWriteContext(new Error('offline'))
+			const wrapper = await mountDetail({
+				secret: {
+					id: 's-1',
+					name: 'GitHub',
+					key: 'CIPHER',
+					ownerId: 'alice',
+				},
+				currentUser: 'alice',
+				attachTo: document.body,
+			})
+			retryButton(wrapper).element.focus()
+
+			serveWriteContext(context)
+			await retryButton(wrapper).trigger('click')
+			await flush()
+
+			expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
+			expect(document.activeElement).toBe(
+				wrapper.find('[data-testid="secret-detail-sharing-heading"]')
+					.element,
+			)
+			wrapper.unmount()
+		},
+	)
+
+	it("leaves another secret's Try again usable while a retry runs", async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+		const held = holdWriteContext('s-1')
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('true')
+
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			id: 's-2',
+			name: 'GitLab',
+			key: 'CIPHER',
+			ownerId: 'alice',
+		})
+		await wrapper.setProps({ secretId: 's-2' })
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+
+		held.reject(new Error('offline'))
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+	})
+
+	it('drops a late retry answer for a secret that is no longer shown', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+		const held = holdWriteContext('s-1')
+		await retryButton(wrapper).trigger('click')
+		await flush()
+
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			id: 's-2',
+			name: 'GitLab',
+			key: 'CIPHER',
+			ownerId: 'alice',
+		})
+		await wrapper.setProps({ secretId: 's-2' })
+		await flush()
+
+		held.resolve({ data: { sourceSecretId: 's-1', effectiveGrade: 'owner' } })
+		await flush()
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toContain('Sharing options could not be loaded.')
+	})
+
+	it('says sharing needs a connection, without a retry, while offline', async () => {
+		useOfflineStore().servedFromCache = true
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toBe('Sharing needs a connection')
+		expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
+	})
+
+	it('offers no share request when the write-context names no source', async () => {
+		serveWriteContext({ sourceSecretId: null, effectiveGrade: 'none' })
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		expect(has(wrapper, 'secret-detail-share-request')).toBe(false)
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+		// The answer is final, so the note says so and offers no retry.
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toBe('Sharing is not available for this secret.')
+		expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
+	})
+
+	it("lists the source's shares for a delegate on their copy, without delegating", async () => {
+		serveWriteContext({ sourceSecretId: 'src-1', effectiveGrade: 'owner' })
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		expect(
+			wrapper
+				.find('[data-testid="secret-detail-share-list"]')
+				.attributes('secretid'),
+		).toBe('src-1')
+		const groups = wrapper.find('[data-testid="secret-detail-group-share-list"]')
+		// The group share form shares from the copy, which the delegate decrypts.
+		expect(groups.attributes('secretid')).toBe('copy-1')
+		expect(groups.attributes('sourcesecretid')).toBe('src-1')
+		expect(has(wrapper, 'secret-detail-delegation-manager')).toBe(false)
+		expect(has(wrapper, 'secret-detail-share-request')).toBe(false)
+	})
+
 	it('hides the entire sharing tab when no secret is loaded', async () => {
 		// The component's mounted hook will set `secret` via fetchSecret;
 		// when our store stub returns null, the v-if="!error && secret"
@@ -158,12 +505,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(
-			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
-		).toBe(false)
-		expect(
-			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
-		).toBe(true)
+		expect(has(wrapper, 'secret-detail-requests')).toBe(false)
 	})
 
 	it('renders the Requests section + SecretRequestList for the owner', async () => {

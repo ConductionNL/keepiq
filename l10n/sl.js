@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Sprememba poslana drugi organizaciji",
         "Share with another organisation revoked": "Souporaba z drugo organizacijo preklicana",
         "Sharing with another organisation stopped": "Souporaba z drugo organizacijo ustavljena",
+        "Resume": "Nadaljuj",
+        "Sharing with another organisation resumed": "Deljenje z drugo organizacijo se nadaljuje",
         "Another organisation did not get a change": "Druga organizacija ni prejela spremembe",
         "Secret received from another organisation": "Skrivnost prejeta iz druge organizacije",
         "Secret from another organisation accepted": "Skrivnost iz druge organizacije sprejeta",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Shranjeno, vendar je %n prejemnikov v partnerskih organizacijah to skrivnost prejelo iz kopije in te spremembe ni prejelo.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Shranjeno, vendar je %n prejemnik v partnerski organizaciji to skrivnost prejel iz kopije in te spremembe ni prejel.","Shranjeno, vendar sta %n prejemnika v partnerskih organizacijah to skrivnost prejela iz kopije in te spremembe nista prejela.","Shranjeno, vendar so %n prejemniki v partnerskih organizacijah to skrivnost prejeli iz kopije in te spremembe niso prejeli.","Shranjeno, vendar je %n prejemnikov v partnerskih organizacijah to skrivnost prejelo iz kopije in te spremembe ni prejelo."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ta skrivnost čaka na preverjanje svojih skupnih rab, ki še ni končano. Nič ni bilo deljeno; poskusite znova pozneje ali prosite skrbnika, naj preveri, ali se opravila v ozadju izvajajo.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ta skrivnost je bila deljena z vami, zato je ni mogoče deliti s partnersko organizacijo. Nič ni bilo deljeno."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ta skrivnost je bila deljena z vami, zato je ni mogoče deliti s partnersko organizacijo. Nič ni bilo deljeno.",
+        "Sharing options could not be loaded.": "Možnosti souporabe ni bilo mogoče naložiti.",
+        "Sharing options still could not be loaded.": "Možnosti souporabe še vedno ni bilo mogoče naložiti.",
+        "Sharing is not available for this secret.": "Souporaba za to skrivnost ni na voljo."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

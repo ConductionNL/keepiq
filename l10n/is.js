@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Breyting send til annars fyrirtækis",
         "Share with another organisation revoked": "Sameign með öðru fyrirtæki afturkölluð",
         "Sharing with another organisation stopped": "Sameign með öðru fyrirtæki stöðvuð",
+        "Resume": "Halda áfram",
+        "Sharing with another organisation resumed": "Deiling með annarri stofnun hafin á ný",
         "Another organisation did not get a change": "Annað fyrirtæki fékk ekki breytingu",
         "Secret received from another organisation": "Leyndarmál móttekið frá öðru fyrirtæki",
         "Secret from another organisation accepted": "Leyndarmál frá öðru fyrirtæki samþykkt",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Vistað, en %n viðtakendur hjá samstarfsfyrirtækjum fengu þetta leyndarmál úr afriti og fengu ekki þessa breytingu.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Vistað, en %n viðtakandi hjá samstarfsfyrirtæki fékk þetta leyndarmál úr afriti og fékk ekki þessa breytingu.","Vistað, en %n viðtakendur hjá samstarfsfyrirtækjum fengu þetta leyndarmál úr afriti og fengu ekki þessa breytingu."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Engu var deilt; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Þessu leyndarmáli var deilt með þér, svo ekki er hægt að deila því með samstarfsfyrirtæki. Engu var deilt."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Þessu leyndarmáli var deilt með þér, svo ekki er hægt að deila því með samstarfsfyrirtæki. Engu var deilt.",
+        "Sharing options could not be loaded.": "Ekki tókst að hlaða inn deilingarvalkostum.",
+        "Sharing options still could not be loaded.": "Enn tókst ekki að hlaða inn deilingarvalkostum.",
+        "Sharing is not available for this secret.": "Deiling er ekki í boði fyrir þetta leyndarmál."
     },
     "nplurals=2; plural=(n != 1);"
 )

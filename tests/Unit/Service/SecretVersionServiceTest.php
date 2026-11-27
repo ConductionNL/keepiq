@@ -23,6 +23,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
@@ -30,12 +31,17 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\CredentialFields;
 use OCA\Keepiq\Service\RotationFlagService;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\ShareRowVerdict;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -92,6 +98,7 @@ class SecretVersionServiceTest extends TestCase {
 			logger: $this->logger,
 			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			eventDispatcher: null,
 			rotationFlags: $this->flagMapper(),
 		);
@@ -684,6 +691,7 @@ class SecretVersionServiceTest extends TestCase {
 			logger: $this->logger,
 			db: $this->createMock(originalClassName: IDBConnection::class),
 			viewOnlyCopies: $guard,
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 		$this->mapper->expects($this->never())->method('insert');
 		$this->secretMapper->expects($this->never())->method('advanceVersion');
@@ -714,6 +722,110 @@ class SecretVersionServiceTest extends TestCase {
 		$this->expectExceptionMessage(Secret::READ_ONLY_REFUSAL);
 		$this->service->restore(versionId: 'v-1', userId: 'alice');
 	}//end testARestoreOfAReadOnlyCopyIsRefusedUntouched()
+
+	/**
+	 * The service with the given share-save guard.
+	 *
+	 * @param ShareSaveRequiredGuard $guard The guard
+	 *
+	 * @return SecretVersionService
+	 */
+	private function serviceGuardedBy(ShareSaveRequiredGuard $guard): SecretVersionService {
+		return new SecretVersionService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			accessGuard: new SecretVersionAccessGuard(
+				mapper: $this->mapper,
+				secretMapper: $this->secretMapper,
+				suiteMapper: $this->suiteMapper,
+			),
+			logger: $this->logger,
+			db: $this->createMock(originalClassName: IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $guard,
+		);
+	}//end serviceGuardedBy()
+
+	/**
+	 * The real share-save guard on a source with one live copy.
+	 *
+	 * @return ShareSaveRequiredGuard
+	 */
+	private function guardOfASourceWithACopy(): ShareSaveRequiredGuard {
+		$rowJudge = $this->createStub(ShareRowJudge::class);
+		$rowJudge->method('forCopy')->willReturn(new ShareRowVerdict(state: ShareRowVerdict::NONE));
+		$guards = $this->createStub(ShareSyncGuards::class);
+		$guards->method('liveCopies')->willReturn([
+			'copies'   => ['copy-bob' => ['secretId' => 'copy-bob', 'holder' => 'bob', 'targetUserId' => 'bob']],
+			'ignored'  => [],
+			'unjudged' => [],
+		]);
+
+		return new ShareSaveRequiredGuard(rowJudge: $rowJudge, guards: $guards, federatedShares: $this->createStub(FederatedShareMapper::class));
+	}//end guardOfASourceWithACopy()
+
+	/**
+	 * A restore that would change the value of a source with a copy on this
+	 * row alone is refused before the head is snapshotted or written: it
+	 * goes through the share-save (keepiq#1300).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
+	 */
+	public function testARestoreOfASharedSourcesValueIsRefusedUntouched(): void {
+		$head = $this->restorableHead();
+		$this->mapper->expects($this->never())->method('insert');
+		$this->secretMapper->expects($this->never())->method('advanceVersion');
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->serviceGuardedBy(guard: $this->guardOfASourceWithACopy())->restore(versionId: 'v-1', userId: 'alice');
+			$this->fail('A restore of a shared value must go through the share-save');
+		} catch (ShareSaveRequiredException) {
+			$this->assertSame('HEAD_CIPHERTEXT', $head->getKey());
+		}
+	}//end testARestoreOfASharedSourcesValueIsRefusedUntouched()
+
+	/**
+	 * The guard is asked about the value fields the version changes only:
+	 * a TOTP or passkeys the version does not hold is no change.
+	 *
+	 * @return void
+	 */
+	public function testARestoreAsksTheShareSaveGuardAboutWhatItChanges(): void {
+		$head = $this->restorableHead();
+		$guard = $this->createMock(ShareSaveRequiredGuard::class);
+		$guard->expects($this->once())->method('assertSavedAlone')->with($head, ['key', 'login']);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+
+		$this->serviceGuardedBy(guard: $guard)->restore(versionId: 'v-1', userId: 'alice');
+	}//end testARestoreAsksTheShareSaveGuardAboutWhatItChanges()
+
+	/**
+	 * A restore of a shared source's version that holds the head's value
+	 * changes only its name, which the plain restore may do.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
+	 */
+	public function testARestoreOfASharedSourceThatKeepsItsValueGoesAhead(): void {
+		$head = $this->restorableHead(totp: '', passkeys: '');
+		$version = $this->mapper->findById('v-1');
+		$version->setKey('HEAD_CIPHERTEXT');
+		$version->setLogin('HEAD_LOGIN_CIPHERTEXT');
+		$version->setName('Old wiki');
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('advanceVersion')->willReturn(1);
+		$this->secretMapper->expects($this->once())->method('update');
+
+		$restored = $this->serviceGuardedBy(guard: $this->guardOfASourceWithACopy())->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame('Old wiki', $restored->getName());
+		$this->assertSame($head, $restored);
+	}//end testARestoreOfASharedSourceThatKeepsItsValueGoesAhead()
 
 	/**
 	 * A restore chosen on an older head changes nothing.
@@ -966,7 +1078,7 @@ class SecretVersionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function testAShareSaveRestoreIsAuditedAsTheClientsClaim(): void {
 		$version = new SecretVersion();
@@ -985,6 +1097,7 @@ class SecretVersionServiceTest extends TestCase {
 			logger: $this->logger,
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			eventDispatcher: $dispatcher,
 		);
 

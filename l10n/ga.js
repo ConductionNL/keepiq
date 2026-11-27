@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Athrú seolta chuig eagraíocht eile",
         "Share with another organisation revoked": "Comhroinnt le heagraíocht eile cúlghairthe",
         "Sharing with another organisation stopped": "Comhroinnt le heagraíocht eile stoptha",
+        "Resume": "Atosaigh",
+        "Sharing with another organisation resumed": "Atosaíodh comhroinnt le heagraíocht eile",
         "Another organisation did not get a change": "Ní bhfuair eagraíocht eile athrú",
         "Secret received from another organisation": "Rún faighte ó eagraíocht eile",
         "Secret from another organisation accepted": "Rún ó eagraíocht eile glactha",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Sábháilte, ach fuair %n faighteoirí in eagraíochtaí comhpháirtíochta an rún seo ó chóip agus níor tháinig an t-athrú seo chucu.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Sábháilte, ach fuair %n faighteoir in eagraíocht chomhpháirtíochta an rún seo ó chóip agus níor tháinig an t-athrú seo chuige.","Sábháilte, ach fuair %n fhaighteoir in eagraíochtaí comhpháirtíochta an rún seo ó chóip agus níor tháinig an t-athrú seo chucu.","Sábháilte, ach fuair %n faighteoirí in eagraíochtaí comhpháirtíochta an rún seo ó chóip agus níor tháinig an t-athrú seo chucu."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Tá an rún seo ag fanacht ar sheiceáil ar a chomhroinnt nach bhfuil críochnaithe fós. Níor comhroinneadh aon rud; bain triail eile as ar ball, nó iarr ar riarthóir a sheiceáil go bhfuil na jabanna cúlra ag rith.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Roinneadh an rún seo leat, mar sin ní féidir é a chomhroinnt le heagraíocht chomhpháirtíochta. Níor comhroinneadh aon rud."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Roinneadh an rún seo leat, mar sin ní féidir é a chomhroinnt le heagraíocht chomhpháirtíochta. Níor comhroinneadh aon rud.",
+        "Sharing options could not be loaded.": "Níorbh fhéidir na roghanna comhroinnte a lódáil.",
+        "Sharing options still could not be loaded.": "Níorbh fhéidir na roghanna comhroinnte a lódáil fós.",
+        "Sharing is not available for this secret.": "Níl comhroinnt ar fáil don rún seo."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

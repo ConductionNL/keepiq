@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
  * genuinely held by its target is dropped from the write set, so a save can
  * never overwrite another user's secret.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 class ShareSaveScopeTest extends TestCase {
 	use ShareRowJudgeFixture;

@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  * The lock is a no-op UPDATE of the row, which takes its lock without moving the version, then a read of the
  * version it holds.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 #[CoversClass(SecretVersionLock::class)]
 class SecretVersionLockTest extends TestCase {
@@ -65,4 +65,55 @@ class SecretVersionLockTest extends TestCase {
 
 		$this->assertNull(actual: (new SecretVersionLock(db: $this->recordingConnection()))->lock(id: 'gone'));
 	}//end testAGoneRowHasNoVersion()
+
+	/**
+	 * The work runs inside the transaction with the version it locked, and
+	 * its result comes back after the commit.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+	 */
+	public function testWorkRunsWhileTheRowIsLocked(): void {
+		$this->affected = [0];
+		$this->queueRows(rows: [['updated_at' => '2026-03-01 11:00:00']]);
+		$seen = [];
+
+		$result = (new SecretVersionLock(db: $this->recordingConnection()))->whileLocked(
+			id: 's1',
+			work: function (?\DateTime $version) use (&$seen): string {
+				$seen = [$this->connectionCalls, $version?->format(DATE_ATOM)];
+				return 'done';
+			}
+		);
+
+		$this->assertSame(expected: 'done', actual: $result);
+		$this->assertSame(expected: [['beginTransaction'], '2026-03-01T11:00:00+00:00'], actual: $seen);
+		$this->assertSame(expected: ['beginTransaction', 'commit'], actual: $this->connectionCalls);
+	}//end testWorkRunsWhileTheRowIsLocked()
+
+	/**
+	 * Work that throws rolls the transaction back and the error goes on.
+	 *
+	 * @return void
+	 */
+	public function testWorkThatThrowsRollsBack(): void {
+		$this->affected = [0];
+		$this->queueRows(rows: []);
+
+		try {
+			(new SecretVersionLock(db: $this->recordingConnection()))->whileLocked(
+				id: 'gone',
+				work: function (?\DateTime $version): never {
+					$this->assertNull(actual: $version);
+					throw new \RuntimeException(message: 'refused');
+				}
+			);
+			$this->fail(message: 'The error was swallowed');
+		} catch (\RuntimeException $exception) {
+			$this->assertSame(expected: 'refused', actual: $exception->getMessage());
+		}
+
+		$this->assertSame(expected: ['beginTransaction', 'rollBack'], actual: $this->connectionCalls);
+	}//end testWorkThatThrowsRollsBack()
 }//end class

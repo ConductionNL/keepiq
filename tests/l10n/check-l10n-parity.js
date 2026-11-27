@@ -145,6 +145,20 @@ function loadJs (file) {
 	return captured || {}
 }
 
+/**
+ * The frontend source keys: l10n/en.json completed by l10n/en.js. The build
+ * drops identity entries from en.js (scripts/build-l10n-js.js), so en.js
+ * alone no longer lists every key a browser catalogue must carry; en.json
+ * does, and en.js adds any browser-only entry.
+ *
+ * @spec PERF-HANDOFF.md (all apps: drop identity entries from the English catalogue at build time)
+ */
+function loadSourceJs (file) {
+	const json = path.join(path.dirname(file), 'en.json')
+	const base = fs.existsSync(json) ? loadJsonSet(json) : {}
+	return { ...base, ...loadJs(file) }
+}
+
 /** Load an l10n .json file into its translations object. */
 function loadJsonSet (file) {
 	return readJson(file).translations || {}
@@ -167,6 +181,7 @@ const sets = [
 		enFile: path.join(L10N_DIR, 'en.js'),
 		file: (loc) => path.join(L10N_DIR, `${loc}.js`),
 		load: loadJs,
+		loadSource: loadSourceJs,
 	},
 	{
 		kind: 'backend (.json)',
@@ -189,7 +204,7 @@ for (const set of sets) {
 		continue // this app does not ship this translation set
 	}
 	checkedSets++
-	const enKeys = Object.keys(set.load(set.enFile))
+	const enKeys = Object.keys((set.loadSource || set.load)(set.enFile))
 	for (const loc of REQUIRED) {
 		const locFile = set.file(loc)
 		if (!fs.existsSync(locFile)) {

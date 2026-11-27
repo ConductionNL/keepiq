@@ -270,47 +270,6 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		}
 	}
 
-	public function testAnUpdateReplacesTheCiphertextAndTellsBobsInstance(): void {
-		$response = $this->controller()->update('fs-1', self::FINGERPRINT, self::NEW_KEY, 'NEW-LOGIN', null);
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$row = $this->rows['fs-1'];
-		$this->assertSame(self::NEW_KEY, $row->getKey());
-		$this->assertSame('NEW-LOGIN', $row->getLogin());
-		$this->assertNull($row->getAdditionalFields());
-		$this->assertSame(self::FINGERPRINT, $row->getRecipientCertFingerprint());
-		$this->assertNull($row->getPendingNotification());
-
-		$this->assertCount(1, $this->sent);
-		$message = $this->sent[0]->getMessage();
-		$this->assertSame('SHARE_UPDATED', $message['notificationType']);
-		$this->assertSame('keepiq-secret', $message['resourceType']);
-		$this->assertSame('fs-1', $message['providerId']);
-		$this->assertSame('cloud.partner.example', $this->sentTo[0]);
-		// The hash, never the secret, and never ciphertext.
-		$this->assertSame(hash('sha256', self::SHARED_SECRET), $message['notification']['sharedSecret']);
-		// The share id and the owner, so Bob's Nextcloud can find whose
-		// signature this is (ISignedCloudFederationProvider).
-		$this->assertSame('fs-1', $message['notification']['providerId']);
-		$this->assertSame('alice@cloud.here.example', $message['notification']['sender']);
-		$this->assertStringNotContainsString(self::NEW_KEY, json_encode($message));
-
-		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_UPDATED, $this->audit[0]->getEventType());
-		$this->assertSame('alice', $this->audit[0]->getActorId());
-		$this->assertIdentifiersOnly();
-	}
-
-	public function testOnlyTheOwnerUpdatesALiveShare(): void {
-		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller('mallory')->update('fs-1', self::FINGERPRINT, self::NEW_KEY)->getStatus());
-		$this->rows['fs-1']->setStatus(FederatedShare::STATUS_SUSPENDED);
-		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller()->update('fs-1', self::FINGERPRINT, self::NEW_KEY)->getStatus());
-		$this->rows['fs-1']->setStatus(FederatedShare::STATUS_ACTIVE);
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->controller()->update('fs-1', 'nope', self::NEW_KEY)->getStatus());
-
-		$this->assertSame('OLD-CIPHER-KEY-FOR-BOB', $this->rows['fs-1']->getKey());
-		$this->assertSame([], $this->sent);
-	}
-
 	/**
 	 * A share-save writes the ciphertext inside its transaction and only
 	 * queues the notification; should the send after the commit never

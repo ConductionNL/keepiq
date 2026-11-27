@@ -100,6 +100,14 @@
 					>{{ stateText(row.status) }}</span
 				>
 				<NcButton
+					v-if="row.status === 'suspended'"
+					variant="secondary"
+					:disabled="busy"
+					data-testid="federated-share-resume"
+					@click="resume(row)">
+					{{ t('keepiq', 'Resume') }}
+				</NcButton>
+				<NcButton
 					v-if="row.status !== 'revoked'"
 					variant="tertiary"
 					:disabled="busy"
@@ -218,6 +226,43 @@ export default {
 				this.cloudId = ''
 				await useFederatedShareStore().listFor(this.secretId)
 				this.$emit('shared', row)
+			} catch (e) {
+				this.error = this.explain(e)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Resume a suspended share: verify the recipient's certificate again,
+		 * encrypt the current value for it and send it. When the secret
+		 * changed meanwhile the server refuses it as `stale_source`; it is
+		 * read and encrypted again, at most three times.
+		 *
+		 * @param {object} row The suspended federated share.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+		 */
+		async resume(row) {
+			this.busy = true
+			this.error = ''
+			try {
+				const store = useFederatedShareStore()
+				const recipient = await store.lookup(row.recipientCloudId)
+				for (let attempt = 1; ; attempt++) {
+					const secret = await useSecretStore().fetchSecret(this.secretId)
+					try {
+						await store.resume(row, secret, recipient)
+						return
+					} catch (e) {
+						if (
+							attempt >= 3
+							|| e?.response?.data?.error !== 'stale_source'
+						) {
+							throw e
+						}
+					}
+				}
 			} catch (e) {
 				this.error = this.explain(e)
 			} finally {

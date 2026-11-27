@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Canvi enviat a una altra organització",
         "Share with another organisation revoked": "Compartició amb una altra organització revocada",
         "Sharing with another organisation stopped": "Compartició amb una altra organització aturada",
+        "Resume": "Reprèn",
+        "Sharing with another organisation resumed": "S’ha reprès la compartició amb una altra organització",
         "Another organisation did not get a change": "Una altra organització no ha rebut un canvi",
         "Secret received from another organisation": "Secret rebut d’una altra organització",
         "Secret from another organisation accepted": "Secret d’una altra organització acceptat",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Desat, però %n destinataris d'organitzacions associades van rebre aquest secret a partir d'una còpia i no han rebut aquest canvi.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Desat, però %n destinatari d'una organització associada va rebre aquest secret a partir d'una còpia i no ha rebut aquest canvi.","Desat, però %n destinataris d'organitzacions associades van rebre aquest secret a partir d'una còpia i no han rebut aquest canvi."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Aquest secret està esperant una comprovació de les seves comparticions que encara no ha acabat. No s'ha compartit res; torneu-ho a provar més tard o demaneu a un administrador que comprovi que les tasques en segon pla s'executen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Aquest secret s'ha compartit amb tu, així que no es pot compartir amb una organització associada. No s'ha compartit res."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Aquest secret s'ha compartit amb tu, així que no es pot compartir amb una organització associada. No s'ha compartit res.",
+        "Sharing options could not be loaded.": "No s'han pogut carregar les opcions de compartició.",
+        "Sharing options still could not be loaded.": "Encara no s'han pogut carregar les opcions de compartició.",
+        "Sharing is not available for this secret.": "La compartició no està disponible per a aquest secret."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -53,7 +53,7 @@ use Throwable;
  *   save, the copy fan-out, the partner shares and the stages meet; each is
  *   its own service and the coupling is the orchestration itself.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 class ShareSaveService implements ShareSaveServiceInterface {
 	use TTransactional;
@@ -109,7 +109,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 *
 	 * @return array{stageId:string,expiresAt:string,staged:array{copies:int,federated:int}}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function stage(string $id, ShareSaveRequest $request, string $userId): array {
 		[$path, $entries, $expiresAt, $chunks] = $this->open(id: $id, request: $request, userId: $userId, fields: self::CHUNK_FIELDS);
@@ -147,8 +147,8 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 * @throws StaleWriteException When `{id}` changed since the base
 	 * @throws ShareSaveRefusal A refusal with its code; nothing was written
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
 	public function save(string $id, ShareSaveRequest $request, string $userId): array {
@@ -501,7 +501,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 *
 	 * @return StaleWriteException
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	private function staleRow(ShareSavePath $path, Secret $current, ?DateTime $sourceVersion): StaleWriteException {
 		if ($path->isCopyEditor() === false) {

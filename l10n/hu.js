@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Módosítás elküldve egy másik szervezetnek",
         "Share with another organisation revoked": "Megosztás egy másik szervezettel visszavonva",
         "Sharing with another organisation stopped": "Megosztás egy másik szervezettel leállítva",
+        "Resume": "Folytatás",
+        "Sharing with another organisation resumed": "Megosztás egy másik szervezettel folytatva",
         "Another organisation did not get a change": "Egy másik szervezet nem kapott meg egy módosítást",
         "Secret received from another organisation": "Titok érkezett egy másik szervezettől",
         "Secret from another organisation accepted": "Egy másik szervezettől kapott titok elfogadva",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Mentve, de %n partnerszervezeteknél lévő címzett másolatból kapta meg ezt a titkot, és nem kapta meg ezt a módosítást.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Mentve, de %n partnerszervezetnél lévő címzett másolatból kapta meg ezt a titkot, és nem kapta meg ezt a módosítást.","Mentve, de %n partnerszervezeteknél lévő címzett másolatból kapta meg ezt a titkot, és nem kapta meg ezt a módosítást."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ez a titok a megosztásainak ellenőrzésére vár, amely még nem fejeződött be. Semmi sem lett megosztva; próbálja újra később, vagy kérje meg a rendszergazdát, hogy ellenőrizze, futnak-e a háttérfeladatok.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ezt a titkot megosztották Önnel, ezért nem osztható meg partnerszervezettel. Semmi sem lett megosztva."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ezt a titkot megosztották Önnel, ezért nem osztható meg partnerszervezettel. Semmi sem lett megosztva.",
+        "Sharing options could not be loaded.": "A megosztási beállításokat nem sikerült betölteni.",
+        "Sharing options still could not be loaded.": "A megosztási beállításokat továbbra sem sikerült betölteni.",
+        "Sharing is not available for this secret.": "A megosztás nem érhető el ehhez a titokhoz."
     },
     "nplurals=2; plural=(n != 1);"
 )

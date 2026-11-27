@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Изменение отправлено другой организации",
         "Share with another organisation revoked": "Общий доступ для другой организации отозван",
         "Sharing with another organisation stopped": "Общий доступ для другой организации остановлен",
+        "Resume": "Возобновить",
+        "Sharing with another organisation resumed": "Обмен с другой организацией возобновлён",
         "Another organisation did not get a change": "Другая организация не получила изменение",
         "Secret received from another organisation": "Получен секрет из другой организации",
         "Secret from another organisation accepted": "Секрет из другой организации принят",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Сохранено, но %n получателей в партнёрских организациях получили этот секрет из копии и не получили это изменение.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Сохранено, но %n получатель в партнёрской организации получил этот секрет из копии и не получил это изменение.","Сохранено, но %n получателя в партнёрских организациях получили этот секрет из копии и не получили это изменение.","Сохранено, но %n получателей в партнёрских организациях получили этот секрет из копии и не получили это изменение."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не передано; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Этим секретом поделились с вами, поэтому им нельзя поделиться с партнёрской организацией. Доступ не предоставлен."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Этим секретом поделились с вами, поэтому им нельзя поделиться с партнёрской организацией. Доступ не предоставлен.",
+        "Sharing options could not be loaded.": "Не удалось загрузить параметры общего доступа.",
+        "Sharing options still could not be loaded.": "По-прежнему не удалось загрузить параметры общего доступа.",
+        "Sharing is not available for this secret.": "Общий доступ к этому секрету недоступен."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

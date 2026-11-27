@@ -1757,6 +1757,8 @@
         "Change sent to another organisation": "Modifica inviata a un’altra organizzazione",
         "Share with another organisation revoked": "Condivisione con un’altra organizzazione revocata",
         "Sharing with another organisation stopped": "Condivisione con un’altra organizzazione interrotta",
+        "Resume": "Riprendi",
+        "Sharing with another organisation resumed": "Condivisione con un’altra organizzazione ripresa",
         "Another organisation did not get a change": "Un’altra organizzazione non ha ricevuto una modifica",
         "Secret received from another organisation": "Segreto ricevuto da un’altra organizzazione",
         "Secret from another organisation accepted": "Segreto da un’altra organizzazione accettato",
@@ -2057,7 +2059,10 @@
             "Salvato, ma %n destinatari di organizzazioni partner hanno ricevuto questo segreto da una copia e non hanno ricevuto questa modifica."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Questo segreto è in attesa di un controllo delle sue condivisioni che non è ancora terminato. Non è stato condiviso nulla; riprova più tardi o chiedi a un amministratore di verificare che i processi in background siano in esecuzione.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Questo segreto è stato condiviso con te, quindi non può essere condiviso con un'organizzazione partner. Non è stato condiviso nulla."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Questo segreto è stato condiviso con te, quindi non può essere condiviso con un'organizzazione partner. Non è stato condiviso nulla.",
+        "Sharing options could not be loaded.": "Impossibile caricare le opzioni di condivisione.",
+        "Sharing options still could not be loaded.": "Non è stato ancora possibile caricare le opzioni di condivisione.",
+        "Sharing is not available for this secret.": "La condivisione non è disponibile per questo segreto."
     },
     "plurals": null
 }

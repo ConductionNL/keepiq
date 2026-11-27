@@ -29,7 +29,7 @@ use OCA\Keepiq\Service\SecretService;
  * The body of `PUT /secrets/{id}/share-save`, parsed without touching the
  * database. Every shape error is a 400 with its own `error` code.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 final class ShareSaveRequest {
 	/**
@@ -150,7 +150,7 @@ final class ShareSaveRequest {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function isChunk(): bool {
 		return $this->final === false;
@@ -169,7 +169,7 @@ final class ShareSaveRequest {
 	 *
 	 * @throws ShareSaveRefusal `copy_fields_mismatch` or `duplicate_entry`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertConsistent(ShareSaveEntries $entries): void {
 		if ($this->patch !== null) {
@@ -199,7 +199,7 @@ final class ShareSaveRequest {
 	 *
 	 * @throws ShareSaveRefusal `invalid_body` naming the field the patch gets wrong
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function restoring(SecretVersion $version, ShareSaveEntries $entries, Secret $head): array {
 		return (new ShareSaveRestore())->split(patch: (array)$this->patch, version: $version, entries: $entries, head: $head);

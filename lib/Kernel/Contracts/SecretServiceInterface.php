@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
@@ -306,12 +307,36 @@ interface SecretServiceInterface {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$restoring` only tells the
 	 *   compromise rule that the totp and passkeys written are old values; the
 	 *   write itself is the same.
 	 */
 	public function update(string $id, array $data, string $userId, ?DateTime $savedAt = null, bool $restoring = false): Secret;
+
+	/**
+	 * Update a secret through the plain `PUT /api/v1/secrets/{id}`: as
+	 * update(), but a change of its value is refused when it would reach this
+	 * row only, on a secret with copies or partner shares or on a copy its
+	 * holder writes for everyone (keepiq#1300).
+	 *
+	 * @param string $id The secret ID
+	 * @param array<string,mixed> $data The fields to update
+	 * @param string $userId The requesting Nextcloud user ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws NotFoundException When the secret does not exist
+	 * @throws ForbiddenException When the secret belongs to another user, or its value changes on a copy its holder may only view
+	 * @throws WriteLockedException When a compromise-recovery migration is in progress
+	 * @throws InvalidArgumentException When a provided field is invalid
+	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
+	 * @throws ShareScanPendingException When a share row of the secret waits for the share quarantine scan
+	 * @throws ShareSaveRequiredException When the value change must go through the share-save
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
+	 */
+	public function updateAlone(string $id, array $data, string $userId): Secret;
 
 	/**
 	 * Update a secret written by the application itself (machine write-back).

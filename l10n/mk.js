@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Промената е испратена до друга организација",
         "Share with another organisation revoked": "Споделувањето со друга организација е укинато",
         "Sharing with another organisation stopped": "Споделувањето со друга организација е запрено",
+        "Resume": "Продолжи",
+        "Sharing with another organisation resumed": "Споделувањето со друга организација е продолжено",
         "Another organisation did not get a change": "Друга организација не доби промена",
         "Secret received from another organisation": "Примена е тајна од друга организација",
         "Secret from another organisation accepted": "Тајната од друга организација е прифатена",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Зачувано, но %n примачи во партнерски организации ја добија оваа тајна од копија и не ја добија оваа промена.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Зачувано, но %n примач во партнерска организација ја доби оваа тајна од копија и не ја доби оваа промена.","Зачувано, но %n примачи во партнерски организации ја добија оваа тајна од копија и не ја добија оваа промена."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е споделено; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Оваа тајна е споделена со вас, па не може да се сподели со партнерска организација. Ништо не е споделено."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Оваа тајна е споделена со вас, па не може да се сподели со партнерска организација. Ништо не е споделено.",
+        "Sharing options could not be loaded.": "Опциите за споделување не можеа да се вчитаат.",
+        "Sharing options still could not be loaded.": "Опциите за споделување сè уште не можеа да се вчитаат.",
+        "Sharing is not available for this secret.": "Споделувањето не е достапно за оваа тајна."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

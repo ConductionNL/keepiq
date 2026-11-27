@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Muutos lähetetty toiselle organisaatiolle",
         "Share with another organisation revoked": "Jako toiselle organisaatiolle peruutettu",
         "Sharing with another organisation stopped": "Jako toiselle organisaatiolle pysäytetty",
+        "Resume": "Jatka",
+        "Sharing with another organisation resumed": "Jakaminen toisen organisaation kanssa jatkui",
         "Another organisation did not get a change": "Toinen organisaatio ei saanut muutosta",
         "Secret received from another organisation": "Salaisuus vastaanotettu toisesta organisaatiosta",
         "Secret from another organisation accepted": "Salaisuus toisesta organisaatiosta hyväksytty",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Tallennettu, mutta %n kumppaniorganisaatioiden vastaanottajaa sai tämän salaisuuden kopiosta eikä saanut tätä muutosta.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Tallennettu, mutta %n kumppaniorganisaation vastaanottaja sai tämän salaisuuden kopiosta eikä saanut tätä muutosta.","Tallennettu, mutta %n kumppaniorganisaatioiden vastaanottajaa sai tämän salaisuuden kopiosta eikä saanut tätä muutosta."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Tämä salaisuus odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei jaettu; yritä myöhemmin uudelleen tai pyydä ylläpitäjää tarkistamaan, että taustatyöt ovat käynnissä.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Tämä salaisuus on jaettu sinulle, joten sitä ei voi jakaa kumppaniorganisaatiolle. Mitään ei jaettu."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Tämä salaisuus on jaettu sinulle, joten sitä ei voi jakaa kumppaniorganisaatiolle. Mitään ei jaettu.",
+        "Sharing options could not be loaded.": "Jakamisen asetuksia ei voitu ladata.",
+        "Sharing options still could not be loaded.": "Jakamisen asetuksia ei vieläkään voitu ladata.",
+        "Sharing is not available for this secret.": "Jakaminen ei ole käytettävissä tälle salaisuudelle."
     },
     "nplurals=2; plural=(n != 1);"
 )

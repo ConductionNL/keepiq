@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
  * The partner shares a share-save reads: the source's active ones, whether they are its owner's,
  * and how many hang off the copies it writes.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
  */
 class ShareSavePartners {
 	/**
@@ -55,7 +55,7 @@ class ShareSavePartners {
 	 *
 	 * @return array<string,FederatedShare>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function active(Secret $source): array {
 		$active = [];

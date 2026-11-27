@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Bidla mibgħuta lil organizzazzjoni oħra",
         "Share with another organisation revoked": "Qsim ma’ organizzazzjoni oħra irrevokat",
         "Sharing with another organisation stopped": "Qsim ma’ organizzazzjoni oħra mwaqqaf",
+        "Resume": "Kompli",
+        "Sharing with another organisation resumed": "Il-qsim ma’ organizzazzjoni oħra reġa’ beda",
         "Another organisation did not get a change": "Organizzazzjoni oħra ma rċevietx bidla",
         "Secret received from another organisation": "Sigriet riċevut minn organizzazzjoni oħra",
         "Secret from another organisation accepted": "Sigriet minn organizzazzjoni oħra aċċettat",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Issejvjat, iżda %n riċevituri f'organizzazzjonijiet sħab kisbu dan is-sigriet minn kopja u ma kisbux din il-bidla.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Issejvjat, iżda %n riċevitur f'organizzazzjoni sieħba kiseb dan is-sigriet minn kopja u ma kisibx din il-bidla.","Issejvjat, iżda %n riċevituri f'organizzazzjonijiet sħab kisbu dan is-sigriet minn kopja u ma kisbux din il-bidla.","Issejvjat, iżda %n-il riċevitur f'organizzazzjonijiet sħab kisbu dan is-sigriet minn kopja u ma kisbux din il-bidla.","Issejvjat, iżda %n riċevitur f'organizzazzjonijiet sħab kisbu dan is-sigriet minn kopja u ma kisbux din il-bidla."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dan is-sigriet qed jistenna verifika tal-qsim tiegħu li għadha ma ntemmitx. Xejn ma ġie maqsum; erġa' pprova aktar tard, jew staqsi lil amministratur jiċċekkja li x-xogħlijiet fl-isfond qed jaħdmu.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dan is-sigriet inqasam miegħek, għalhekk ma jistax jinqasam ma' organizzazzjoni sieħba. Xejn ma nqasam."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dan is-sigriet inqasam miegħek, għalhekk ma jistax jinqasam ma' organizzazzjoni sieħba. Xejn ma nqasam.",
+        "Sharing options could not be loaded.": "L-għażliet tal-qsim ma setgħux jiġu mgħobbija.",
+        "Sharing options still could not be loaded.": "L-għażliet tal-qsim xorta ma setgħux jiġu mgħobbija.",
+        "Sharing is not available for this secret.": "Il-qsim mhuwiex disponibbli għal dan is-sigriet."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

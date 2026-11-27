@@ -85,7 +85,7 @@ object ApplePasskeys {
 
     @Throws(Exception::class)
     suspend fun signIn(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientDataHash: String, rpId: String): AppleAssertion {
-        val a = Passkeys.sign(api, keys, choice, ClientData.hashed(Encoding.fromBase64(clientDataHash)), rpId)
+        val a = Passkeys.sign(api, keys, choice, ClientData.hashed(Encoding.fromBase64(clientDataHash)), rpId, resync = { Passkeys.reread(api, keys) })
         return AppleAssertion(
             userHandle = a.userHandle?.let { base64(it) } ?: "",
             signature = base64(a.signature),
@@ -115,7 +115,10 @@ object ApplePasskeys {
             algorithms = algorithms,
             excludeCredentialIds = emptyList(),
         )
-        val r = Passkeys.create(api, keys, AutofillIndex.fromJson(siteJson), request, ClientData.hashed(Encoding.fromBase64(clientDataHash)), nowMillis)
+        val r = Passkeys.create(
+            api, keys, AutofillIndex.fromJson(siteJson), request, ClientData.hashed(Encoding.fromBase64(clientDataHash)), nowMillis,
+            resync = { Passkeys.reread(api, keys) },
+        )
         return AppleRegistration(base64(r.credentialId), base64(r.attestationObject), userName)
     }
 

@@ -25,7 +25,7 @@ use OCA\Keepiq\Db\Secret;
  * Who saves what: the owner saving the source (`{id}` is the source), or a
  * copy holder saving through their copy (`{id}` is a recipient copy).
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
 final class ShareSavePath {
 	/**
@@ -84,7 +84,7 @@ final class ShareSavePath {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function isCopyEditor(): bool {
 		return $this->row->getId() !== $this->source->getId();
@@ -95,7 +95,7 @@ final class ShareSavePath {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function getName(): string {
 		if ($this->isCopyEditor() === true) {

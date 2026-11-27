@@ -1757,6 +1757,8 @@
         "Change sent to another organisation": "Ännerung un eng aner Organisatioun geschéckt",
         "Share with another organisation revoked": "Deelen mat enger anerer Organisatioun zréckgezunn",
         "Sharing with another organisation stopped": "Deelen mat enger anerer Organisatioun gestoppt",
+        "Resume": "Weiderfueren",
+        "Sharing with another organisation resumed": "Deele mat enger anerer Organisatioun erëm opgeholl",
         "Another organisation did not get a change": "Eng aner Organisatioun huet eng Ännerung net kritt",
         "Secret received from another organisation": "Geheimnis vun enger anerer Organisatioun kritt",
         "Secret from another organisation accepted": "Geheimnis vun enger anerer Organisatioun acceptéiert",
@@ -2057,7 +2059,10 @@
             "Gespäichert, mee %n Empfänger bei Partnerorganisatiounen hunn dëst Geheimnis iwwer eng Kopie kritt an dës Ännerung net kritt."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dëst Geheimnis waart op eng Kontroll vu senge Fräigaben, déi nach net fäerdeg ass. Et gouf näischt gedeelt; probéiert méi spéit nach eng Kéier, oder frot en Administrateur ze kontrolléieren, ob d'Hannergrondaufgaben lafen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dëst Geheimnis gouf mat Iech gedeelt, dofir kann et net mat enger Partnerorganisatioun gedeelt ginn. Et gouf näischt gedeelt."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dëst Geheimnis gouf mat Iech gedeelt, dofir kann et net mat enger Partnerorganisatioun gedeelt ginn. Et gouf näischt gedeelt.",
+        "Sharing options could not be loaded.": "D'Optioune fir ze deelen konnten net geluede ginn.",
+        "Sharing options still could not be loaded.": "D'Optioune fir ze deelen konnten ëmmer nach net geluede ginn.",
+        "Sharing is not available for this secret.": "Deelen ass fir dëst Geheimnis net disponibel."
     },
     "plurals": null
 }

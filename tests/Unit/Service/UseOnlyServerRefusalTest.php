@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\SecretVersionAccessGuard;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -80,6 +81,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 	}
 
@@ -198,11 +200,13 @@ class UseOnlyServerRefusalTest extends TestCase {
 	}
 
 	/**
-	 * Bob cannot hand his use-only copy over to anyone.
+	 * Bob cannot hand his use-only copy over to anyone: no received copy is
+	 * delegated.
 	 *
 	 * @return void
 	 */
 	public function testADelegationOfAUseOnlyCopyIsRefused(): void {
+		$this->copy->setId('copy-of-bob');
 		$this->copy->setUseOnly(true);
 		$delegations = $this->createMock(SecretDelegationMapper::class);
 		$delegations->expects($this->never())->method('insert');
@@ -211,8 +215,8 @@ class UseOnlyServerRefusalTest extends TestCase {
 			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
-		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
-		$service->createDelegation('copy', 'mallory', 'bob');
+		$this->expectExceptionMessage('A received copy cannot be delegated');
+		$service->createDelegation('copy-of-bob', 'mallory', 'bob');
 	}
 
 	/**

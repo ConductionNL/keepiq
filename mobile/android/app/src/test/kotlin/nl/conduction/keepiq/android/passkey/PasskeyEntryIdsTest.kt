@@ -31,8 +31,8 @@ class PasskeyEntryIdsTest {
     @Test
     fun eachEntryOfOneLoginSignsWithItsOwnPasskey() {
         val choices = listOf(
-            PasskeyChoice("l1", "Mail", credential("a", "alice"), onLogin = true),
-            PasskeyChoice("l1", "Mail", credential("b", "alice-work"), onLogin = true),
+            PasskeyChoice("l1", "Mail", credential("a", "alice"), onLogin = true, held = emptyMap()),
+            PasskeyChoice("l1", "Mail", credential("b", "alice-work"), onLogin = true, held = emptyMap()),
         )
         val intents = CredentialEntries.passkeyIntents(RuntimeEnvironment.getApplication(), choices)
         assertEquals(choices, intents.map { CredentialProviderActivity.chosen(choices, it) })
@@ -40,8 +40,8 @@ class PasskeyEntryIdsTest {
 
     @Test
     fun anEntryWhosePasskeyIsGoneSignsWithNone() {
-        val gone = listOf(PasskeyChoice("l1", "Mail", credential("a", "alice"), onLogin = true))
+        val gone = listOf(PasskeyChoice("l1", "Mail", credential("a", "alice"), onLogin = true, held = emptyMap()))
         val intent = CredentialEntries.passkeyIntents(RuntimeEnvironment.getApplication(), gone).single()
-        assertNull(CredentialProviderActivity.chosen(listOf(PasskeyChoice("l1", "Mail", credential("b", "alice"), onLogin = true)), intent))
+        assertNull(CredentialProviderActivity.chosen(listOf(PasskeyChoice("l1", "Mail", credential("b", "alice"), onLogin = true, held = emptyMap())), intent))
     }
 }

@@ -115,7 +115,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 *
 	 * @return DateTime
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function leaseFrom(DateTime $queuedAt): DateTime {
 		return (clone $queuedAt)->add(new DateInterval('PT' . self::FIRST_WAIT . 'S'));
@@ -153,7 +153,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 *
 	 * @return FederatedShare|null
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 	 */
 	private function stillDue(FederatedShare $row, DateTime $now): ?FederatedShare {
 		try {
@@ -183,6 +183,8 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 * @param DateTime $now The current time
 	 *
 	 * @return bool Whether it was delivered
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	private function attempt(FederatedShare $row, DateTime $now): bool {
 		$type = (string)$row->getPendingNotification();
@@ -220,7 +222,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 			return false;
 		}
 
-		$wait = self::FIRST_WAIT * (2 ** ($attempts - 1));
+		$wait = self::FIRST_WAIT * (int)(2 ** ($attempts - 1));
 		$row->setNextNotifyAt((clone $now)->add(new DateInterval('PT' . $wait . 'S')));
 		$this->write(row: $row, type: $type, from: $from);
 

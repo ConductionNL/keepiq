@@ -102,7 +102,7 @@ final class CefFormatter {
 	private function extensionsOf(PayloadView $view): array {
 		$eventType  = $view->get(field: 'eventType');
 		$extensions = [
-			'rt' => (string)(int)($view->epoch() * 1000),
+			'rt' => (string)(int)($view->epoch() * 1000.0),
 			'cat' => $view->get(field: 'category'),
 			'act' => $eventType,
 		];

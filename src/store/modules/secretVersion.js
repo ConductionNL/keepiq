@@ -133,7 +133,7 @@ async function decryptVersion(data, cryptoKey) {
  * @param {string} secretId The secret.
  * @param {Array<string>} fields The fields.
  * @return {Promise<object>}
- * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
  */
 async function headValue(secretId, fields) {
 	const session = useSessionStore()
@@ -216,7 +216,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 * @param {string} versionId The version id.
 		 * @param {string} secretId The owning secret id.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
 		 */
 		async restore(versionId, secretId) {
 			this.loading = true

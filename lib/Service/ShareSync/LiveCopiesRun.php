@@ -117,7 +117,7 @@ final class LiveCopiesRun {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function isWritable(ShareTarget $target): bool {
 		$row = ($this->rows[$target->getSecretId()] ?? null);

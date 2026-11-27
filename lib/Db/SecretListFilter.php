@@ -59,12 +59,14 @@ final class SecretListFilter {
 	 * given, then the trash/archive state.
 	 *
 	 * @param IQueryBuilder $qb The query to narrow
+	 * @param SecretTypeMatch|null $types The type condition; null matches the type id alone
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
-	public function narrow(IQueryBuilder $qb): void {
+	public function narrow(IQueryBuilder $qb, ?SecretTypeMatch $types=null): void {
 		$qb->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($this->ownerType)))
 			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($this->ownerId)));
 
@@ -72,7 +74,9 @@ final class SecretListFilter {
 			$qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($this->folderId)));
 		}
 
-		if ($this->typeId !== null) {
+		if ($this->typeId !== null && $types !== null) {
+			$types->narrow(qb: $qb, typeId: $this->typeId);
+		} else if ($this->typeId !== null) {
 			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($this->typeId)));
 		}
 

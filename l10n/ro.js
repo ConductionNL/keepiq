@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Modificare trimisă unei alte organizații",
         "Share with another organisation revoked": "Partajare cu o altă organizație revocată",
         "Sharing with another organisation stopped": "Partajare cu o altă organizație oprită",
+        "Resume": "Reia",
+        "Sharing with another organisation resumed": "Partajarea cu o altă organizație a fost reluată",
         "Another organisation did not get a change": "O altă organizație nu a primit o modificare",
         "Secret received from another organisation": "Secret primit de la o altă organizație",
         "Secret from another organisation accepted": "Secret de la o altă organizație acceptat",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Salvat, dar %n de destinatari din organizații partenere au primit acest secret dintr-o copie și nu au primit această modificare.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Salvat, dar %n destinatar dintr-o organizație parteneră a primit acest secret dintr-o copie și nu a primit această modificare.","Salvat, dar %n destinatari din organizații partenere au primit acest secret dintr-o copie și nu au primit această modificare.","Salvat, dar %n de destinatari din organizații partenere au primit acest secret dintr-o copie și nu au primit această modificare."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a partajat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Acest secret a fost partajat cu dumneavoastră, deci nu poate fi partajat cu o organizație parteneră. Nu s-a partajat nimic."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Acest secret a fost partajat cu dumneavoastră, deci nu poate fi partajat cu o organizație parteneră. Nu s-a partajat nimic.",
+        "Sharing options could not be loaded.": "Opțiunile de partajare nu au putut fi încărcate.",
+        "Sharing options still could not be loaded.": "Opțiunile de partajare tot nu au putut fi încărcate.",
+        "Sharing is not available for this secret.": "Partajarea nu este disponibilă pentru acest secret."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

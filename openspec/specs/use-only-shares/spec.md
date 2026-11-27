@@ -71,7 +71,7 @@ For a use-only copy, the web app MUST NOT show or copy the value or additional f
 
 ### Requirement: The server refuses what it can enforce
 
-The system MUST refuse any share whose source is a use-only copy (direct, batch, group, team-folder fan-out, link share, delegation and handover), MUST refuse recipient updates and sync of a use-only copy, MUST refuse the recipient's version history ciphertext for it, and MUST leave its value ciphertext out of the recipient's GDPR export.
+The system MUST refuse any share whose source is a use-only copy (direct, batch, group, team-folder fan-out, link share, delegation and handover), MUST refuse recipient updates and share-saves of a use-only copy, MUST refuse the recipient's version history ciphertext for it, and MUST leave its value ciphertext out of the recipient's GDPR export.
 
 #### Scenario: A modified client cannot share it onward
 
@@ -82,7 +82,7 @@ The system MUST refuse any share whose source is a use-only copy (direct, batch,
 #### Scenario: Bob cannot overwrite it
 
 - **GIVEN** Bob with a use-only copy
-- **WHEN** Bob calls `PUT /api/v1/secrets/{id}/sync` for it
+- **WHEN** Bob calls `PUT /api/v1/secrets/{id}/share-save` for it
 - **THEN** the system MUST refuse the request
 
 ### Requirement: Each use is recorded

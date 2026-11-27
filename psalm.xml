@@ -26,6 +26,11 @@
         <file name="tests/stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php" />
     </stubs>
     <issueHandlers>
+        <!-- Psalm 7 reports every interface or parent method without #[\Override].
+             Several parents here are OCP stubs that differ per Nextcloud version,
+             and PHP fatals on #[\Override] when the parent method is absent, so
+             the attribute is not added wholesale. -->
+        <MissingOverrideAttribute errorLevel="suppress"/>
         <UndefinedDocblockClass errorLevel="suppress"/>
         <UndefinedClass>
             <errorLevel type="suppress">

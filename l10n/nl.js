@@ -1712,6 +1712,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Wijziging verstuurd naar een andere organisatie",
         "Share with another organisation revoked": "Delen met een andere organisatie ingetrokken",
         "Sharing with another organisation stopped": "Delen met een andere organisatie gestopt",
+        "Resume": "Hervatten",
+        "Sharing with another organisation resumed": "Delen met een andere organisatie hervat",
         "Another organisation did not get a change": "Een andere organisatie heeft een wijziging niet ontvangen",
         "Secret received from another organisation": "Geheim ontvangen van een andere organisatie",
         "Secret from another organisation accepted": "Geheim van een andere organisatie geaccepteerd",
@@ -1982,7 +1984,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Opgeslagen, maar %n ontvangers bij partnerorganisaties kregen dit geheim via een kopie en hebben deze wijziging niet gekregen.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Opgeslagen, maar %n ontvanger bij een partnerorganisatie kreeg dit geheim via een kopie en heeft deze wijziging niet gekregen.","Opgeslagen, maar %n ontvangers bij partnerorganisaties kregen dit geheim via een kopie en hebben deze wijziging niet gekregen."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets gedeeld; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dit geheim is met je gedeeld, dus het kan niet met een partnerorganisatie worden gedeeld. Er is niets gedeeld."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dit geheim is met je gedeeld, dus het kan niet met een partnerorganisatie worden gedeeld. Er is niets gedeeld.",
+        "Sharing options could not be loaded.": "De deelopties konden niet worden geladen.",
+        "Sharing options still could not be loaded.": "De deelopties konden nog steeds niet worden geladen.",
+        "Sharing is not available for this secret.": "Delen is niet beschikbaar voor dit geheim."
     },
     "nplurals=2; plural=(n != 1);"
 )

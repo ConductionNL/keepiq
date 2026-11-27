@@ -35,7 +35,7 @@ use RuntimeException;
  * The batch answers only for the caller's own active partner shares, asks each recipient once, and refuses per
  * share with the single route's status and reason.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
  */
 #[CoversClass(PartnerCertificateBatchService::class)]
 class PartnerCertificateBatchServiceTest extends TestCase {
@@ -152,7 +152,7 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-another-users-partner-share-is-not-looked-up
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-another-users-partner-share-is-not-looked-up
 	 */
 	public function testOtherSharesAreRefusedAlike(): void {
 		$this->row(id: 'mallory', owner: 'mallory', cloudId: 'bob@a.example');
@@ -171,7 +171,7 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-one-unreachable-partner-does-not-fail-the-others
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-one-unreachable-partner-does-not-fail-the-others
 	 */
 	public function testOneUnreachablePartnerDoesNotFailTheOthers(): void {
 		$this->row(id: 's1', owner: 'alice', cloudId: 'bob@down.example');

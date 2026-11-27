@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Змена адпраўлена іншай арганізацыі",
         "Share with another organisation revoked": "Супольны доступ для іншай арганізацыі адкліканы",
         "Sharing with another organisation stopped": "Супольны доступ для іншай арганізацыі спынены",
+        "Resume": "Аднавіць",
+        "Sharing with another organisation resumed": "Абмен з іншай арганізацыяй адноўлены",
         "Another organisation did not get a change": "Іншая арганізацыя не атрымала змену",
         "Secret received from another organisation": "Сакрэт атрыманы з іншай арганізацыі",
         "Secret from another organisation accepted": "Сакрэт з іншай арганізацыі прыняты",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Захавана, але %n атрымальнікаў у партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Захавана, але %n атрымальнік у партнёрскай арганізацыі атрымаў гэты сакрэт з копіі і не атрымаў гэтую змену.","Захавана, але %n атрымальнікі ў партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену.","Захавана, але %n атрымальнікаў у партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Гэты сакрэт чакае праверкі сваіх абагульванняў, якая яшчэ не скончылася. Нічога не перададзена; паспрабуйце пазней або папрасіце адміністратара праверыць, ці працуюць фонавыя задачы.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Гэты сакрэт абагулены з вамі, таму яго нельга абагуліць з партнёрскай арганізацыяй. Доступ не нададзены."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Гэты сакрэт абагулены з вамі, таму яго нельга абагуліць з партнёрскай арганізацыяй. Доступ не нададзены.",
+        "Sharing options could not be loaded.": "Не ўдалося загрузіць параметры абагульвання.",
+        "Sharing options still could not be loaded.": "Параметры абагульвання ўсё яшчэ не ўдалося загрузіць.",
+        "Sharing is not available for this secret.": "Абагульванне недаступнае для гэтага сакрэту."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

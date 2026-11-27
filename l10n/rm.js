@@ -1662,6 +1662,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Midada tramessa ad ina autra organisaziun",
         "Share with another organisation revoked": "Cundivisiun cun ina autra organisaziun revocada",
         "Sharing with another organisation stopped": "Cundivisiun cun ina autra organisaziun interrutta",
+        "Resume": "Cuntinuar",
+        "Sharing with another organisation resumed": "Cundivisiun cun in’autra organisaziun reprendida",
         "Another organisation did not get a change": "Ina autra organisaziun n’ha betg retschavì ina midada",
         "Secret received from another organisation": "Secret retschavì dad ina autra organisaziun",
         "Secret from another organisation accepted": "Secret d’ina autra organisaziun acceptà",
@@ -1952,7 +1954,10 @@ OC.L10N.register(
         "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Memorisà, ma %n destinatari tar ina organisaziun partenaria ha survegnì quest secret d'ina copia e n'ha betg survegnì questa midada.",
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Memorisà, ma %n destinataris tar organisaziuns partenarias han survegnì quest secret d'ina copia e n'han betg survegnì questa midada.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Quest secret spetga sin ina controlla da ses parts che n'è anc betg terminada. Nagut n'è vegnì cundividì; empruvai pli tard anc ina giada, u dumandai in administratur da controllar sch'ils lavurs en il fund funcziunan.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Quest secret è vegnì partì cun tai, perquai na po el betg vegnir partì cun ina organisaziun partenaria. Nagut n'è vegnì partì."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Quest secret è vegnì partì cun tai, perquai na po el betg vegnir partì cun ina organisaziun partenaria. Nagut n'è vegnì partì.",
+        "Sharing options could not be loaded.": "Las opziuns da cundivisiun n'han betg pudì vegnir chargiadas.",
+        "Sharing options still could not be loaded.": "Las opziuns da cundivisiun n'han anc adina betg pudì vegnir chargiadas.",
+        "Sharing is not available for this secret.": "La cundivisiun n'è betg disponibla per quest secret."
     },
     "nplurals=1; plural=0;"
 )

@@ -340,7 +340,7 @@ class DirectShareRegistrarTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function testARowFromTheCurrentVersionIsMinted(): void {
 		$this->secretMapper->method('findById')->willReturn($this->ownerSecret(id: 'src-1', ownerId: 'alice'));
@@ -372,7 +372,7 @@ class DirectShareRegistrarTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+	 * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
 	 */
 	public function testARowFromAnOlderVersionIsStale(): void {
 		$this->secrets(
@@ -420,7 +420,7 @@ class DirectShareRegistrarTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function testARowWithoutAVersionIsNotCheckedAndAMalformedOneIsInvalid(): void {
 		$this->secretMapper->method('findById')->willReturn($this->ownerSecret(id: 'src-1', ownerId: 'alice'));
@@ -564,7 +564,7 @@ class DirectShareRegistrarTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function testADelegatesRowIsComparedWithTheirCopyAfterTheSourcesLock(): void {
 		$this->secrets(

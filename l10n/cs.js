@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Změna odeslána jiné organizaci",
         "Share with another organisation revoked": "Sdílení s jinou organizací odvoláno",
         "Sharing with another organisation stopped": "Sdílení s jinou organizací zastaveno",
+        "Resume": "Obnovit",
+        "Sharing with another organisation resumed": "Sdílení s jinou organizací obnoveno",
         "Another organisation did not get a change": "Jiná organizace nedostala změnu",
         "Secret received from another organisation": "Tajemství přijato z jiné organizace",
         "Secret from another organisation accepted": "Tajemství z jiné organizace přijato",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Uloženo, ale %n příjemců v partnerských organizacích dostalo toto tajemství z kopie a tuto změnu nedostalo.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Uloženo, ale %n příjemce v partnerské organizaci dostal toto tajemství z kopie a tuto změnu nedostal.","Uloženo, ale %n příjemci v partnerských organizacích dostali toto tajemství z kopie a tuto změnu nedostali.","Uloženo, ale %n příjemců v partnerských organizacích dostalo toto tajemství z kopie a tuto změnu nedostalo."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Toto tajemství čeká na kontrolu svých sdílení, která ještě neskončila. Nic nebylo sdíleno; zkuste to později, nebo požádejte správce, aby ověřil, že běží úlohy na pozadí.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Toto tajemství s vámi bylo sdíleno, proto jej nelze sdílet s partnerskou organizací. Nic nebylo sdíleno."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Toto tajemství s vámi bylo sdíleno, proto jej nelze sdílet s partnerskou organizací. Nic nebylo sdíleno.",
+        "Sharing options could not be loaded.": "Možnosti sdílení se nepodařilo načíst.",
+        "Sharing options still could not be loaded.": "Možnosti sdílení se stále nepodařilo načíst.",
+        "Sharing is not available for this secret.": "Sdílení není pro toto tajemství k dispozici."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

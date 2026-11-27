@@ -768,7 +768,7 @@ export default {
 		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-exporting-provider
 		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-client-side-hpke-seal-and-open
 		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-cxp-transfer-emits-an-export-event-with-mode-cxp
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async doSend() {
 			this.error = null
@@ -890,7 +890,7 @@ export default {
 		 *
 		 * @param {boolean} value The open state.
 		 * @return {void}
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		onUpdateOpen(value) {
 			if (!value) {

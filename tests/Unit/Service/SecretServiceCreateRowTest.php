@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\OrgOwnershipGuard;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -141,6 +142,7 @@ class SecretServiceCreateRowTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			auditService: $auditService,
 			auditEvents: new AuditEventFactory(),
 			folderOwnership: $this->folders,

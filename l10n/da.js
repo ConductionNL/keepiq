@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Ændring sendt til en anden organisation",
         "Share with another organisation revoked": "Deling med en anden organisation tilbagekaldt",
         "Sharing with another organisation stopped": "Deling med en anden organisation stoppet",
+        "Resume": "Genoptag",
+        "Sharing with another organisation resumed": "Deling med en anden organisation genoptaget",
         "Another organisation did not get a change": "En anden organisation fik ikke en ændring",
         "Secret received from another organisation": "Hemmelighed modtaget fra en anden organisation",
         "Secret from another organisation accepted": "Hemmelighed fra en anden organisation accepteret",
@@ -1977,7 +1979,10 @@ OC.L10N.register(
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Gemt, men %n modtagere hos partnerorganisationer fik denne hemmelighed fra en kopi og fik ikke denne ændring.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Gemt, men %n modtager hos en partnerorganisation fik denne hemmelighed fra en kopi og fik ikke denne ændring.","Gemt, men %n modtagere hos partnerorganisationer fik denne hemmelighed fra en kopi og fik ikke denne ændring."],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Denne hemmelighed venter på en kontrol af dens delinger, som ikke er færdig endnu. Intet blev delt; prøv igen senere, eller bed en administrator om at kontrollere, at baggrundsjob kører.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Denne hemmelighed blev delt med dig, så den kan ikke deles med en partnerorganisation. Intet blev delt."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Denne hemmelighed blev delt med dig, så den kan ikke deles med en partnerorganisation. Intet blev delt.",
+        "Sharing options could not be loaded.": "Delingsindstillingerne kunne ikke indlæses.",
+        "Sharing options still could not be loaded.": "Delingsindstillingerne kunne stadig ikke indlæses.",
+        "Sharing is not available for this secret.": "Deling er ikke tilgængelig for denne hemmelighed."
     },
     "nplurals=2; plural=(n != 1);"
 )
