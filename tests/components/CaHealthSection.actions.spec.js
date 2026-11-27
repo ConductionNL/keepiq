@@ -235,4 +235,33 @@ describe('CaHealthSection actions', () => {
 			rootFingerprint: 'ab'.repeat(32),
 		})
 	})
+
+	it('sends the new root after an announced renewal too, without the re-pin warning', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { status: 'healthy', root: { expiresAt: '2046-01-01' } },
+		})
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: {
+				resignedCount: 1,
+				announced: true,
+				rootFingerprint: 'cd'.repeat(32),
+			},
+		})
+		const renewed = vi.fn()
+		window.addEventListener('keepiq:root-renewed', renewed)
+		const wrapper = mountSection()
+		await flushPromises()
+
+		wrapper.vm.renewRoot()
+		await flushPromises()
+		window.removeEventListener('keepiq:root-renewed', renewed)
+
+		expect(renewed).toHaveBeenCalledOnce()
+		expect(renewed.mock.calls[0][0].detail).toEqual({
+			rootFingerprint: 'cd'.repeat(32),
+		})
+		expect(
+			wrapper.find('[data-testid="ca-renew-root-unannounced"]').exists(),
+		).toBe(false)
+	})
 })
