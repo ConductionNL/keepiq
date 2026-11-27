@@ -126,7 +126,7 @@ class CACertificateController extends OCSController {
 
 	/**
 	 * Trigger root renewal. `announced` is false when the old root's key could not be read: partners are not told, and
-	 * each has to re-pin the new root by hand.
+	 * each has to re-pin the new root by hand after comparing `rootFingerprint` out of band.
 	 *
 	 * @AuthorizedAdminSetting(AdminSettings::class)
 	 *
@@ -140,11 +140,17 @@ class CACertificateController extends OCSController {
 		try {
 			$renewal = $this->caService->renewRoot();
 			$count   = $renewal['resignedCount'];
+			$message = "Root renewed, {$count} suites re-signed";
+			if ($renewal['announced'] === false) {
+				$message .= '. Partners were not told: each has to re-pin this server by hand after an out-of-band fingerprint check.';
+			}
+
 			return new JSONResponse(
 				data: [
-					'message' => "Root renewed, {$count} suites re-signed",
+					'message' => $message,
 					'resignedCount' => $count,
 					'announced' => $renewal['announced'],
+					'rootFingerprint' => $renewal['rootFingerprint'],
 					'status' => $this->caService->getStatus(),
 				]
 			);

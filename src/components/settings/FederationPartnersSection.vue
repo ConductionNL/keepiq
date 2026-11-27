@@ -305,6 +305,10 @@ import {
 } from '@nextcloud/vue'
 import { localDateTime } from '../../utils/dateTime.js'
 import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
+import {
+	formatFingerprint,
+	ROOT_RENEWED_EVENT,
+} from '../../utils/rootFingerprint.js'
 
 const BASE = '/apps/keepiq/api/v1/federation/partners'
 
@@ -357,21 +361,30 @@ export default {
 	async created() {
 		/** @type {Map<string, object>} The row buttons focus returns to, by `repin:` or `accept:` and partner id. */
 		this.buttons = new Map()
+		window.addEventListener(ROOT_RENEWED_EVENT, this.onRootRenewed)
 		await this.load()
 		this.$nextTick(() => this.revealLinkedPartner())
+	},
+
+	beforeUnmount() {
+		window.removeEventListener(ROOT_RENEWED_EVENT, this.onRootRenewed)
 	},
 
 	methods: {
 		t,
 		localDateTime,
+		formatFingerprint,
 
 		/**
-		 * @param {string} hex A lowercase hex SHA-256.
-		 * @return {string} Upper case, colon separated, as people read it aloud.
-		 * @spec exclude Display formatting only.
+		 * Show the new root as this server's own after the CA section renewed it.
+		 *
+		 * @param {CustomEvent<{rootFingerprint: string}>} event The renewal.
+		 * @return {void}
+		 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-a-root-whose-key-cannot-be-read-is-renewed-unannounced
 		 */
-		formatFingerprint(hex) {
-			return (String(hex || '').match(/.{2}/g) || []).join(':').toUpperCase()
+		onRootRenewed(event) {
+			this.localRootFingerprint =
+				event.detail?.rootFingerprint ?? this.localRootFingerprint
 		},
 
 		/**

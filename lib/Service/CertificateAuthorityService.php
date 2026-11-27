@@ -311,7 +311,8 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	 * commit, RootRenewedEvent queues the notices to partners. When the current root's key cannot be read, the root is
 	 * renewed anyway, without a signature and unannounced, so every partner has to re-pin it by hand.
 	 *
-	 * @return array{resignedCount:int,announced:bool} The number of suites re-signed, and whether partners are told
+	 * @return array{resignedCount:int,announced:bool,rootFingerprint:string} The number of suites re-signed, whether
+	 *     partners are told, and the new root's fingerprint as the discovery document publishes it
 	 *
 	 * @throws RuntimeException When the current root's key cannot sign the new root
 	 *
@@ -355,7 +356,11 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 
 		$this->logger->info("Keepiq: Root renewed, {$resignedCount} suites re-signed");
 
-		return ['resignedCount' => $resignedCount, 'announced' => $signature !== null];
+		return [
+			'resignedCount' => $resignedCount,
+			'announced' => $signature !== null,
+			'rootFingerprint' => (new CertificatePem(pem: $pems['certificate']))->fingerprint(),
+		];
 	}//end renewRoot()
 
 	/**

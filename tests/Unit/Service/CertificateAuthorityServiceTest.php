@@ -244,7 +244,12 @@ class CertificateAuthorityServiceTest extends TestCase {
 
 		$renewal = $this->service->renewRoot();
 
-		$this->assertSame(expected: ['resignedCount' => 0, 'announced' => false], actual: $renewal);
+		$newFingerprint = (new CertificatePem(pem: $inserted['root']->getCertificate()))->fingerprint();
+		$this->assertSame(
+			expected: ['resignedCount' => 0, 'announced' => false, 'rootFingerprint' => $newFingerprint],
+			actual: $renewal
+		);
+		$this->assertNotSame((new CertificatePem(pem: $oldRoot->getCertificate()))->fingerprint(), $newFingerprint);
 		$this->assertNull($inserted['root']->getPredecessorSignature());
 		$this->assertSame(expected: $inserted['root']->getId(), actual: $oldRoot->getSuccessorId());
 		$this->assertFalse($oldIntermediate->getIsActive());
@@ -577,7 +582,16 @@ class CertificateAuthorityServiceTest extends TestCase {
 		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
 		$this->caCertMapper->expects($this->once())->method('update')->with($oldRoot);
 
-		$this->assertSame(expected: ['resignedCount' => 0, 'announced' => true], actual: $this->service->renewRoot());
+		$renewal = $this->service->renewRoot();
+
+		$this->assertSame(
+			expected: [
+				'resignedCount' => 0,
+				'announced' => true,
+				'rootFingerprint' => (new CertificatePem(pem: $inserted['root']->getCertificate()))->fingerprint(),
+			],
+			actual: $renewal
+		);
 		$this->assertSame(expected: ['root', 'intermediate'], actual: array_keys($inserted->getArrayCopy()));
 	}//end testRenewRootWithoutAnActiveIntermediate()
 

@@ -33,7 +33,7 @@ Issue: #1283. This is the second of two changes for it; the first is `partner-sh
 ## Impact
 
 - **Renewing side:**
-  - `CertificateAuthorityService::renewRoot` has `RootRenewalSignature` sign the new root's DER with the old root key, and `RootRenewalRecorder` stores that signature with the new root (`predecessor_signature` on `keepiq_ca_certs`) in the renewal's transaction, then dispatches `RootRenewedEvent`. When the old root key cannot be read, the root is renewed without a signature and nothing is announced; the renew response says so, and the CA health section tells the admin that partners must re-pin by hand.
+  - `CertificateAuthorityService::renewRoot` has `RootRenewalSignature` sign the new root's DER with the old root key, and `RootRenewalRecorder` stores that signature with the new root (`predecessor_signature` on `keepiq_ca_certs`) in the renewal's transaction, then dispatches `RootRenewedEvent`. When the old root key cannot be read, the root is renewed without a signature and nothing is announced; the renew response says so and carries the new root's fingerprint, and the CA health section tells the admin that partners must re-pin by hand and shows that fingerprint.
   - `FederationRootService::localRootRenewal` gives the announcement for 30 days: `DiscoveryController` publishes it, and `FederatedCertificateService::answer` adds it to lookup answers next to the chain.
   - `RootRenewedListener` queues one notice per partner with inbound sharing on through `RootRenewalNoticeDelivery` (`renewal_notice_attempts` and `renewal_notice_next_at` on `keepiq_federation_partners`), and `RetryFederatedNotificationsJob` sends them with `RootRenewalNoticeSender`, retrying as share notifications are.
 - **Receiving side:**

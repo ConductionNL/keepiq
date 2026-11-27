@@ -210,16 +210,29 @@ describe('CaHealthSection actions', () => {
 			data: { status: 'healthy', root: { expiresAt: '2046-01-01' } },
 		})
 		vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { resignedCount: 2, announced: false },
+			data: {
+				resignedCount: 2,
+				announced: false,
+				rootFingerprint: 'ab'.repeat(32),
+			},
 		})
+		const renewed = vi.fn()
+		window.addEventListener('keepiq:root-renewed', renewed)
 		const wrapper = mountSection()
 		await flushPromises()
 
 		wrapper.vm.renewRoot()
 		await flushPromises()
+		window.removeEventListener('keepiq:root-renewed', renewed)
 
-		expect(
-			wrapper.find('[data-testid="ca-renew-root-unannounced"]').text(),
-		).toContain('re-pin this server')
+		const note = wrapper.find('[data-testid="ca-renew-root-unannounced"]')
+		expect(note.text()).toContain('re-pin this server')
+		expect(note.find('[data-testid="ca-renew-root-fingerprint"]').text()).toBe(
+			Array(32).fill('AB').join(':'),
+		)
+		expect(renewed).toHaveBeenCalledOnce()
+		expect(renewed.mock.calls[0][0].detail).toEqual({
+			rootFingerprint: 'ab'.repeat(32),
+		})
 	})
 })
