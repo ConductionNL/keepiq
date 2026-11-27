@@ -23,15 +23,20 @@ vi.mock('../../src/crypto/reauth.js', () => ({
 
 const stubs = {
 	NcDialog: { template: '<div><slot /><slot name="actions" /></div>' },
-	NcNoteCard: { props: ['type'], template: '<div :class="`note--${type}`" v-bind="$attrs"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div :class="`note--${type}`" v-bind="$attrs"><slot /></div>',
+	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
 		emits: ['update:modelValue'],
-		template: '<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
+		template:
+			'<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
 	},
 }
 
@@ -66,7 +71,9 @@ describe('SecretQrModal', () => {
 		expect(verifyMasterPassword).toHaveBeenCalledWith('wrapped-key', 'wrong')
 		expect(wrapper.find('[data-testid="secret-qr-code"]').exists()).toBe(false)
 		expect(wrapper.vm.matrix).toBeNull()
-		expect(wrapper.find('[data-testid="secret-qr-error"]').text()).toBe('Incorrect master password')
+		expect(wrapper.find('[data-testid="secret-qr-error"]').text()).toBe(
+			'Incorrect master password',
+		)
 		// The typed password is not kept.
 		expect(wrapper.vm.masterPassword).toBe('')
 	})
@@ -87,7 +94,9 @@ describe('SecretQrModal', () => {
 		const wrapper = mountQr()
 		await wrapper.vm.onVerify()
 		expect(verifyMasterPassword).not.toHaveBeenCalled()
-		expect(wrapper.find('[data-testid="secret-qr-show"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper.find('[data-testid="secret-qr-show"]').attributes('disabled'),
+		).toBeDefined()
 	})
 
 	it('drops the code and emits close when dismissed', async () => {

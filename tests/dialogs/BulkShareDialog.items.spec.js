@@ -88,14 +88,25 @@ describe('BulkShareDialog per-item outcome', () => {
 		expect(rows).toHaveLength(1)
 		expect(rows[0].sourceSecretId).toBe('s-1')
 		expect(rows[0].targetUserId).toBe('bob')
-		expect(options).toEqual({ masterPassword: 'pw', rebuild: expect.any(Function) })
+		expect(options).toEqual({
+			masterPassword: 'pw',
+			rebuild: expect.any(Function),
+		})
 		expect(encrypt.mock.calls[0][1]).toBe('PEM')
 	})
 
 	it('names the source version and, when a save replaced it, shares the value fetched again (#1255)', async () => {
 		const fetch = vi.spyOn(useSecretStore(), 'fetchSecret')
-		fetch.mockResolvedValueOnce({ id: 's-1', key: 'old', updatedAt: '2026-10-01T10:00:00+00:00' })
-		fetch.mockResolvedValueOnce({ id: 's-1', key: 'new', updatedAt: '2026-10-01T10:00:05+00:00' })
+		fetch.mockResolvedValueOnce({
+			id: 's-1',
+			key: 'old',
+			updatedAt: '2026-10-01T10:00:00+00:00',
+		})
+		fetch.mockResolvedValueOnce({
+			id: 's-1',
+			key: 'new',
+			updatedAt: '2026-10-01T10:00:05+00:00',
+		})
 		registerBatch.mockImplementationOnce(async (rows, { rebuild }) => {
 			expect(rows[0].sourceUpdatedAt).toBe('2026-10-01T10:00:00+00:00')
 			const [again] = await rebuild(rows)
@@ -103,7 +114,10 @@ describe('BulkShareDialog per-item outcome', () => {
 			return { items: [{ status: 'created' }], masterPassword: 'pw' }
 		})
 
-		expect(await wrapper.vm.shareOne('s-1')).toEqual({ status: 'ok', reason: undefined })
+		expect(await wrapper.vm.shareOne('s-1')).toEqual({
+			status: 'ok',
+			reason: undefined,
+		})
 		expect(encrypt.mock.calls.map((call) => call[0].key)).toEqual(['old', 'new'])
 	})
 })

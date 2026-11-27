@@ -47,7 +47,9 @@
 
 				<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
-				<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
+				<SecretPayloadFields
+					v-bind="payloadFields"
+					v-on="payloadFieldEvents" />
 
 				<AuthenticatorKeyField
 					v-if="showAuthenticator"
@@ -522,21 +524,6 @@ export default {
 		 */
 		canAddFiles() {
 			return !this.contributeTo && !useOfflineStore().readOnly
-		},
-
-		/**
-		 * Why listed files cannot be added, '' when they can.
-		 *
-		 * @return {string}
-		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
-		 */
-		filesUnavailable() {
-			if (this.canAddFiles) {
-				return ''
-			}
-			return useOfflineStore().readOnly
-				? t('keepiq', 'Files cannot be added while you are offline. Remove them to save.')
-				: t('keepiq', 'Files can only be added to a secret you own. Remove them to save.')
 		},
 
 		/**

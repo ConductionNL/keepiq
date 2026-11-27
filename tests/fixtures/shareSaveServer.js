@@ -188,7 +188,11 @@ export function shareSaveServer({
 				]),
 			)
 			const cloudIds = [
-				...new Set(body.shareIds.map((shareId) => byShare.get(shareId)).filter(Boolean)),
+				...new Set(
+					body.shareIds
+						.map((shareId) => byShare.get(shareId))
+						.filter(Boolean),
+				),
 			]
 			log.partnerLookups.push(...cloudIds)
 			limitLookup()
@@ -211,7 +215,10 @@ export function shareSaveServer({
 						? { status: reject.status, message: reject.data?.message }
 						: { status: 502, message: 'partner_unreachable' }
 				} else {
-					certificates[shareId] = { cloudId: echoedCloudId(cloudId), ...answer }
+					certificates[shareId] = {
+						cloudId: echoedCloudId(cloudId),
+						...answer,
+					}
 				}
 			}
 			return { data: { certificates, refused } }

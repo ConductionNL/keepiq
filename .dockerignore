@@ -4,6 +4,8 @@
 .git
 **/node_modules
 vendor
+# Dev-only tool installs (psalm), not part of the app.
+vendor-bin
 coverage
 .phpunit.cache
 .phpunit.result.cache

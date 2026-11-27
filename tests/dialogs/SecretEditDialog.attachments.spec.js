@@ -31,7 +31,10 @@ const stubs = {
 		template:
 			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcSelect: { props: ['options', 'modelValue', 'inputLabel'], template: '<div />' },
+	NcSelect: {
+		props: ['options', 'modelValue', 'inputLabel'],
+		template: '<div />',
+	},
 	NcTextField: {
 		props: ['modelValue', 'label', 'disabled', 'required'],
 		template: '<input :value="modelValue" />',
@@ -206,7 +209,9 @@ describe('SecretEditDialog attachments', () => {
 		useOfflineStore().servedFromCache = true
 		await flushPromises()
 
-		expect(wrapper.findComponent(AttachmentDropZone).text()).toContain('cert.pem')
+		expect(wrapper.findComponent(AttachmentDropZone).text()).toContain(
+			'cert.pem',
+		)
 		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 

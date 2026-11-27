@@ -425,7 +425,8 @@ export async function saveShared({
 		if (batched?.error) {
 			throw batched.error
 		}
-		const recipient = batched?.recipient
+		const recipient =
+			batched?.recipient
 			?? (await withinLookupLimit(() =>
 				useFederatedShareStore().lookup(share.recipientCloudId),
 			))

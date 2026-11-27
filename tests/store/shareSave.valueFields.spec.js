@@ -163,7 +163,9 @@ describe('a share save reaching a partner', () => {
 							cloudId: BOB,
 							fingerprint: 'AB:CD',
 							spki: new Uint8Array(
-								createPublicKey(RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM).export({
+								createPublicKey(
+									RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM,
+								).export({
 									type: 'spki',
 									format: 'der',
 								}),

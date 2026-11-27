@@ -101,7 +101,10 @@ describe('ExportDialog.onExport', () => {
 		wrapper.vm.scopeFolderIds = ['f1', 'f2']
 		wrapper.vm.scopeTypeIds = ['t-api-key']
 		await wrapper.vm.onExport()
-		expect(backup.mock.calls[0][3]).toEqual({ folderIds: ['f1', 'f2'], typeIds: ['t-api-key'] })
+		expect(backup.mock.calls[0][3]).toEqual({
+			folderIds: ['f1', 'f2'],
+			typeIds: ['t-api-key'],
+		})
 	})
 
 	it('offers the type choice with chosen folders and chosen types only', async () => {

@@ -85,16 +85,18 @@ describe('AttachmentDropZone', () => {
 		)
 
 		await zone.trigger('drop', { dataTransfer: { files: [file('c.png')] } })
-		expect(wrapper.find('[data-testid="attachment-pending-0"]').text()).toContain(
-			'c.png',
-		)
+		expect(
+			wrapper.find('[data-testid="attachment-pending-0"]').text(),
+		).toContain('c.png')
 	})
 
 	it('removes a waiting file', async () => {
 		const wrapper = mounted()
 		await pick(wrapper, [file('a.txt'), file('b.txt')])
 
-		await wrapper.find('[data-testid="attachment-pending-remove-0"]').trigger('click')
+		await wrapper
+			.find('[data-testid="attachment-pending-remove-0"]')
+			.trigger('click')
 
 		expect(wrapper.text()).not.toContain('a.txt')
 		expect(wrapper.text()).toContain('b.txt')
@@ -138,9 +140,12 @@ describe('AttachmentDropZone', () => {
 		store.uploadFile = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('Attachment quota exceeded'))
-			.mockImplementationOnce(() => new Promise((resolve) => {
-				finish = resolve
-			}))
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						finish = resolve
+					}),
+			)
 		const wrapper = mount(AttachmentDropZone, {
 			props: { secretId: 's1' },
 			global: { stubs },
@@ -149,7 +154,9 @@ describe('AttachmentDropZone', () => {
 		await wrapper.vm.uploadPending('s1')
 		await flushPromises()
 
-		await wrapper.find('[data-testid="attachment-pending-retry-0"]').trigger('click')
+		await wrapper
+			.find('[data-testid="attachment-pending-retry-0"]')
+			.trigger('click')
 		const second = wrapper.vm.uploadPending('s1')
 		await flushPromises()
 
@@ -165,8 +172,16 @@ describe('AttachmentDropZone', () => {
 		const wrapper = mounted()
 		const folder = new File([''], 'photos')
 		const items = [
-			{ kind: 'file', webkitGetAsEntry: () => ({ isDirectory: true }), getAsFile: () => folder },
-			{ kind: 'file', webkitGetAsEntry: () => ({ isDirectory: false }), getAsFile: () => file('a.txt') },
+			{
+				kind: 'file',
+				webkitGetAsEntry: () => ({ isDirectory: true }),
+				getAsFile: () => folder,
+			},
+			{
+				kind: 'file',
+				webkitGetAsEntry: () => ({ isDirectory: false }),
+				getAsFile: () => file('a.txt'),
+			},
 			{ kind: 'string', webkitGetAsEntry: () => null, getAsFile: () => null },
 		]
 
@@ -176,9 +191,9 @@ describe('AttachmentDropZone', () => {
 
 		expect(wrapper.text()).toContain('a.txt')
 		expect(wrapper.text()).not.toContain('photos')
-		expect(wrapper.find('[data-testid="attachment-dropzone-folders"]').exists()).toBe(
-			true,
-		)
+		expect(
+			wrapper.find('[data-testid="attachment-dropzone-folders"]').exists(),
+		).toBe(true)
 	})
 
 	it('keeps a file dropped beside the zone from replacing the page', () => {
@@ -218,7 +233,9 @@ describe('AttachmentDropZone', () => {
 		const wrapper = mounted()
 		await pick(wrapper, [file('a.txt')])
 
-		await wrapper.setProps({ unavailable: 'Files can only be added to a secret you own.' })
+		await wrapper.setProps({
+			unavailable: 'Files can only be added to a secret you own.',
+		})
 		await pick(wrapper, [file('b.txt')])
 		await wrapper
 			.find('[data-testid="attachment-dropzone"]')
@@ -231,10 +248,14 @@ describe('AttachmentDropZone', () => {
 			wrapper.find('[data-testid="attachment-dropzone-unavailable"]').text(),
 		).toContain('Files can only be added to a secret you own.')
 		expect(
-			wrapper.find('[data-testid="attachment-dropzone-add"]').attributes('disabled'),
+			wrapper
+				.find('[data-testid="attachment-dropzone-add"]')
+				.attributes('disabled'),
 		).toBeDefined()
 
-		await wrapper.find('[data-testid="attachment-pending-remove-0"]').trigger('click')
+		await wrapper
+			.find('[data-testid="attachment-pending-remove-0"]')
+			.trigger('click')
 		expect(wrapper.text()).not.toContain('a.txt')
 	})
 

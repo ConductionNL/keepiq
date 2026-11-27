@@ -1633,7 +1633,12 @@ export default {
 		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		canPrintOrShowQr() {
-			if (!this.secret || this.useOnly || typeof this.secret.key !== 'string' || this.secret.key === '') {
+			if (
+				!this.secret
+				|| this.useOnly
+				|| typeof this.secret.key !== 'string'
+				|| this.secret.key === ''
+			) {
 				return false
 			}
 			const type = useSecretTypeStore().typesById[this.secret.typeId]

@@ -4,18 +4,43 @@
  */
 
 import { evaluateHibp, fetchPolicy } from '../policy/policy.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { missingRequired } from '../utils/typedFields.js'
 
 /**
  * What the create and edit secret dialogs check before a save: loading the
  * org policy and the secret types, the Save guard with the required typed
- * fields, and the breached-value block.
+ * fields, the breached-value block, and why listed files hold the save back.
  *
- * The host provides `policy`, `canSubmit`, `typedFields`, `typedValues`,
- * `typedMissing`, `selectedTypeName`, `value`, `error` and `saving`.
+ * The host provides `policy`, `canSubmit`, `canAddFiles`, `typedFields`,
+ * `typedValues`, `typedMissing`, `selectedTypeName`, `value`, `error` and
+ * `saving`.
  */
 export const secretSaveGuards = {
+	computed: {
+		/**
+		 * Why listed files cannot be added, '' when they can.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		filesUnavailable() {
+			if (this.canAddFiles) {
+				return ''
+			}
+			return useOfflineStore().readOnly
+				? t(
+						'keepiq',
+						'Files cannot be added while you are offline. Remove them to save.',
+					)
+				: t(
+						'keepiq',
+						'Files can only be added to a secret you own. Remove them to save.',
+					)
+		},
+	},
+
 	methods: {
 		/**
 		 * Load the org policy, then the secret types when none are cached.

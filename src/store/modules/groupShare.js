@@ -83,7 +83,11 @@ async function registerMemberCopies(store, share) {
 		rebuild: (stale) =>
 			encryptAgain(
 				store,
-				{ secretId: share.secretId, groupShareId: share.groupShare.id, members: share.members },
+				{
+					secretId: share.secretId,
+					groupShareId: share.groupShare.id,
+					members: share.members,
+				},
 				stale,
 			),
 	})

@@ -57,7 +57,9 @@ describe('lookupShares', () => {
 		])
 
 		expect(post).toHaveBeenCalledTimes(1)
-		expect(post.mock.calls[0][0]).toContain('/api/v1/federation/recipient-certificates')
+		expect(post.mock.calls[0][0]).toContain(
+			'/api/v1/federation/recipient-certificates',
+		)
 		expect(post.mock.calls[0][1]).toEqual({ shareIds: ['fs-1'] })
 		const { recipient } = results.get('fs-1')
 		expect(recipient.cloudId).toBe(BOB)
@@ -67,12 +69,18 @@ describe('lookupShares', () => {
 		expect(recipient).not.toHaveProperty('certificate')
 	})
 
-	it('gives an answer for another cloud id, or one that does not chain, as that share\'s error', async () => {
+	it("gives an answer for another cloud id, or one that does not chain, as that share's error", async () => {
 		vi.spyOn(axios, 'post').mockResolvedValue({
 			data: {
 				certificates: {
-					'fs-1': { ...BOB_ANSWER, cloudId: 'mallory@cloud.partner.example' },
-					'fs-2': { ...BOB_ANSWER, chain: [F.intermediateA, F.intermediateA] },
+					'fs-1': {
+						...BOB_ANSWER,
+						cloudId: 'mallory@cloud.partner.example',
+					},
+					'fs-2': {
+						...BOB_ANSWER,
+						chain: [F.intermediateA, F.intermediateA],
+					},
 				},
 				refused: {},
 			},
@@ -102,7 +110,10 @@ describe('lookupShares', () => {
 
 		const refused = results.get('fs-1').error
 		expect(refused).toBeInstanceOf(PartnerLookupRefusal)
-		expect(refused.response).toEqual({ status: 403, data: { message: 'not_a_partner' } })
+		expect(refused.response).toEqual({
+			status: 403,
+			data: { message: 'not_a_partner' },
+		})
 		expect(results.get('fs-2').error.response).toEqual({
 			status: 404,
 			data: { message: 'unknown_share' },
@@ -110,11 +121,15 @@ describe('lookupShares', () => {
 	})
 
 	it('rejects as the request does, so share-save can wait out a 429', async () => {
-		const limited = Object.assign(new Error('HTTP 429'), { response: { status: 429 } })
+		const limited = Object.assign(new Error('HTTP 429'), {
+			response: { status: 429 },
+		})
 		vi.spyOn(axios, 'post').mockRejectedValue(limited)
 
 		await expect(
-			useFederatedShareStore().lookupShares([{ shareId: 'fs-1', recipientCloudId: BOB }]),
+			useFederatedShareStore().lookupShares([
+				{ shareId: 'fs-1', recipientCloudId: BOB },
+			]),
 		).rejects.toBe(limited)
 	})
 })
@@ -147,7 +162,14 @@ describe('share-save over the batch lookup', () => {
 			],
 			lookup: {
 				[BOB]: { ...BOB_ANSWER, cloudId: echoedCloudId(BOB) },
-				[CAROL]: { reject: Object.assign(new Error('x'), { response: { status: 403, data: { message: 'not_a_partner' } } }) },
+				[CAROL]: {
+					reject: Object.assign(new Error('x'), {
+						response: {
+							status: 403,
+							data: { message: 'not_a_partner' },
+						},
+					}),
+				},
 			},
 		})
 

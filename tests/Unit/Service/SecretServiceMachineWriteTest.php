@@ -78,6 +78,9 @@ class SecretServiceMachineWriteTest extends TestCase {
 		);
 
 		$this->typeService->method('resolveTypeForSecret')->willReturn('api_key');
+		// No other write lands between a write-back's read and its write here;
+		// SecretServiceApplicationWriteLockTest covers the ones that do.
+		$this->mapper->method('advanceVersion')->willReturn(1);
 	}//end setUp()
 
 	/**

@@ -42,6 +42,8 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PreconditionFailedException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\MachineSecretEnvelopeServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\MachineSecretResponseServiceInterface;
@@ -66,7 +68,8 @@ use OCP\IRequest;
  * - `GET    /api/v1/app/secrets/by-name/{name}`— fetch by name (404 / envelope / 409).
  * - `POST   /api/v1/app/secrets`               — create (client-encrypted).
  * - `PUT    /api/v1/app/secrets/{id}`          — replace ciphertext (client-encrypted;
- *                                                 If-Match → 412 on a stale ETag).
+ *                                                 If-Match → 412 on a stale ETag,
+ *                                                 409 when the secret moved twice).
  *
  * Responses contain ciphertext only — the calling application decrypts
  * with its private key.
@@ -311,13 +314,19 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 * The new value arrives pre-encrypted with the application's own
 	 * certificate. PUT advances updatedAt (and keyUpdatedAt when the key
 	 * blob changes). A secret owned by another vault returns 404,
-	 * indistinguishable from a nonexistent id.
+	 * indistinguishable from a nonexistent id. The write is locked on the
+	 * version it read: a write that lands in between is kept as a version
+	 * and the update is made on top of it, or, when that happens twice, the
+	 * answer is 409 and nothing is written. With `If-Match` the update is
+	 * written only over the version the header names (or any, for `*`);
+	 * otherwise the answer is 412 with the current ETag.
 	 *
 	 * @param string $id The secret ID
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-conditional-machine-write-back
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -328,19 +337,24 @@ class ApplicationSecretsController extends ApplicationApiController {
 			return $this->unauthorized();
 		}
 
-		$precondition = $this->checkIfMatch(id: $id, applicationId: $application->getId());
-		if ($precondition !== null) {
-			return $precondition;
-		}
-
 		try {
 			$secret = $this->secretService->updateByApplication(
 				id: $id,
 				data: $this->writePayload(),
-				applicationId: $application->getId()
+				applicationId: $application->getId(),
+				precondition: $this->ifMatch()
 			);
 		} catch (NotFoundException) {
 			return $this->notFound();
+		} catch (PreconditionFailedException $e) {
+			$response = new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_PRECONDITION_FAILED);
+			$response->addHeader('ETag', $this->envelopeService->etag($e->getCurrent()));
+			return $response;
+		} catch (StaleWriteException) {
+			return new JSONResponse(
+				data: ['message' => 'The secret changed while it was written; read it again and retry'],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
@@ -349,43 +363,27 @@ class ApplicationSecretsController extends ApplicationApiController {
 	}//end update()
 
 	/**
-	 * Enforce an If-Match precondition on a write-back.
+	 * The If-Match precondition of a write-back, checked by the service on
+	 * the row it reads for the write: it holds when the header names that
+	 * row's strong ETag or is `*`. Without the header there is none. The
+	 * service reads the row in the application's vault first, so a secret of
+	 * another vault is the usual 404 and the precondition is no existence oracle.
 	 *
-	 * Without the header nothing is checked, as before. With it, the write
-	 * goes ahead only when the header names the secret's current strong ETag
-	 * (or is `*`); otherwise the answer is 412 with the current ETag, and
-	 * nothing is written. A secret of another vault is the usual 404, so the
-	 * precondition is no existence oracle.
+	 * @return \Closure|null
 	 *
-	 * @param string $id The secret ID
-	 * @param string $applicationId The calling application id
+	 * @phpstan-return (\Closure(Secret): bool)|null
+	 * @psalm-return (\Closure(Secret): bool)|null
 	 *
-	 * @return JSONResponse|null The refusal, or null when the write may go ahead
-	 *
-	 * @spec openspec/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-conditional-machine-write-back
 	 */
-	private function checkIfMatch(string $id, string $applicationId): ?JSONResponse {
+	private function ifMatch(): ?\Closure {
 		$header = trim($this->request->getHeader('If-Match'));
 		if ($header === '') {
 			return null;
 		}
 
-		$secret = $this->loadOwnedOrNull(id: $id, applicationId: $applicationId);
-		if ($secret === null) {
-			return $this->notFound();
-		}
-
-		if ($this->envelopeService->ifMatchHolds(secret: $secret, header: $header) === true) {
-			return null;
-		}
-
-		$response = new JSONResponse(
-			data: ['message' => 'The secret changed since it was read; read it again before writing'],
-			statusCode: Http::STATUS_PRECONDITION_FAILED
-		);
-		$response->addHeader('ETag', $this->envelopeService->etag($secret));
-		return $response;
-	}//end checkIfMatch()
+		return fn (Secret $secret): bool => $this->envelopeService->ifMatchHolds(secret: $secret, header: $header);
+	}//end ifMatch()
 
 	/**
 	 * Load a secret only when it is owned by the given application, else

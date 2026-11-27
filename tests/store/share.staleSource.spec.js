@@ -14,7 +14,10 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sourceVersion } from '../../src/services/recipientCopy.js'
 import { encryptAgain } from '../../src/store/modules/groupShare.js'
-import { MAX_STALE_SOURCE_ROUNDS, useShareStore } from '../../src/store/modules/share.js'
+import {
+	MAX_STALE_SOURCE_ROUNDS,
+	useShareStore,
+} from '../../src/store/modules/share.js'
 
 vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
 	...(await importOriginal()),
@@ -57,7 +60,11 @@ function server(state) {
 			data: {
 				items: body.shares.map((r) =>
 					r.sourceUpdatedAt === state.current
-						? { sourceSecretId: r.sourceSecretId, targetUserId: r.targetUserId, status: 'created' }
+						? {
+								sourceSecretId: r.sourceSecretId,
+								targetUserId: r.targetUserId,
+								status: 'created',
+							}
 						: {
 								sourceSecretId: r.sourceSecretId,
 								targetUserId: r.targetUserId,
@@ -81,7 +88,9 @@ describe('registerBatch with a stale source', () => {
 
 	it('encrypts the stale rows again and sends only those, keeping row order and the password', async () => {
 		const requests = server({ current: NEW })
-		const rebuild = vi.fn(async (stale) => stale.map((r) => row(r.targetUserId, NEW)))
+		const rebuild = vi.fn(async (stale) =>
+			stale.map((r) => row(r.targetUserId, NEW)),
+		)
 
 		const { items, masterPassword } = await useShareStore().registerBatch(
 			[row('bob', OLD), row('carol', NEW), row('dan', OLD)],
@@ -89,7 +98,10 @@ describe('registerBatch with a stale source', () => {
 		)
 
 		expect(rebuild).toHaveBeenCalledTimes(1)
-		expect(rebuild.mock.calls[0][0].map((r) => r.targetUserId)).toEqual(['bob', 'dan'])
+		expect(rebuild.mock.calls[0][0].map((r) => r.targetUserId)).toEqual([
+			'bob',
+			'dan',
+		])
 		expect(requests.map((rows) => rows.map((r) => r.targetUserId))).toEqual([
 			['bob', 'carol', 'dan'],
 			['bob', 'dan'],
@@ -105,14 +117,23 @@ describe('registerBatch with a stale source', () => {
 	it('gives up after three more rounds and reports the row stale', async () => {
 		const requests = server({ current: NEW })
 		// The source keeps moving: every rebuild is one version behind.
-		const rebuild = vi.fn(async (stale) => stale.map((r) => row(r.targetUserId, OLD)))
+		const rebuild = vi.fn(async (stale) =>
+			stale.map((r) => row(r.targetUserId, OLD)),
+		)
 
-		const { items } = await useShareStore().registerBatch([row('bob', OLD)], { rebuild })
+		const { items } = await useShareStore().registerBatch([row('bob', OLD)], {
+			rebuild,
+		})
 
 		expect(rebuild).toHaveBeenCalledTimes(MAX_STALE_SOURCE_ROUNDS)
 		expect(requests).toHaveLength(MAX_STALE_SOURCE_ROUNDS + 1)
 		expect(items).toEqual([
-			{ sourceSecretId: 's1', targetUserId: 'bob', status: 'stale_source', sourceUpdatedAt: NEW },
+			{
+				sourceSecretId: 's1',
+				targetUserId: 'bob',
+				status: 'stale_source',
+				sourceUpdatedAt: NEW,
+			},
 		])
 	})
 
@@ -141,8 +162,12 @@ describe('the copy rows of the share paths', () => {
 		]
 
 		await expect(
-			encryptAgain(store, { secretId: 's1', groupShareId: 'g1', members }, [row('carol', OLD)]),
+			encryptAgain(store, { secretId: 's1', groupShareId: 'g1', members }, [
+				row('carol', OLD),
+			]),
 		).resolves.toEqual(['rows'])
-		expect(store.encryptForMembers).toHaveBeenCalledWith('s1', 'g1', [{ userId: 'carol', certificate: 'C' }])
+		expect(store.encryptForMembers).toHaveBeenCalledWith('s1', 'g1', [
+			{ userId: 'carol', certificate: 'C' },
+		])
 	})
 })

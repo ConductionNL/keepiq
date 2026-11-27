@@ -2829,7 +2829,7 @@
             "put": {
                 "operationId": "application-secrets-update",
                 "summary": "Replace the ciphertext of one of the calling application's secrets",
-                "description": "Replace the ciphertext of one of the calling application's secrets. The new value arrives pre-encrypted with the application's own certificate. PUT advances updatedAt (and keyUpdatedAt when the key blob changes). A secret owned by another vault returns 404, indistinguishable from a nonexistent id.",
+                "description": "Replace the ciphertext of one of the calling application's secrets. The new value arrives pre-encrypted with the application's own certificate. PUT advances updatedAt (and keyUpdatedAt when the key blob changes). A secret owned by another vault returns 404, indistinguishable from a nonexistent id. The write is locked on the version it read: a write that lands in between is kept as a version and the update is made on top of it, or, when that happens twice, the answer is 409 and nothing is written. With `If-Match` the update is written only over the version the header names (or any, for `*`); otherwise the answer is 412 with the current ETag.",
                 "tags": [
                     "application-secrets"
                 ],
@@ -2884,6 +2884,50 @@
                     },
                     "401": {
                         "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict with the current state",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Precondition failed",
                         "content": {
                             "application/problem+json": {
                                 "schema": {

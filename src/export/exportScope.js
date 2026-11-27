@@ -35,7 +35,12 @@ export const SCOPE_KINDS = Object.freeze(['vault', 'folders', 'types', 'selectio
  * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 export function buildScope(choice) {
-	const ids = (list) => (Array.isArray(list) ? list.filter((id) => id !== null && id !== undefined && id !== '').map(String) : [])
+	const ids = (list) =>
+		Array.isArray(list)
+			? list
+					.filter((id) => id !== null && id !== undefined && id !== '')
+					.map(String)
+			: []
 	const kind = choice?.kind ?? 'vault'
 	if (kind === 'selection') {
 		return { mode: 'selection', secretIds: ids(choice.secretIds) }
