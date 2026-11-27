@@ -973,6 +973,36 @@ describe('replay', () => {
 		expect(failureText(old)).toContain('cannot be reached (bob@partner)')
 	})
 
+	it("a partner share that is not the owner's fails the entry, not a version conflict, and the queue goes on", async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		await secrets.createSecret({ name: 'B', key: 'v' })
+		goOnline()
+		shareSaveServer({
+			id: 's1',
+			rows: { s1: { id: 's1', updatedAt: BASE } },
+			posts: { '/api/v1/secrets': { id: 'created' } },
+			onSave: () => {
+				throw httpError(409, {
+					error: 'partner_share_owner_mismatch',
+					message: "A partner share of this secret is not its owner's",
+				})
+			},
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 1, stopped: false })
+		expect(offline.entries.filter((e) => e.status === 'conflict')).toEqual([])
+		expect(offline.conflicts).toEqual({})
+		const [failed] = offline.failedEntries
+		expect(failed.secretId).toBe('s1')
+		expect(failed.failure).toEqual({ code: 'partner_share_owner_mismatch' })
+		expect(failureText(failed.failure)).toContain(
+			'An administrator must repair the partner shares',
+		)
+	})
+
 	it('a failed entry left at "sync" keeps that status, so "Try again" finishes it from the saved row', async () => {
 		await goOffline()
 		const kept = await secrets.updateSecret('s1', { key: 'queued-value' })

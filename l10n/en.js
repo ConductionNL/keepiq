@@ -26,7 +26,8 @@ OC.L10N.register(
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n change waiting to sync","%n changes waiting to sync"],
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.","The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account."],
         "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Removed the user from %n team folder.","Removed the user from %n team folders."],
-        "_%n passkey_::_%n passkeys_": ["%n passkey","%n passkeys"]
+        "_%n passkey_::_%n passkeys_": ["%n passkey","%n passkeys"],
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.","Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change."]
     },
     "nplurals=2; plural=(n != 1);"
 )

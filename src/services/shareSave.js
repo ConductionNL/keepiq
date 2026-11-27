@@ -16,7 +16,7 @@
  */
 
 import axios from '@nextcloud/axios'
-import { translate as t } from '@nextcloud/l10n'
+import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { FederatedCertificateError } from '../crypto/federatedCertificate.js'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../crypto/index.js'
@@ -280,9 +280,11 @@ function idsOf(list, key) {
 /**
  * Save a value change of `{id}` for every holder in one transaction.
  *
- * On the copy-editor path partner shares are never written; the answer's
- * `federated.ownerOnly` counts them. A copy holder without a write grade is
- * refused before anything is sent, for an edit and a restore alike.
+ * On the copy-editor path partner shares are written only when the caller owns the secret,
+ * which the server's `incomplete` answer shows by requiring them;
+ * for anyone else the answer's `federated.ownerOnly` says they exist.
+ * A copy holder without a write grade is refused before anything is sent,
+ * for an edit and a restore alike.
  *
  * @param {object} options The save.
  * @param {string} options.id The caller's own row.
@@ -303,6 +305,7 @@ function idsOf(list, key) {
  * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
  * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  * @spec openspec/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
+ * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
  */
 export async function saveShared({
 	id,
@@ -460,13 +463,14 @@ export async function saveShared({
 				.map(([key, entry]) => ({ key: prefix + key, entry }))
 		let local = [...unsent(copies, 'c:'), ...unsent(skipped, 's:')]
 		let remote = [...unsent(federated, 'f:'), ...unsent(suspend, 'p:')]
+		// A copy editor sends partner lists only when the server required them, which it does only of the secret's owner.
 		const listsOf = (localPart, remotePart) => {
 			const pick = (part, prefix) =>
 				part.filter((x) => x.key.startsWith(prefix)).map((x) => x.entry)
 			return {
 				copies: pick(localPart, 'c:'),
 				skipped: pick(localPart, 's:'),
-				...(copyPath
+				...(copyPath && remotePart.length === 0
 					? {}
 					: {
 							federated: pick(remotePart, 'f:'),
@@ -693,9 +697,8 @@ export async function saveShared({
 		await lookUpCertificates(todo)
 		await fillCopies(todo)
 
-		if (!copyPath) {
-			await fillPartners(answer.federated?.required ?? [], drop)
-		}
+		// The owner's partner shares, also when they save through their own copy; the server requires none of anyone else.
+		await fillPartners(answer.federated?.required ?? [], drop)
 		if (stageDirty) {
 			stage = { id: null, sent: new Set() }
 		}
@@ -840,17 +843,23 @@ async function encryptWhole(value, recipient) {
 }
 
 /**
- * Tell a copy editor that partner shares get the change only when the owner
- * saves next, since partners stay owner-only.
+ * Tell the user which recipients at partner organisations a save did not reach.
+ * Those only the owner's next save reaches, when a copy editor who does not own the secret saved,
+ * and those who got the secret from a copy, which no save reaches.
  *
  * @param {object} result A share-save answer.
  * @return {Promise<void>}
  * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+ * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
  */
-export async function notifyOwnerOnly(result) {
-	if (result?.federated?.ownerOnly === true) {
-		// Loaded on use: the toast library needs a DOM at import time.
-		const { showInfo } = await import('@nextcloud/dialogs')
+export async function notifyPartnerNotes(result) {
+	const notReached = result?.federated?.notReached ?? 0
+	if (result?.federated?.ownerOnly !== true && !(notReached > 0)) {
+		return
+	}
+	// Loaded on use: the toast library needs a DOM at import time.
+	const { showInfo, showWarning } = await import('@nextcloud/dialogs')
+	if (result.federated.ownerOnly === true) {
 		showInfo(
 			t(
 				'keepiq',
@@ -858,6 +867,26 @@ export async function notifyOwnerOnly(result) {
 			),
 		)
 	}
+	if (notReached > 0) {
+		showWarning(notReachedText(notReached))
+	}
+}
+
+/**
+ * The note for recipients at partner organisations who got the secret from a copy, which no save reaches.
+ * The count is of partner shares, one per recipient.
+ *
+ * @param {number} count How many partner shares hang off a copy the save wrote.
+ * @return {string}
+ * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+ */
+export function notReachedText(count) {
+	return n(
+		'keepiq',
+		'Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.',
+		'Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.',
+		count,
+	)
 }
 
 /**
@@ -944,6 +973,19 @@ function partnerClockText() {
 	)
 }
 
+/**
+ * The text for the `partner_share_owner_mismatch` share save refusal.
+ *
+ * @return {string}
+ * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+ */
+function partnerOwnerMismatchText() {
+	return t(
+		'keepiq',
+		'Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.',
+	)
+}
+
 /** The text for each share save refusal that needs no more than its code. */
 const CODE_TEXTS = new Map([
 	['stale', staleText],
@@ -953,6 +995,7 @@ const CODE_TEXTS = new Map([
 	['partner_lookup_limit', lookupLimitText],
 	['partner_clock', partnerClockText],
 	['view_only', viewOnlyText],
+	['partner_share_owner_mismatch', partnerOwnerMismatchText],
 	[SHARE_SCAN_PENDING, shareScanPendingText],
 ])
 

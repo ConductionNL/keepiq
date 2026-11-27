@@ -36,6 +36,7 @@ use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -51,6 +52,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/FederationFixtures.php';
@@ -58,6 +60,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedShareOwnerChangesTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const SHARED_SECRET = 'the-shared-secret';
 	private const NEW_KEY = 'NEW-CIPHER-KEY-FOR-BOB';
@@ -198,7 +201,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$config->method('getSystemValueBool')->willReturn(false);
 		$this->service = new FederatedShareService(
 			shareMapper: $mapper,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: new FederationPartnerService(
 				$this->partnerMapper([$this->partner('cloud.partner.example', true, true)]),
 				$this->createMock(IClientService::class),

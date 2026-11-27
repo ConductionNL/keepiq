@@ -49,6 +49,7 @@ const EXPECTED = {
 	share_scan_pending: {
 		open: 'writeErrors.shareScanPendingOpen', delete: 'writeErrors.shareScanPendingDelete', passkey: 'passkey.errors.shareScanPending', other: 'writeErrors.shareScanPending',
 	},
+	partner_share_owner_mismatch: 'writeErrors.partnerShareOwnerMismatch',
 } satisfies Record<WriteErrorCode, Expected>
 
 const CODES = Object.keys(EXPECTED) as WriteErrorCode[]

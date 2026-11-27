@@ -19,6 +19,7 @@
  "partner lookup limit": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute.",
  "partner clock": "[keepiq] The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.",
  "view only": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it.",
+ "partner share not the owner's": "[keepiq] Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.",
  "upgrade required": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys ({partners}). It needs Keepiq {version} or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them. {\"partners\":\"a@x\",\"version\":\"3.1\"}",
  "upgrade required no partners": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys. It needs Keepiq {version} or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them. {\"version\":\"\"}",
  "refused known": "[keepiq] Failed to save secret",

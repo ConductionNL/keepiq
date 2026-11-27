@@ -2052,6 +2052,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Mappar kan inte bifogas. Släpp i stället filerna i dem.",
         "Files cannot be added while you are offline. Remove them to save.": "Filer kan inte läggas till när du är offline. Ta bort dem för att spara.",
         "Files can only be added to a secret you own. Remove them to save.": "Filer kan bara läggas till i en hemlighet som du äger. Ta bort dem för att spara.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Inget sparades: en delning av den här hemligheten med en partnerorganisation tillhör fortfarande dess tidigare ägare. En administratör måste reparera partnerdelningarna innan den här ändringen kan sparas.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Sparat, men %n mottagare hos en partnerorganisation fick den här hemligheten från en kopia och fick inte den här ändringen.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Sparat, men %n mottagare hos partnerorganisationer fick den här hemligheten från en kopia och fick inte den här ändringen.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Sparat, men %n mottagare hos en partnerorganisation fick den här hemligheten från en kopia och fick inte den här ändringen.",
+            "Sparat, men %n mottagare hos partnerorganisationer fick den här hemligheten från en kopia och fick inte den här ändringen."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget delades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Den här hemligheten delades med dig, så den kan inte delas med en partnerorganisation. Inget delades.",
         "Sharing options could not be loaded.": "Delningsalternativen kunde inte läsas in.",
         "Sharing options still could not be loaded.": "Delningsalternativen kunde fortfarande inte läsas in.",
         "Sharing is not available for this secret.": "Delning är inte tillgänglig för den här hemligheten.",

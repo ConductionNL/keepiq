@@ -14,6 +14,7 @@ const KNOWN = {
 	offline: 0, server_error: 0, unknown: 0, restricted: 0, view_only: 0, key_mismatch: 0, account_changed: 0, stale_source: 0,
 	share_scan_pending: 0, incomplete: 0, bad_certificate: 0, unverified: 0, partner_unreachable: 0, partner_upgrade_required: 0,
 	partner_lookup_limit: 0, federation_unavailable: 0, keepiq_outdated: 0, partner_clock: 0, passkey_clone: 0, argon2_unavailable: 0,
+	partner_share_owner_mismatch: 0,
 } satisfies Record<WriteErrorCode, 0>
 
 const CODES = [...Object.keys(KNOWN), 'a_code_from_a_newer_background', 'toString', '__proto__', 'constructor']

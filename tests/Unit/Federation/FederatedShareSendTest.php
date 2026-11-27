@@ -27,12 +27,21 @@ use OCA\Keepiq\Controller\FederatedShareController;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
@@ -52,6 +61,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedShareSendTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const CIPHER_KEY = 'CIPHER-KEY-FOR-BOB';
 	private const CIPHER_LOGIN = 'CIPHER-LOGIN-FOR-BOB';
@@ -69,6 +79,18 @@ class FederatedShareSendTest extends TestCase {
 	private int $deliveryStatus = 201;
 
 	private ICloudFederationProviderManager&MockObject $ocm;
+
+	/** @var list<ShareTarget> The share rows naming a secret as a copy */
+	private array $copyRows = [];
+
+	/** The pending quarantine scan; null holds no row back */
+	private ?ShareQuarantineScanner $scanner = null;
+
+	/** @var array<string,Secret> Secrets besides Alice's `src`, by id */
+	private array $otherSecrets = [];
+
+	/** @var list<SecretDelegation> The active delegations */
+	private array $delegations = [];
 
 	protected function setUp(): void {
 		$this->skipWithoutFederation();
@@ -91,10 +113,7 @@ class FederatedShareSendTest extends TestCase {
 	 * @return FederatedShareController
 	 */
 	private function controller(array $partners, string $uid = 'alice'): FederatedShareController {
-		$secrets = $this->createMock(SecretMapper::class);
-		$secrets->method('findById')->willReturnCallback(
-			fn (string $id): Secret => ($id === 'src') ? $this->source : throw new DoesNotExistException('none')
-		);
+		$secrets = $this->secretTable();
 
 		$mapper = $this->createMock(FederatedShareMapper::class);
 		$mapper->method('insert')->willReturnCallback(
@@ -109,7 +128,14 @@ class FederatedShareSendTest extends TestCase {
 				return $row;
 			}
 		);
-		$mapper->method('findBySourceSecret')->willReturnCallback(fn (): array => array_values($this->rows));
+		$mapper->method('findBySourceSecret')->willReturnCallback(
+			fn (string $sourceSecretId): array => array_values(
+				array_filter($this->rows, static fn (FederatedShare $row): bool => $row->getSourceSecretId() === $sourceSecretId)
+			)
+		);
+		$mapper->method('findById')->willReturnCallback(
+			fn (string $id): FederatedShare => ($this->rows[$id] ?? throw new DoesNotExistException('no share'))
+		);
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationShare')->willReturnCallback(
@@ -152,7 +178,7 @@ class FederatedShareSendTest extends TestCase {
 
 		$service = new FederatedShareService(
 			shareMapper: $mapper,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge(targets: $this->shareTargets(), secrets: $secrets, scanner: $this->scanner)),
 			partners: new FederationPartnerService($this->partnerMapper($partners), $this->createMock(IClientService::class), $config),
 			root: $this->rootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),
@@ -173,6 +199,136 @@ class FederatedShareSendTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return new FederatedShareController($this->createMock(IRequest::class), $service, $session);
+	}
+
+	/**
+	 * The secrets: Alice's `src` and $this->otherSecrets.
+	 *
+	 * @return SecretMapper
+	 */
+	private function secretTable(): SecretMapper {
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findById')->willReturnCallback(
+			fn (string $id): Secret => ($id === 'src') ? $this->source : ($this->otherSecrets[$id] ?? throw new DoesNotExistException('none'))
+		);
+
+		return $secrets;
+	}
+
+	/**
+	 * The share rows, found by the copy they name or by their pair from $this->copyRows.
+	 *
+	 * @return ShareTargetMapper
+	 */
+	private function shareTargets(): ShareTargetMapper {
+		$targets = $this->createMock(ShareTargetMapper::class);
+		$targets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceId, string $targetUserId): ShareTarget {
+				foreach ($this->copyRows as $row) {
+					if ($row->getSourceSecretId() === $sourceId && $row->getTargetUserId() === $targetUserId) {
+						return $row;
+					}
+				}
+
+				throw new DoesNotExistException('no row');
+			}
+		);
+		$targets->method('findByRecipientSecret')->willReturnCallback(
+			function (string $copyId): ShareTarget {
+				$rows = array_values(array_filter($this->copyRows, static fn (ShareTarget $row): bool => $row->getSecretId() === $copyId));
+				if ($rows === []) {
+					throw new DoesNotExistException('not a copy');
+				}
+
+				if (count($rows) > 1) {
+					throw new MultipleObjectsReturnedException('two rows');
+				}
+
+				return $rows[0];
+			}
+		);
+
+		return $targets;
+	}
+
+	/**
+	 * A share row making `src` the copy that `$holder` received of `orig`.
+	 *
+	 * @param string $holder The row's target
+	 * @param string|null $groupShareId The group share it came from, if any
+	 * @param string|null $teamFolderId The team folder it came from, if any
+	 *
+	 * @return ShareTarget
+	 */
+	private function copyRow(string $holder = 'alice', ?string $groupShareId = null, ?string $teamFolderId = null): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId('st-'.count($this->copyRows));
+		$row->setSourceSecretId('orig');
+		$row->setSecretId('src');
+		$row->setTargetUserId($holder);
+		$row->setGroupShareId($groupShareId);
+		$row->setTeamFolderId($teamFolderId);
+
+		return $row;
+	}
+
+	/**
+	 * Olivia owns `orig` and has an active delegation of it to Alice, whose copy `src` is.
+	 *
+	 * @return ShareAuthorizationService The authorization service over that delegation
+	 */
+	private function aliceIsOliviasDelegate(): ShareAuthorizationService {
+		$orig = new Secret();
+		$orig->setId('orig');
+		$orig->setOwnerType('user');
+		$orig->setOwnerId('olivia');
+		$this->otherSecrets['orig'] = $orig;
+
+		$delegation = new SecretDelegation();
+		$delegation->setSecretId('orig');
+		$delegation->setOriginalOwnerId('olivia');
+		$delegation->setDelegatedTo('alice');
+		$delegation->setIsPermanent(false);
+		$this->delegations[] = $delegation;
+
+		$delegations = $this->createMock(SecretDelegationMapper::class);
+		$delegations->method('findActiveBySecretAndUser')->willReturnCallback(
+			function (string $secretId, string $userId): SecretDelegation {
+				foreach ($this->delegations as $delegation) {
+					if ($delegation->getSecretId() === $secretId && $delegation->getDelegatedTo() === $userId) {
+						return $delegation;
+					}
+				}
+
+				throw new DoesNotExistException('no delegation');
+			}
+		);
+		$delegations->method('findBySecret')->willReturnCallback(
+			fn (string $secretId): array => array_values(
+				array_filter($this->delegations, static fn (SecretDelegation $delegation): bool => $delegation->getSecretId() === $secretId)
+			)
+		);
+
+		$secrets = $this->secretTable();
+		return new ShareAuthorizationService(
+			secretMapper: $secrets,
+			delegationMapper: $delegations,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargets(), secrets: $secrets),
+		);
+	}
+
+	/**
+	 * A pending quarantine scan answering `$verdict` for every row.
+	 *
+	 * @param string $verdict What heldBack() answers
+	 *
+	 * @return ShareQuarantineScanner
+	 */
+	private function scanAnswering(string $verdict): ShareQuarantineScanner {
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($verdict);
+
+		return $scanner;
 	}
 
 	/**
@@ -321,5 +477,269 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $list->getStatus());
 		$this->assertSame('bob@cloud.partner.example', $list->getData()[0]['recipientCloudId']);
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller([], 'mallory')->index('src')->getStatus());
+	}
+
+	/**
+	 * Every way a share row can name Alice's `src` as a copy she received.
+	 *
+	 * @return array<string,array{0:list<array{0:string,1:?string,2:?string}>,1:?string,2:int,3:string,4?:bool}>
+	 *   The rows (holder, group share, team folder), the scan's verdict, the status, the answer's code,
+	 *   and whether Alice holds an active delegation of the source
+	 */
+	public static function receivedCopies(): array {
+		return [
+			'a plain recipient\'s copy' => [[['alice', null, null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			// A delegation on the source changes nothing here: partner shares are the owner's.
+			'a delegate\'s copy' => [[['alice', null, null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable', true],
+			'a copy reached through a group share' => [[['alice', 'gs-1', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a copy reached through a team folder' => [[['alice', null, 'tf-1']], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a copy two share rows name' => [[['alice', null, null], ['alice', 'gs-1', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a row whose target does not hold it' => [[['carol', null, null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a row the pending scan cannot judge' => [[['alice', null, null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
+			'a foreign row the pending scan cannot judge' => [[['carol', null, null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
+		];
+	}
+
+	/**
+	 * @param list<array{0:string,1:?string,2:?string}> $rows The share rows naming `src`
+	 * @param string|null $verdict What the pending scan answers for each, null when it holds none back
+	 * @param int $status The status the refusal answers
+	 * @param string $code The refusal's code
+	 * @param bool $delegated Whether Alice holds an active delegation of the source
+	 *
+	 * @dataProvider receivedCopies
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 */
+	public function testAReceivedCopyIsNotSharedWithAPartner(array $rows, ?string $verdict, int $status, string $code, bool $delegated = false): void {
+		foreach ($rows as [$holder, $groupShareId, $teamFolderId]) {
+			$this->copyRows[] = $this->copyRow(holder: $holder, groupShareId: $groupShareId, teamFolderId: $teamFolderId);
+		}
+
+		if ($verdict !== null) {
+			$this->scanner = $this->scanAnswering(verdict: $verdict);
+		}
+
+		if ($delegated === true) {
+			// The delegation is live: Alice is Olivia's delegate and may share her copy onward through other paths.
+			$auth = $this->aliceIsOliviasDelegate();
+			$this->assertTrue($auth->isOwnerOrDelegate(secret: $this->otherSecrets['orig'], userId: 'alice'));
+			$auth->assertMayShareOnward(source: $this->otherSecrets['orig'], userId: 'alice');
+		}
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame($status, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame($code, ($data['error'] ?? $data['message']));
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * `src` is Alice's copy of `orig`, which `$owner` owns: Alice herself after a transfer made her its owner.
+	 *
+	 * @param string $owner The source's owner
+	 * @param string $ownerType The kind of owner: a user, or an organisation whose id may equal a user's
+	 *
+	 * @return void
+	 */
+	private function aliceHoldsACopyOfASourceOwnedBy(string $owner, string $ownerType = 'user'): void {
+		$orig = new Secret();
+		$orig->setId('orig');
+		$orig->setName('Supplier portal');
+		$orig->setOwnerType($ownerType);
+		$orig->setOwnerId($owner);
+		$this->otherSecrets['orig'] = $orig;
+		$this->copyRows[] = $this->copyRow();
+	}
+
+	/**
+	 * Alice owns `orig` and works through her own copy `src`, as after a transfer the new owner does: the partner share
+	 * is made on the source.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testTheSourcesOwnerSharesTheirOwnCopy(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $this->rows);
+		$row = array_values($this->rows)[0];
+		$this->assertSame('orig', $row->getSourceSecretId());
+		$this->assertSame('alice', $row->getOwnerId());
+		$this->assertSame(self::CIPHER_KEY, $row->getKey());
+		$this->assertSame(self::FINGERPRINT, $row->getRecipientCertFingerprint());
+		$this->assertCount(1, $this->sent);
+	}
+
+	/**
+	 * The share the owner made through their copy shows in the list of that copy, next to one made from the copy
+	 * before such shares were refused, and the owner revokes it from there.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testTheSourcesOwnerListsAndRevokesThroughTheirOwnCopy(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+		$old = new FederatedShare();
+		$old->setId('fs-old');
+		$old->setSourceSecretId('src');
+		$old->setOwnerId('alice');
+		$old->setRecipientCloudId('carol@cloud.partner.example');
+		$old->setStatus(FederatedShare::STATUS_ACTIVE);
+		$this->rows['fs-old'] = $old;
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+		$made = $this->share($controller)->getData();
+
+		$listed = array_column($controller->index('src')->getData(), 'id');
+
+		$this->assertEqualsCanonicalizing([$made['id'], 'fs-old'], $listed);
+		$this->assertSame(Http::STATUS_OK, $controller->destroy($made['id'])->getStatus());
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->rows[$made['id']]->getStatus());
+	}
+
+	/**
+	 * A copy holder who does not own the source sees only the partner shares of their own copy.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testACopyHolderListsOnlyTheirOwnCopysShares(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'olivia');
+		foreach (['fs-orig' => 'orig', 'fs-src' => 'src'] as $id => $sourceId) {
+			$row = new FederatedShare();
+			$row->setId($id);
+			$row->setSourceSecretId($sourceId);
+			$row->setOwnerId('olivia');
+			$this->rows[$id] = $row;
+		}
+
+		$listed = array_column($this->controller([])->index('src')->getData(), 'id');
+
+		$this->assertSame(['fs-src'], $listed);
+	}
+
+	/**
+	 * The same request from a copy holder who does not own the source is refused as before.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testACopyOfASourceTheHolderDoesNotOwnIsStillRefused(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'olivia');
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('not_shareable', $response->getData()['message']);
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * A source an organisation owns is not the caller's, even when the organisation's id equals the caller's user id:
+	 * the copy is refused and its list does not reach the source.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testASourceAnOrganisationOwnsUnderTheCallersIdIsNotTheirs(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice', ownerType: 'organisation');
+		$orig = new FederatedShare();
+		$orig->setId('fs-orig');
+		$orig->setSourceSecretId('orig');
+		$orig->setOwnerId('alice');
+		$this->rows['fs-orig'] = $orig;
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+
+		$response = $this->share($controller);
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('not_shareable', $response->getData()['message']);
+		$this->assertSame(['fs-orig'], array_keys($this->rows));
+		$this->assertSame([], $this->sent);
+		$this->assertSame([], $controller->index('src')->getData());
+	}
+
+	/**
+	 * A partner share made from the owner's copy before such shares were refused still counts: sharing with the same
+	 * recipient again is refused until the owner revokes that share, and then made on the source.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testTheOwnersCopyShareToTheSameRecipientRefusesASecond(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+		$old = new FederatedShare();
+		$old->setId('fs-old');
+		$old->setSourceSecretId('src');
+		$old->setOwnerId('alice');
+		$old->setRecipientCloudId('bob@cloud.partner.example');
+		$old->setStatus(FederatedShare::STATUS_ACTIVE);
+		$this->rows['fs-old'] = $old;
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+
+		$response = $this->share($controller);
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('already_shared', $response->getData()['message']);
+		$this->assertSame(['fs-old'], array_keys($this->rows));
+		$this->assertSame([], $this->sent);
+
+		$this->assertSame(Http::STATUS_OK, $controller->destroy('fs-old')->getStatus());
+		$made = $this->share($controller);
+
+		$this->assertSame(Http::STATUS_CREATED, $made->getStatus());
+		$this->assertSame('orig', $this->rows[$made->getData()['id']]->getSourceSecretId());
+	}
+
+	/**
+	 * A copy of a secret the holder owns waits for the pending scan like any copy: nothing leads to the source
+	 * until the scan has judged the row.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 */
+	public function testTheOwnersCopyTheScanCannotJudgeWaits(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+		$this->scanner = $this->scanAnswering(verdict: ShareQuarantineScanner::HELD_UNJUDGED);
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('share_scan_pending', ($data['error'] ?? $data['message']));
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * An original, or a secret whose only row the pending scan quarantines,
+	 * is Alice's own, as register-batch and group shares judge it.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function originals(): array {
+		return [
+			'no share row names it' => [false],
+			'the row naming it is quarantined' => [true],
+		];
+	}
+
+	/**
+	 * @param bool $quarantined Whether a quarantined row names `src`
+	 *
+	 * @dataProvider originals
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-original-is-still-shared
+	 */
+	public function testTheOwnersOriginalIsStillShared(bool $quarantined): void {
+		if ($quarantined === true) {
+			$this->copyRows[] = $this->copyRow();
+			$this->scanner = $this->scanAnswering(verdict: ShareQuarantineScanner::HELD_QUARANTINED);
+		}
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $this->rows);
+		$this->assertCount(1, $this->sent);
 	}
 }

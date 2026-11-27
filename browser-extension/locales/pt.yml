@@ -285,6 +285,7 @@ writeErrors:
   shareScanPending: Está a ser verificado com quem este item é partilhado. Nada foi guardado; tente novamente mais tarde.
   shareScanPendingOpen: Está a ser verificado com quem este item é partilhado, pelo que ainda não pode ser editado. Tente novamente mais tarde.
   shareScanPendingDelete: Está a ser verificado com quem este item é partilhado. Nada foi eliminado; tente novamente mais tarde.
+  partnerShareOwnerMismatch: "Nada foi guardado: uma partilha deste item com uma organização parceira ainda pertence ao respetivo proprietário anterior. Um administrador tem de reparar as partilhas com organizações parceiras antes de esta alteração poder ser guardada."
   sendInvalid: O Keepiq não aceitou este envio. Nada foi enviado; verifique os campos e tente novamente.
   sendOffline: Não foi possível contactar o servidor, nada foi enviado
   argon2Unavailable: A proteção por palavra-passe não está disponível neste navegador
@@ -294,6 +295,9 @@ shareSave:
   ownerOnly: Guardado. Os destinatários em organizações parceiras recebem esta alteração quando o proprietário voltar a guardá-la.
   suspended: A partilha com {cloudIds} está em pausa, porque não foi possível verificar o respetivo certificado ou a respetiva organização já não o aceita. A aplicação web do Keepiq mostra a partilha.
   paused: A partilha com {cloudIds} está em pausa até voltar a partilhar este item.
+  notReached:
+    1: Guardado, mas 1 destinatário de uma organização parceira recebeu este item a partir de uma cópia e não recebeu esta alteração.
+    n: Guardado, mas $1 destinatários de organizações parceiras receberam este item a partir de uma cópia e não receberam esta alteração.
 
 folders:
   add: Adicionar pasta

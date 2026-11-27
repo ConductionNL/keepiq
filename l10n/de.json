@@ -2052,6 +2052,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Ordner können nicht angehängt werden. Legen Sie stattdessen die Dateien darin ab.",
         "Files cannot be added while you are offline. Remove them to save.": "Dateien können offline nicht hinzugefügt werden. Entfernen Sie sie, um zu speichern.",
         "Files can only be added to a secret you own. Remove them to save.": "Dateien können nur zu einem eigenen Geheimnis hinzugefügt werden. Entfernen Sie sie, um zu speichern.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Es wurde nichts gespeichert: Eine Freigabe dieses Geheimnisses an eine Partnerorganisation gehört noch dem vorherigen Eigentümer. Eine Administratorin oder ein Administrator muss die Partnerfreigaben reparieren, bevor diese Änderung gespeichert werden kann.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Gespeichert, aber %n Empfänger bei einer Partnerorganisation hat dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Gespeichert, aber %n Empfänger bei Partnerorganisationen haben dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Gespeichert, aber %n Empfänger bei einer Partnerorganisation hat dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten.",
+            "Gespeichert, aber %n Empfänger bei Partnerorganisationen haben dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts geteilt; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dieses Geheimnis wurde mit Ihnen geteilt, daher kann es nicht mit einer Partnerorganisation geteilt werden. Es wurde nichts geteilt.",
         "Sharing options could not be loaded.": "Die Optionen zum Teilen konnten nicht geladen werden.",
         "Sharing options still could not be loaded.": "Die Optionen zum Teilen konnten weiterhin nicht geladen werden.",
         "Sharing is not available for this secret.": "Teilen ist für dieses Geheimnis nicht verfügbar.",

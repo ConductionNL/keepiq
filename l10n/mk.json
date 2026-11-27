@@ -2052,6 +2052,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Папките не можат да се приложат. Наместо тоа, спуштете ги датотеките од нив.",
         "Files cannot be added while you are offline. Remove them to save.": "Не може да се додаваат датотеки додека сте офлајн. Отстранете ги за да зачувате.",
         "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ништо не е зачувано: едно споделување на оваа тајна со партнерска организација сè уште му припаѓа на нејзиниот претходен сопственик. Администратор мора да ги поправи споделувањата со партнери пред оваа промена да може да се зачува.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Зачувано, но %n примач во партнерска организација ја доби оваа тајна од копија и не ја доби оваа промена.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Зачувано, но %n примачи во партнерски организации ја добија оваа тајна од копија и не ја добија оваа промена.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Зачувано, но %n примач во партнерска организација ја доби оваа тајна од копија и не ја доби оваа промена.",
+            "Зачувано, но %n примачи во партнерски организации ја добија оваа тајна од копија и не ја добија оваа промена."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е споделено; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Оваа тајна е споделена со вас, па не може да се сподели со партнерска организација. Ништо не е споделено.",
         "Sharing options could not be loaded.": "Опциите за споделување не можеа да се вчитаат.",
         "Sharing options still could not be loaded.": "Опциите за споделување сè уште не можеа да се вчитаат.",
         "Sharing is not available for this secret.": "Споделувањето не е достапно за оваа тајна.",

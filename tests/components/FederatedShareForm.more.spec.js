@@ -256,6 +256,10 @@ describe('FederatedShareForm sharing', () => {
 			'outbound_disabled',
 			'An administrator turned off sharing with that organisation.',
 		],
+		[
+			'not_shareable',
+			'This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.',
+		],
 		['no_such_code', 'Something went wrong. Try again.'],
 	])('says what the %s refusal of a share means', async (message, shown) => {
 		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ key: 'pw' })
@@ -275,5 +279,26 @@ describe('FederatedShareForm sharing', () => {
 		expect(
 			wrapper.find('[data-testid="federated-share-verified"]').exists(),
 		).toBe(true)
+	})
+
+	it('says a share waits for the share quarantine scan', async () => {
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ key: 'pw' })
+		vi.spyOn(store, 'share').mockRejectedValue({
+			response: {
+				status: 409,
+				data: { error: 'share_scan_pending', message: 'x' },
+			},
+		})
+		const wrapper = await mountForm()
+		await checkBob(wrapper)
+
+		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
+		await flushPromises()
+
+		const error = wrapper.find('[data-testid="federated-share-error"]').text()
+		expect(error).toContain('waiting for a check of its shares')
+		expect(error).toContain('Nothing was shared')
+		expect(error).not.toContain('Nothing was saved')
+		expect(wrapper.emitted('shared')).toBeUndefined()
 	})
 })

@@ -239,6 +239,14 @@ describe('the sync panel', () => {
 					],
 				},
 			},
+			{
+				entryId: 'e7',
+				op: 'update',
+				secretId: 's7',
+				status: 'failed',
+				body: { name: 'Proxy' },
+				failure: { code: 'partner_share_owner_mismatch' },
+			},
 		]
 		offline.retryEntry = vi.fn()
 
@@ -283,6 +291,14 @@ describe('the sync panel', () => {
 		expect(renewed).toContain('carol@partner')
 		await wrapper.find('[data-testid="offline-sync-retry-e6"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e6')
+		// Translated words, never the code; tried again once an administrator repaired the partner shares.
+		const mismatch = wrapper
+			.find('[data-testid="offline-sync-reason-e7"]')
+			.text()
+		expect(mismatch).toContain('An administrator must repair the partner shares')
+		expect(mismatch).not.toContain('partner_share_owner_mismatch')
+		await wrapper.find('[data-testid="offline-sync-retry-e7"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e7')
 	})
 })
 

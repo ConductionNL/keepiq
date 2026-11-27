@@ -285,6 +285,7 @@ writeErrors:
   shareScanPending: Acest element așteaptă o verificare a partajărilor care nu s-a încheiat. Nu s-a salvat nimic; încercați din nou mai târziu.
   shareScanPendingOpen: Acest element așteaptă o verificare a partajărilor și nu poate fi editat încă. Încercați din nou mai târziu.
   shareScanPendingDelete: Acest element așteaptă o verificare a partajărilor care nu s-a încheiat. Nu s-a șters nimic; încercați din nou mai târziu.
+  partnerShareOwnerMismatch: "Nu s-a salvat nimic: o partajare a acestui element cu o organizație parteneră aparține încă proprietarului său anterior. Un administrator trebuie să repare partajările cu organizațiile partenere înainte ca această modificare să poată fi salvată."
   sendInvalid: Keepiq nu a acceptat această trimitere. Nu s-a trimis nimic; verificați câmpurile și încercați din nou.
   sendOffline: Serverul nu a putut fi accesat, nu s-a trimis nimic
   argon2Unavailable: Protecția cu parolă nu este disponibilă în acest browser
@@ -294,6 +295,9 @@ shareSave:
   ownerOnly: Salvat. Destinatarii din organizațiile partenere primesc această modificare când proprietarul salvează din nou elementul.
   suspended: Partajarea cu {cloudIds} este suspendată, deoarece certificatul lor nu a putut fi verificat sau organizația lor nu îl mai acceptă. Aplicația web Keepiq afișează partajarea.
   paused: Partajarea cu {cloudIds} este suspendată până când partajați din nou acest element cu ei.
+  notReached:
+    1: Salvat, dar 1 destinatar dintr-o organizație parteneră a primit acest element dintr-o copie și nu a primit această modificare.
+    n: Salvat, dar această modificare nu a ajuns la destinatarii din organizațiile partenere care au primit acest element dintr-o copie ($1).
 
 folders:
   add: Adăugare dosar

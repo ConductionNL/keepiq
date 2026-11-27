@@ -191,8 +191,9 @@ export interface PasskeyView {
  */
 export type PasskeyFailure = 'ended' | 'locked' | 'verify_required' | 'stale' | 'already_saved' | 'replace_required' | 'write_failed' | ErrorCode
 
+/** `shareSave`: a delivered pick or save left partner shares behind; the window shows it and stays open until closed. */
 export type PasskeyWindowReply =
-	| { ok: true; view?: PasskeyView }
+	| { ok: true; view?: PasskeyView; shareSave?: ShareSaveNote }
 	| { ok: false; code: PasskeyFailure; attemptsLeft?: number; error?: VaultWriteError }
 
 export const PASSKEY_POPUP_KINDS = kindSet<PasskeyPopupRequest['kind']>({
@@ -461,11 +462,15 @@ export type CaptureStateReply = {
 /** The host could not confirm the bar was visible at the press; nothing was done and the capture stays. */
 export type CaptureRefused = { refused: 'not_visible' }
 
+/** An update that left partner shares behind; the bar shows it and stays until closed. */
+export type CaptureUpdated = { shareSave: ShareSaveNote }
+
 /** `null`: no pending capture, or a key or frame the background did not bind. */
 export interface NotificationReplies {
 	'capture.state': CaptureStateReply | null
-	'capture.save': WriteResult<null> | CaptureRefused | null
-	'capture.update': WriteResult<null> | CaptureRefused | null
+	/** A second click joins the write in flight, so a save may answer with an update's note. */
+	'capture.save': WriteResult<CaptureUpdated | null> | CaptureRefused | null
+	'capture.update': WriteResult<CaptureUpdated | null> | CaptureRefused | null
 	'capture.dismiss': CaptureRefused | null
 	'capture.expand': null
 }
@@ -839,6 +844,8 @@ export type WriteErrorCode =
 	| 'partner_upgrade_required'
 	/** A share row of the item waits for the server's share quarantine scan, which only background jobs finish. */
 	| 'share_scan_pending'
+	/** A partner share of the item is not its owner's; an administrator's repair hands it over. */
+	| 'partner_share_owner_mismatch'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
@@ -856,10 +863,29 @@ export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultW
 export interface ShareSaveNote {
 	/** Copy-editor path: partner shares exist that only the owner's next save reaches. */
 	ownerOnly?: true
+	/** How many partner shares made from a copy the save wrote did not get the change. */
+	notReached?: number
 	/** Partner shares this save suspended on a verdict about the recipient, by cloud id. */
 	suspended?: string[]
 	/** Partner shares the user suspended through Save without them, by cloud id. */
 	paused?: string[]
+}
+
+const isCloudIds = (value: unknown): value is string[] => Array.isArray(value) && value.length > 0 && value.every((cloudId) => typeof cloudId === 'string')
+
+/**
+ * The note's fields that have something to say, in their own shape; `undefined` when none has. The bar and the passkey
+ * window stay open for a note only on this, and word exactly this, so a note with nothing to show never keeps them open.
+ */
+export function shareSaveNoteOf(note: unknown): ShareSaveNote | undefined {
+	const n = (typeof note === 'object' && note !== null ? note : {}) as Partial<Record<keyof ShareSaveNote, unknown>>
+	const valid: ShareSaveNote = {
+		...(n.ownerOnly === true && { ownerOnly: true as const }),
+		...(typeof n.notReached === 'number' && Number.isInteger(n.notReached) && n.notReached > 0 && { notReached: n.notReached }),
+		...(isCloudIds(n.suspended) && { suspended: n.suspended }),
+		...(isCloudIds(n.paused) && { paused: n.paused }),
+	}
+	return Object.keys(valid).length > 0 ? valid : undefined
 }
 
 /** Popup → background requests with their own reply shapes, listed in `PopupReplies`. */

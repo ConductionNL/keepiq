@@ -2052,6 +2052,15 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Folders cannot be attached. Drop the files inside them instead.",
         "Files can only be added to a secret you own. Remove them to save.": "Files can only be added to a secret you own. Remove them to save.",
         "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.",
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.",
+            "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change."
+        ],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.",
         "Sharing options could not be loaded.": "Sharing options could not be loaded.",
         "Sharing options still could not be loaded.": "Sharing options still could not be loaded.",
         "Sharing is not available for this secret.": "Sharing is not available for this secret.",

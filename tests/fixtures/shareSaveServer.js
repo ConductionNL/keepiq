@@ -78,13 +78,15 @@ export async function settleWithTimers(promise) {
  * @param {string} options.id The row being saved.
  * @param {object} [options.context] Write-context fields over an owner default.
  * @param {Array<object>|((n: number) => Array<object>)} [options.required] Required copies, or a function of the save number.
- * @param {Array<object>} [options.partners] Required partner shares.
+ * @param {Array<object>|((n: number) => Array<object>)} [options.partners] Required partner shares, or a function of the save number.
  * @param {object} [options.suites] userId to certificate for users with a vault key.
  * @param {object} [options.lookup] cloudId to a lookup answer, or `{ reject }`.
  * @param {object} [options.rows] GET answers by the URL's last segment.
  * @param {object} [options.posts] Other POST answers by URL suffix, or a function of the body that may throw.
  * @param {{perMinute: number, retryAfter?: string}} [options.lookupLimit] The partner lookup limit, a 429 above it.
  * @param {(body: object, n: number) => void} [options.onSave] Called with each save body; may throw.
+ * @param {number} [options.notReached] The partner shares hanging off a copy the save wrote, as the answer counts them.
+ * @param {boolean|((n: number) => boolean)} [options.ownerOnly] The answer's `federated.ownerOnly`, or a function of the save number; defaults to `context.ownerOnly`.
  * @return {{saves: Array, lookups: Array, plainPuts: Array, partnerLookups: Array, partnerBatches: Array}}
  */
 export function shareSaveServer({
@@ -98,6 +100,8 @@ export function shareSaveServer({
 	posts = {},
 	lookupLimit = null,
 	onSave = null,
+	notReached = 0,
+	ownerOnly = context.ownerOnly === true,
 }) {
 	const log = {
 		saves: [],
@@ -108,6 +112,8 @@ export function shareSaveServer({
 	}
 	let stage = null
 	const lookupTimes = []
+	const partnersAt = (n) =>
+		typeof partners === 'function' ? partners(n) : partners
 
 	/**
 	 * Count one partner lookup call against the limit, a 429 above it.
@@ -176,7 +182,10 @@ export function shareSaveServer({
 			// the limit, each recipient asked once, a refusal per share.
 			log.partnerBatches.push(body.shareIds)
 			const byShare = new Map(
-				partners.map((p) => [p.shareId, p.recipientCloudId]),
+				partnersAt(log.saves.length).map((p) => [
+					p.shareId,
+					p.recipientCloudId,
+				]),
 			)
 			const cloudIds = [
 				...new Set(
@@ -248,6 +257,7 @@ export function shareSaveServer({
 		}
 		const req =
 			typeof required === 'function' ? required(log.saves.length) : required
+		const partnersNow = partnersAt(log.saves.length)
 		if (body.stage && body.stage.final === false) {
 			if ('patch' in body || 'restoredFrom' in body) {
 				throw httpError(400, { error: 'invalid_body' })
@@ -264,7 +274,7 @@ export function shareSaveServer({
 					...Object.fromEntries(LISTS.map((k) => [k, []])),
 				}
 			}
-			const reach = Math.max(req.length, partners.length)
+			const reach = Math.max(req.length, partnersNow.length)
 			if (++stage.chunks > Math.ceil(reach / BOUND)) {
 				throw httpError(400, { error: 'too_many_chunks' })
 			}
@@ -289,7 +299,7 @@ export function shareSaveServer({
 		}
 		const reqIds = req.map((r) => r.secretId)
 		const sent = [...all('copies'), ...all('skipped')].map((e) => e.secretId)
-		const fedIds = partners.map((p) => p.shareId)
+		const fedIds = partnersNow.map((p) => p.shareId)
 		const fedSent = [...all('federated'), ...all('suspend')].map(
 			(e) => e.shareId,
 		)
@@ -305,7 +315,7 @@ export function shareSaveServer({
 				.map((e) => e.secretId),
 		}
 		const federated = {
-			required: partners,
+			required: partnersNow,
 			missing: fedIds.filter((x) => !fedSent.includes(x)),
 			unexpected: fedSent.filter((x) => !fedIds.includes(x)),
 		}
@@ -329,7 +339,11 @@ export function shareSaveServer({
 				federated: {
 					written: all('federated').length,
 					suspended: all('suspend').length,
-					ownerOnly: context.ownerOnly === true,
+					ownerOnly:
+						(typeof ownerOnly === 'function'
+							? ownerOnly(log.saves.length)
+							: ownerOnly) === true,
+					notReached,
 				},
 			},
 		}

@@ -25,8 +25,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
@@ -40,13 +38,11 @@ use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DirectShareRegistrar;
-use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
-use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
@@ -55,11 +51,9 @@ use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
-use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 
 /**
@@ -197,7 +191,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 		$verdict = ShareQuarantineScanner::HELD_QUARANTINED;
 
 		$this->assertNotContains($this->registrarRefusal(verdict: $verdict), ['not_shareable', 'share_scan_pending']);
-		$this->assertFalse($this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)));
+		$this->assertFalse($this->isReceivedCopy(verdict: $verdict));
 		$this->syncStartsFrom(verdict: $verdict, userId: 'bob');
 		$this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob');
 		$this->viewOnlyGuard(verdict: $verdict, standing: false)->assertMayChangeValue(row: $this->secrets['V'], fields: ['key'], userId: 'bob');
@@ -216,7 +210,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 
 		$this->assertSame('share_scan_pending', $this->registrarRefusal(verdict: $verdict));
 		foreach ([
-			'group share' => fn () => $this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)),
+			'group or partner share' => fn () => $this->isReceivedCopy(verdict: $verdict),
 			'link share' => fn () => $this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob'),
 			'value change' => fn () => $this->viewOnlyGuard(verdict: $verdict, standing: true)->assertMayChangeValue(
 				row: $this->secrets['V'],
@@ -251,7 +245,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	 */
 	public function testALegitimateCopyIsStillACopy(): void {
 		$this->assertSame('not_shareable', $this->registrarRefusal(verdict: null));
-		$this->assertTrue($this->isReceivedCopy(service: $this->groupShares(verdict: null)));
+		$this->assertTrue($this->isReceivedCopy(verdict: null));
 
 		$this->expectException(ViewOnlyCopyException::class);
 		$this->viewOnlyGuard(verdict: null, standing: false)->assertMayChangeValue(row: $this->secrets['V'], fields: ['key'], userId: 'bob');
@@ -311,7 +305,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 		$this->assertSame('share_scan_pending', $this->registrarRefusal(verdict: $verdict));
 		foreach ([
 			'sync' => fn () => $sync->syncUpdate(secretId: 'V', updates: [], expectedUpdatedAt: '', userId: 'bob'),
-			'group share' => fn () => $this->isReceivedCopy(service: $this->groupShares(verdict: $verdict)),
+			'group or partner share' => fn () => $this->isReceivedCopy(verdict: $verdict),
 			'link share' => fn () => $this->authorization(verdict: $verdict)->assertMayReshare(secretId: 'V', userId: 'bob'),
 		] as $path => $onward) {
 			try {
@@ -443,31 +437,6 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	}//end registrar()
 
 	/**
-	 * The group-share service.
-	 *
-	 * @param string|null $verdict The scan's verdict on the row
-	 *
-	 * @return GroupShareService
-	 */
-	private function groupShares(?string $verdict): GroupShareService {
-		return new GroupShareService(
-			mapper: $this->createMock(GroupShareMapper::class),
-			shareTargetMapper: $this->targets(),
-			bulkGrantMapper: $this->createMock(BulkGrantShareTargetMapper::class),
-			secretMapper: $this->secretMapper(),
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-			delegationMapper: $this->createMock(SecretDelegationMapper::class),
-			groupManager: $this->createMock(IGroupManager::class),
-			notificationService: $this->createMock(NotificationService::class),
-			logger: $this->createMock(LoggerInterface::class),
-			shareManager: $this->createMock(IShareManager::class),
-			revocationService: $this->createMock(ShareRevocationService::class),
-			rowJudge: $this->judge(verdict: $verdict),
-			quarantineScan: $this->clearedQuarantineScan(),
-		);
-	}//end groupShares()
-
-	/**
 	 * The view-only guard; Bob writes S_a for everyone when standing is true.
 	 *
 	 * @param string|null $verdict  The scan's verdict on the row
@@ -488,14 +457,14 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	}//end viewOnlyGuard()
 
 	/**
-	 * Whether the group-share service's private check calls V a received copy.
+	 * Whether the received-copy check that group shares and partner shares make (ShareRowJudge::isReceivedCopy()) calls V a received copy.
 	 *
-	 * @param GroupShareService $service The service
+	 * @param string|null $verdict The scan's verdict on the row
 	 *
 	 * @return bool
 	 */
-	private function isReceivedCopy(GroupShareService $service): bool {
-		return (bool)(new ReflectionMethod($service, 'isReceivedCopy'))->invoke($service, $this->secrets['V']);
+	private function isReceivedCopy(?string $verdict): bool {
+		return $this->judge(verdict: $verdict)->isReceivedCopy(secret: $this->secrets['V'], pending: 'V waits for the scan');
 	}//end isReceivedCopy()
 
 	/**

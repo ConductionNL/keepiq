@@ -285,6 +285,7 @@ writeErrors:
   shareScanPending: Ta element čaka na preverjanje deljenj, ki še ni končano. Nič ni bilo shranjeno; poskusite znova pozneje.
   shareScanPendingOpen: Ta element čaka na preverjanje deljenj in ga še ni mogoče urejati. Poskusite znova pozneje.
   shareScanPendingDelete: Ta element čaka na preverjanje deljenj, ki še ni končano. Nič ni bilo izbrisano; poskusite znova pozneje.
+  partnerShareOwnerMismatch: "Nič ni bilo shranjeno: deljenje tega elementa s partnersko organizacijo še vedno pripada njegovemu prejšnjemu lastniku. Skrbnik mora popraviti deljenja s partnerskimi organizacijami, preden je mogoče to spremembo shraniti."
   sendInvalid: Keepiq te pošiljke ni sprejel. Nič ni bilo poslano; preverite polja in poskusite znova.
   sendOffline: Strežnika ni bilo mogoče doseči, nič ni bilo poslano
   argon2Unavailable: Zaščita z geslom v tem brskalniku ni na voljo
@@ -294,6 +295,9 @@ shareSave:
   ownerOnly: Shranjeno. Prejemniki v partnerskih organizacijah bodo to spremembo prejeli, ko lastnik naslednjič shrani element.
   suspended: Deljenje z {cloudIds} je začasno ustavljeno, ker njihovega potrdila ni bilo mogoče preveriti ali ga njihova organizacija ne sprejema več. Deljenje je prikazano v spletni aplikaciji Keepiq.
   paused: Deljenje z {cloudIds} je začasno ustavljeno, dokler tega elementa z njimi znova ne delite.
+  notReached:
+    1: Shranjeno, vendar je 1 prejemnik v partnerski organizaciji ta element prejel iz kopije in te spremembe ni prejel.
+    n: "Shranjeno, vendar te spremembe niso prejeli prejemniki v partnerskih organizacijah, ki so ta element prejeli iz kopije: $1"
 
 folders:
   add: Dodaj mapo
