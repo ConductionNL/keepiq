@@ -54,4 +54,14 @@ interface FederationRootServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function localRootFingerprint(): ?string;
+
+	/**
+	 * The announcement of this instance's last root renewal, or null for a root that was never renewed and once 30
+	 * days have passed since the renewal.
+	 *
+	 * @return array{previousRoot:string,newRoot:string,renewedAt:string,signature:string}|null
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
+	 */
+	public function localRootRenewal(): ?array;
 }//end interface

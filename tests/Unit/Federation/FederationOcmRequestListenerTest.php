@@ -72,10 +72,12 @@ class FederationOcmRequestListenerTest extends TestCase {
 	 *
 	 * @param array $partners The partner rows
 	 * @param bool $caPresent Whether the local CA exists
+	 * @param \OCA\Keepiq\Db\CACertificateMapper|null $ca The local CA, caMapper() when null
+	 * @param string $now The local clock's time
 	 *
 	 * @return FederationOcmRequestListener
 	 */
-	private function listener(array $partners, bool $caPresent = true): FederationOcmRequestListener {
+	private function listener(array $partners, bool $caPresent = true, ?\OCA\Keepiq\Db\CACertificateMapper $ca = null, string $now = '2026-11-25T10:00:00Z'): FederationOcmRequestListener {
 		$config = $this->createMock(IConfig::class);
 		$config->method('getUserValue')->willReturnCallback(
 			fn (string $user, string $app, string $key, $default) => $this->optIns[$user] ?? $default
@@ -93,7 +95,7 @@ class FederationOcmRequestListenerTest extends TestCase {
 		$partnerMapper = $this->partnerMapper($partners);
 		$service = new FederatedCertificateService(
 			new FederationPartnerService($partnerMapper, $this->createMock(IClientService::class), $config),
-			new FederationRootService($this->caMapper($caPresent)),
+			$this->rootService($ca ?? $this->caMapper($caPresent), $now),
 			$shares,
 			$this->cloudIdManager(),
 			$users,
@@ -160,6 +162,49 @@ class FederationOcmRequestListenerTest extends TestCase {
 			],
 			$data
 		);
+	}
+
+	/**
+	 * After a root renewal the answer carries the announcement next to the chain, so a partner that missed the
+	 * notice finds it in its next lookup (partner-root-renewal-announcement D1, D7).
+	 */
+	public function testAfterARootRenewalTheAnswerAnnouncesItNextToTheChain(): void {
+		$listener = $this->listener([$this->partner('cloud.city.example', false, true)], ca: $this->renewedCaMapper());
+
+		[$status, $data] = $this->answerOf($this->ask($listener, 'cloud.city.example', 'bob@cloud.here.example'));
+
+		$this->assertSame(Http::STATUS_OK, $status);
+		$this->assertSame(['cloudId', 'certificate', 'chain', 'valueFields', 'rootRenewal'], array_keys($data));
+		$this->assertSame([self::INTERMEDIATE_PEM, self::ROOT_PEM], $data['chain']);
+		$this->assertSame(self::RENEWAL, $data['rootRenewal']);
+	}
+
+	/**
+	 * Once 30 days have passed since the renewal no partner can accept it, so the answer no longer carries it and a
+	 * partner does not read the discovery document again on every lookup.
+	 */
+	public function testThirtyDaysAfterTheRenewalTheAnswerNoLongerAnnouncesIt(): void {
+		$partners = [$this->partner('cloud.city.example', false, true)];
+		$lastSecond = $this->listener($partners, ca: $this->renewedCaMapper(), now: '2026-12-20T09:59:59Z');
+		$ended = $this->listener($partners, ca: $this->renewedCaMapper(), now: '2026-12-20T10:00:00Z');
+
+		[, $before] = $this->answerOf($this->ask($lastSecond, 'cloud.city.example', 'bob@cloud.here.example'));
+		[$status, $after] = $this->answerOf($this->ask($ended, 'cloud.city.example', 'bob@cloud.here.example'));
+
+		$this->assertSame(self::RENEWAL, $before['rootRenewal']);
+		$this->assertSame(Http::STATUS_OK, $status);
+		$this->assertSame(['cloudId', 'certificate', 'chain', 'valueFields'], array_keys($after));
+	}
+
+	/**
+	 * A refused lookup carries no announcement either: it is the one unknown answer.
+	 */
+	public function testARefusedLookupCarriesNoAnnouncement(): void {
+		$listener = $this->listener([$this->partner('cloud.city.example', false, true)], ca: $this->renewedCaMapper());
+
+		[, $data] = $this->answerOf($this->ask($listener, 'cloud.stranger.example', 'bob@cloud.here.example'));
+
+		$this->assertStringNotContainsString('rootRenewal', (string)json_encode($data));
 	}
 
 	/**

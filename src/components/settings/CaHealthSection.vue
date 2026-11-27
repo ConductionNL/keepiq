@@ -90,6 +90,25 @@
 				data-testid="ca-renew-root-result">
 				{{ renewRootResult }}
 			</p>
+			<NcNoteCard
+				v-if="renewRootUnannounced"
+				type="warning"
+				data-testid="ca-renew-root-unannounced">
+				<p>
+					{{
+						t(
+							'keepiq',
+							"Partners were not told about the new root, because the previous root's key could not be read. Each partner's administrator has to re-pin this server by hand, after you read them the new fingerprint by phone or in person.",
+						)
+					}}
+				</p>
+				<p v-if="renewRootFingerprint" class="ca-health__fingerprint">
+					<span>{{ t('keepiq', 'Your root fingerprint') }}</span>
+					<code data-testid="ca-renew-root-fingerprint">{{
+						formatFingerprint(renewRootFingerprint)
+					}}</code>
+				</p>
+			</NcNoteCard>
 		</div>
 
 		<CaRenewRootConfirmDialog
@@ -104,12 +123,21 @@
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton } from '@nextcloud/vue'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import CaRenewRootConfirmDialog from '../../dialogs/CaRenewRootConfirmDialog.vue'
+import {
+	announceRootRenewed,
+	formatFingerprint,
+} from '../../utils/rootFingerprint.js'
 
 export default {
 	name: 'CaHealthSection',
-	components: { NcButton, CnSettingsSection, CaRenewRootConfirmDialog },
+	components: {
+		NcButton,
+		NcNoteCard,
+		CnSettingsSection,
+		CaRenewRootConfirmDialog,
+	},
 
 	data() {
 		return {
@@ -117,6 +145,8 @@ export default {
 			loading: false,
 			renewRootOpen: false,
 			renewRootResult: '',
+			renewRootUnannounced: false,
+			renewRootFingerprint: null,
 		}
 	},
 
@@ -159,6 +189,8 @@ export default {
 	},
 
 	methods: {
+		formatFingerprint,
+
 		/**
 		 * Fetch current CA health from the API.
 		 *
@@ -200,13 +232,19 @@ export default {
 		/**
 		 * Admin action: renew the root certificate after the admin confirmed it
 		 * in the dialog. The server re-signs every active suite and answers
-		 * with the count, which is shown back so the admin sees the reach.
+		 * with the count, which is shown back so the admin sees the reach. A
+		 * renewal the previous root could not sign is not announced, so the admin
+		 * is told that every partner has to re-pin by hand, and is shown the new
+		 * fingerprint to read them.
 		 *
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-certificate-renewal
+		 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-a-root-whose-key-cannot-be-read-is-renewed-unannounced
 		 */
 		async renewRoot() {
 			this.loading = true
 			this.renewRootResult = ''
+			this.renewRootUnannounced = false
+			this.renewRootFingerprint = null
 			try {
 				const response = await axios.post(
 					generateUrl('/apps/keepiq/api/v1/ca/renew-root'),
@@ -216,6 +254,11 @@ export default {
 					'Root renewed. {n} encryption suites signed again.',
 					{ n: response.data?.resignedCount ?? 0 },
 				)
+				this.renewRootUnannounced = response.data?.announced === false
+				this.renewRootFingerprint = response.data?.rootFingerprint ?? null
+				if (this.renewRootFingerprint) {
+					announceRootRenewed(this.renewRootFingerprint)
+				}
 				this.renewRootOpen = false
 				await this.fetchStatus()
 			} catch {
@@ -261,6 +304,17 @@ export default {
 
 .ca-health__result {
 	margin-top: 0.5rem;
+}
+
+.ca-health__fingerprint {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.ca-health__fingerprint code {
+	overflow-wrap: anywhere;
 }
 
 .ca-health__indicator--grey {

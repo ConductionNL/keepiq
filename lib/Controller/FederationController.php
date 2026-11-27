@@ -69,6 +69,7 @@ class FederationController extends Controller {
 	 * Look up a federated recipient's certificate at their partner instance.
 	 * The answer is `{cloudId, certificate, chain, partnerRootFingerprint, valueFields}`, where `valueFields` lists
 	 * the value fields beyond `key`, `login` and `additionalFields` the partner stores, empty for an older Keepiq.
+	 * A refusal answers `{message}` with the status the batch route gives it: 403, 404, 409 or 502.
 	 *
 	 * @param string $cloudId The recipient's cloud id
 	 *
@@ -80,6 +81,8 @@ class FederationController extends Controller {
 	 *   and opt-in checks.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) refusalStatus() is a pure mapping, shared with the batch route.
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
@@ -93,21 +96,14 @@ class FederationController extends Controller {
 
 		try {
 			return new JSONResponse(data: $this->certificates->lookup(cloudId: $cloudId, userId: $user->getUID()));
-		} catch (InvalidArgumentException $exception) {
-			$status = Http::STATUS_NOT_FOUND;
-			if ($exception->getMessage() === 'not_a_partner') {
-				$status = Http::STATUS_FORBIDDEN;
-			}
-
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
-		} catch (RuntimeException $exception) {
-			$status = Http::STATUS_BAD_GATEWAY;
-			if ($exception->getMessage() === 'federation_unavailable') {
-				$status = Http::STATUS_CONFLICT;
-			}
-
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
-		}//end try
+		} catch (InvalidArgumentException | RuntimeException $exception) {
+			// For scripts/generate-openapi.php: refusalStatus() answers Http::STATUS_FORBIDDEN, Http::STATUS_NOT_FOUND,
+			// Http::STATUS_CONFLICT or Http::STATUS_BAD_GATEWAY.
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage()],
+				statusCode: PartnerCertificateBatchService::refusalStatus(exception: $exception)
+			);
+		}
 	}//end recipientCertificate()
 
 	/**

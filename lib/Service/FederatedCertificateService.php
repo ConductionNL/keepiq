@@ -36,11 +36,8 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
-use OCA\Keepiq\Event\Audit\AuditEventFactory;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
 use OCP\IUserManager;
@@ -86,8 +83,8 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * @param IOCMDiscoveryService $ocmDiscovery Signed OCM requests to partners
 	 * @param LoggerInterface $logger Warnings about a partner's answer
 	 * @param FederationPartnerMapper $partnerMapper Records the value fields a partner advertises
-	 * @param IEventDispatcher|null $eventDispatcher Audits a change of those value fields
-	 * @param AuditEventFactory $auditEvents Builds the audit events
+	 * @param FederationPartnerAuditTrail $audit Audits a change of those value fields
+	 * @param PartnerRootRenewalService|null $renewals Checks a root renewal a partner announces in its answer
 	 *
 	 * @return void
 	 *
@@ -105,8 +102,8 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 		private IOCMDiscoveryService $ocmDiscovery,
 		private LoggerInterface $logger,
 		private FederationPartnerMapper $partnerMapper,
-		private ?IEventDispatcher $eventDispatcher = null,
-		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private FederationPartnerAuditTrail $audit = new FederationPartnerAuditTrail(),
+		private ?PartnerRootRenewalService $renewals = null,
 	) {
 	}//end __construct()
 
@@ -116,9 +113,10 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * @param string|null $signer The verified signer (OCMEndpointRequestEvent::getRemote()), null when unsigned
 	 * @param array<array-key,mixed> $payload The request payload, `{cloudId}`
 	 *
-	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,valueFields:string[]}|null
+	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,valueFields:string[],rootRenewal?:array<string,string>}|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
 	 */
 	public function answer(?string $signer, array $payload): ?array {
 		if ($this->partners->inboundPartnerForSigner(signer: $signer) === null) {
@@ -141,12 +139,19 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 			return null;
 		}
 
-		return [
+		$answer = [
 			'cloudId' => (string)$payload['cloudId'],
 			'certificate' => $certificate,
 			'chain' => $chain,
 			'valueFields' => FederatedValueFields::VALUE_FIELDS,
 		];
+		// After a root renewal, the announcement goes next to the chain, so a partner that missed the notice finds it.
+		$renewal = $this->root->localRootRenewal();
+		if ($renewal !== null) {
+			$answer['rootRenewal'] = $renewal;
+		}
+
+		return $answer;
 	}//end answer()
 
 	/**
@@ -176,17 +181,19 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 * Ask an outbound partner for a recipient's certificate.
 	 *
 	 * The answer names the value fields beyond `key`, `login` and `additionalFields` the partner stores,
-	 * so the browser leaves out a `totp` or `passkeys` value it cannot hold.
+	 * so the browser leaves out a `totp` or `passkeys` value it cannot hold. A root renewal it announces next to the
+	 * chain starts the check of that renewal; the answer itself is never trusted for it.
 	 *
 	 * @param string $cloudId The recipient's cloud id, `bob@cloud.partner.example`
 	 * @param string $userId The owner asking; their cloud id goes along as `sender`
 	 *
 	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string,valueFields:list<string>}
 	 *
-	 * @throws InvalidArgumentException `not_a_partner` or `unknown_recipient`
+	 * @throws InvalidArgumentException `not_a_partner`, `outbound_disabled` or `unknown_recipient`
 	 * @throws RuntimeException `federation_unavailable`, `partner_unreachable` or `bad_chain`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function lookup(string $cloudId, string $userId): array {
 		// The OCM call requestRemoteOcmEndpoint() arrived in Nextcloud 33 with the
@@ -201,10 +208,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 			throw new InvalidArgumentException('unknown_recipient');
 		}
 
-		$partner = $this->partners->outboundPartnerForRemote(remote: $resolved->getRemote());
-		if ($partner === null) {
-			throw new InvalidArgumentException('not_a_partner');
-		}
+		$partner = $this->partners->requireOutboundPartner(remote: $resolved->getRemote());
 
 		try {
 			$response = $this->ocmDiscovery->requestRemoteOcmEndpoint(
@@ -225,6 +229,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 		}
 
 		$answer = $this->parseAnswer(status: $status, body: $body, partner: $partner->getBaseUrl());
+		$this->renewals?->announcedInLookup(partner: $partner, announcement: $body['rootRenewal'] ?? null);
 
 		return [
 			'cloudId' => $resolved->getId(),
@@ -273,14 +278,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 			);
 		}
 
-		$this->eventDispatcher?->dispatchTyped(
-			$this->auditEvents->forSystem(
-				eventType: AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED,
-				objectType: 'federation_partner',
-				objectId: $partner->getId(),
-				metadata: ['partnerId' => $partner->getId(), 'from' => $was, 'to' => $fields],
-			)
-		);
+		$this->audit->valueFieldsChanged(partner: $partner, from: $was, to: $fields);
 
 		return $fields;
 	}//end recordValueFields()

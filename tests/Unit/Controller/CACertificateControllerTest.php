@@ -162,7 +162,9 @@ class CACertificateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRenewRootReturnsCountAndStatus(): void {
-		$this->caService->method('renewRoot')->willReturn(10);
+		$this->caService->method('renewRoot')->willReturn(
+			['resignedCount' => 10, 'announced' => false, 'rootFingerprint' => str_repeat('ab', 32)]
+		);
 
 		$statusData = [
 			'status' => 'healthy',
@@ -176,8 +178,32 @@ class CACertificateControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$data = $response->getData();
 		$this->assertSame(10, $data['resignedCount']);
+		$this->assertFalse($data['announced']);
+		$this->assertSame(str_repeat('ab', 32), $data['rootFingerprint']);
+		$this->assertSame(
+			'Root renewed, 10 suites re-signed. Partners were not told: each has to re-pin this server by hand after an out-of-band fingerprint check.',
+			$data['message']
+		);
 		$this->assertArrayHasKey('status', $data);
 	}//end testRenewRootReturnsCountAndStatus()
+
+	/**
+	 * An announced renewal's message says nothing about re-pinning.
+	 *
+	 * @return void
+	 */
+	public function testAnAnnouncedRenewalReportsAPlainSuccess(): void {
+		$this->caService->method('renewRoot')->willReturn(
+			['resignedCount' => 3, 'announced' => true, 'rootFingerprint' => str_repeat('cd', 32)]
+		);
+		$this->caService->method('getStatus')->willReturn(['status' => 'healthy']);
+
+		$data = $this->controller->renewRoot()->getData();
+
+		$this->assertSame('Root renewed, 3 suites re-signed', $data['message']);
+		$this->assertTrue($data['announced']);
+		$this->assertSame(str_repeat('cd', 32), $data['rootFingerprint']);
+	}//end testAnAnnouncedRenewalReportsAPlainSuccess()
 
 	/**
 	 * Test renewRoot returns 500 on failure.

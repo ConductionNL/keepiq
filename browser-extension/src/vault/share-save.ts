@@ -26,6 +26,10 @@ const COPY_EDITOR_GRADES = new Set(['owner', 'write', 'manage'])
  * `bad_chain` is the server's own check that the partner served an intermediate and a root.
  */
 const PARTNER_GONE = new Map([['unknown_recipient', 404], ['not_a_partner', 403], ['bad_chain', 502]])
+/** Lookup refusals that may be temporary, so they stop the save until the user saves without them, with the status each comes with. */
+const PARTNER_PAUSED = new Map([['partner_unreachable', 502], ['outbound_disabled', 403]])
+/** A renewed partner root waits for an administrator to re-pin it, so it stops the save instead of suspending. */
+const CERTIFICATE_PAUSED = new Set(['untrusted_root'])
 
 const secretPath = (id: string) => `/api/v1/secrets/${encodeURIComponent(id)}`
 
@@ -196,7 +200,7 @@ async function sealWhole(value: Values, key: CryptoKey, valueFields: readonly st
 	}
 }
 
-type PartnerOutcome = { verified: VerifiedPartner } | { suspend: string } | 'unreachable'
+type PartnerOutcome = { verified: VerifiedPartner } | { suspend: string } | { pause: string }
 
 /** A lookup answer in the shape `FederatedCertificateService::parseAnswer` guarantees. */
 interface CertificateAnswer {
@@ -225,9 +229,9 @@ function lookupFailure(error: unknown): PartnerOutcome {
 	throw serverFailure(error)
 }
 
-/** The partner did not answer, or answered that the recipient or the partnership is gone. */
+/** The partner did not answer or may not be shared with now, or answered that the recipient or the partnership is gone. */
 function partnerGone(error: ApiError): PartnerOutcome | null {
-	if (error.status === 502 && error.message === 'partner_unreachable') return 'unreachable'
+	if (PARTNER_PAUSED.get(error.message) === error.status) return { pause: error.message }
 	return PARTNER_GONE.get(error.message) === error.status ? { suspend: error.message } : null
 }
 
@@ -263,7 +267,7 @@ async function verifiedOutcome(share: RequiredShare, answer: CertificateAnswer):
 /** Validity is judged by this machine's clock, which may be wrong, so it stops the save instead of suspending for good. */
 function certificateFailure(error: unknown): PartnerOutcome {
 	if (error instanceof FederatedCertificateError && error.reason === 'not_valid_now') throw new WriteFailure({ code: 'partner_clock' })
-	if (error instanceof FederatedCertificateError) return { suspend: error.reason }
+	if (error instanceof FederatedCertificateError) return CERTIFICATE_PAUSED.has(error.reason) ? { pause: error.reason } : { suspend: error.reason }
 	throw error
 }
 
@@ -326,8 +330,13 @@ const pick = (part: Pending[], prefix: string) => part.filter(({ key }) => key.s
 interface PartnerRound {
 	value: Values
 	adds: ReadonlyArray<typeof PARTNER_OPTIONAL[number]>
-	unreachable: RequiredShare[]
+	unreachable: PausedShare[]
 	tooOld: RequiredShare[]
+}
+
+/** A partner share a refusal that may be temporary stopped, with that refusal's reason. */
+interface PausedShare extends RequiredShare {
+	reason: string
 }
 
 /** A partner recipient with a verified certificate, and whether it was already verified for the account. */
@@ -364,9 +373,9 @@ function refuseTooOld(tooOld: RequiredShare[]): void {
 }
 
 /** Only shares the user agreed to leave out are suspended; naming every unreachable one lets one Save without them cover them all. */
-function refuseUnreachable(unreachable: RequiredShare[], withoutUnreachable: ReadonlySet<string>): void {
+function refuseUnreachable(unreachable: PausedShare[], withoutUnreachable: ReadonlySet<string>): void {
 	if (unreachable.some((share) => !withoutUnreachable.has(share.shareId))) {
-		throw new WriteFailure({ code: 'partner_unreachable', partners: unreachable.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })
+		throw new WriteFailure({ code: 'partner_unreachable', partners: unreachable.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId, reason: share.reason })) })
 	}
 }
 
@@ -379,6 +388,8 @@ class ShareSaveRun {
 	private readonly skipped = new Staged<{ secretId: string; reason: 'no_vault_key' }>('s:')
 	private readonly federated = new Staged<Awaited<ReturnType<typeof sealWhole>> & { shareId: string; certFingerprint: string }>('f:')
 	private readonly suspend = new Staged<{ shareId: string; reason: string }>('p:')
+	/** The suspended shares the user left out through Save without them. */
+	private readonly paused = new Set<string>()
 	private readonly cloudIds = new Map<string, string>()
 	private readonly certificates = new Map<string, string | null>()
 	private readonly keys = new Map<string, Promise<CryptoKey>>()
@@ -427,7 +438,7 @@ class ShareSaveRun {
 
 	/** Those the user left out through Save without them get their own line, worded for a pause, not a verdict on the recipient. */
 	private partnerNote(): ShareSaveNote | undefined {
-		const named = (paused: boolean) => [...this.suspend.entries.values()].filter((entry) => (entry.reason === 'partner_unreachable') === paused).map((entry) => this.cloudIds.get(entry.shareId)!)
+		const named = (paused: boolean) => [...this.suspend.entries.values()].filter((entry) => this.paused.has(entry.shareId) === paused).map((entry) => this.cloudIds.get(entry.shareId)!)
 		const suspended = named(false)
 		const paused = named(true)
 		if (suspended.length === 0 && paused.length === 0) return undefined
@@ -561,13 +572,17 @@ class ShareSaveRun {
 		const shareIds = new Set(required.map((share) => share.shareId))
 		this.dropFrom(this.federated, (key) => shareIds.has(key))
 		this.dropFrom(this.suspend, (key) => shareIds.has(key))
+		for (const shareId of this.paused) if (!this.suspend.entries.has(shareId)) this.paused.delete(shareId)
 		const todo = required.filter((share) => !this.federated.entries.has(share.shareId) && !this.suspend.entries.has(share.shareId))
 		if (todo.length === 0) return
 		const round = await this.partnerRound()
 		for (const share of todo) await this.fillPartner(share, round)
 		refuseTooOld(round.tooOld)
 		refuseUnreachable(round.unreachable, this.input.withoutUnreachable)
-		for (const share of round.unreachable) this.suspend.entries.set(share.shareId, { shareId: share.shareId, reason: 'partner_unreachable' })
+		for (const share of round.unreachable) {
+			this.suspend.entries.set(share.shareId, { shareId: share.shareId, reason: share.reason })
+			this.paused.add(share.shareId)
+		}
 	}
 
 	/** A replaced or removed key or passkey reaches a partner that cannot store it as null, since it never held one; only a field the item did not hold stops the save, as in the web app. */
@@ -582,7 +597,7 @@ class ShareSaveRun {
 		const kept = this.session.partners.get(share)
 		const outcome = kept ? { verified: kept } : await lookUp(this.session.client, share)
 		this.cloudIds.set(share.shareId, share.recipientCloudId)
-		if (outcome === 'unreachable') round.unreachable.push(share)
+		if ('pause' in outcome) round.unreachable.push({ ...share, reason: outcome.pause })
 		else if ('suspend' in outcome) this.suspend.entries.set(share.shareId, { shareId: share.shareId, reason: outcome.suspend })
 		else await this.fillVerified({ share, partner: outcome.verified, kept: !!kept }, round)
 	}

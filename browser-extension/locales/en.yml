@@ -276,6 +276,10 @@ writeErrors:
   badCertificate: Keepiq sent an encryption key for someone this item is shared with that this browser could not read. Nothing was saved.
   unverified: This item is shared with partner organisations, and this browser can't confirm they would get it exactly as you saw it. Nothing was saved; make this change in the Keepiq web app.
   partnerUnreachable: "Nothing was saved: a partner organisation this item is shared with can't be reached ({cloudIds}). Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+  partnerPaused: "Nothing was saved. {reasons} Try again later, or save without them, which pauses sharing this item with them until you share it with them again."
+  partnerPausedUnreachable: "These partner organisations can't be reached: {cloudIds}."
+  partnerPausedRootChanged: "The certificate of these partner organisations no longer matches the one pinned in your Keepiq. This can mean they renewed it; an administrator of your Keepiq has to check it with them before sharing resumes: {cloudIds}."
+  partnerPausedSharingOff: "An administrator turned off sharing with these partner organisations: {cloudIds}."
   partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to receive an authenticator key. Remove the key, or ask them to update Keepiq."
   partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this item is shared with runs a Keepiq too old to receive an authenticator key. Remove the key, or ask them to update Keepiq."
   partnerUpgradeVersion: They need Keepiq {version} or later.

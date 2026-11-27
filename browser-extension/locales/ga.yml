@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Sheol Keepiq eochair chriptithe do dhuine a bhfuil an mhír seo comhroinnte leis nárbh fhéidir leis an mbrabhsálaí seo a léamh. Níor sábháladh aon rud.
   unverified: Tá an mhír seo comhroinnte le heagraíochtaí comhpháirtíochta, agus ní féidir leis an mbrabhsálaí seo a dheimhniú go bhfaighidís í díreach mar a chonaic tusa í. Níor sábháladh aon rud; déan an t-athrú seo in aip ghréasáin Keepiq.
   partnerUnreachable: "Níor sábháladh aon rud: ní féidir eagraíocht chomhpháirtíochta a bhfuil an mhír seo comhroinnte léi a shroicheadh ({cloudIds}). Bain triail eile as ar ball, nó sábháil gan iad, rud a chuireann comhroinnt na míre seo leo ar sos go dtí go gcomhroinnfidh tú arís leo í."
+  partnerPaused: "Níor sábháladh aon rud. {reasons} Bain triail eile as ar ball, nó sábháil gan iad, rud a chuireann comhroinnt na míre seo leo ar sos go dtí go gcomhroinnfidh tú arís leo í."
+  partnerPausedUnreachable: "Ní féidir na heagraíochtaí comhpháirtíochta seo a shroicheadh: {cloudIds}."
+  partnerPausedRootChanged: "Ní mheaitseálann deimhniú na n-eagraíochtaí comhpháirtíochta seo an ceann atá pionnáilte i do Keepiq a thuilleadh. D’fhéadfadh sé seo a chiallú gur athnuaigh siad é; caithfidh riarthóir de do Keepiq é a sheiceáil leo sula leanfar ar aghaidh leis an gcomhroinnt: {cloudIds}."
+  partnerPausedSharingOff: "Mhúch riarthóir comhroinnt leis na heagraíochtaí comhpháirtíochta seo: {cloudIds}."
   partnerUpgradeRequired: "Níor sábháladh aon rud: tá an Keepiq atá ag {cloudIds} rósean chun eochair fhíordheimhnithe a fháil. Bain an eochair, nó iarr orthu Keepiq a nuashonrú."
   partnerUpgradeRequiredUnnamed: "Níor sábháladh aon rud: tá Keepiq rósean ag eagraíocht chomhpháirtíochta a bhfuil an mhír seo comhroinnte léi chun eochair fhíordheimhnithe a fháil. Bain an eochair, nó iarr orthu Keepiq a nuashonrú."
   partnerUpgradeVersion: Teastaíonn Keepiq {version} nó níos déanaí uathu.

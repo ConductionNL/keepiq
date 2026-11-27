@@ -106,6 +106,20 @@ class FederationControllerLookupTest extends TestCase {
 	}//end testNotAPartnerIsForbidden()
 
 	/**
+	 * A partner whose outbound sharing is off is 403 with its own reason.
+	 *
+	 * @return void
+	 */
+	public function testOutboundDisabledIsForbidden(): void {
+		$this->certificates->method('lookup')->willThrowException(new InvalidArgumentException('outbound_disabled'));
+
+		$response = $this->controller('alice')->recipientCertificate(cloudId: 'bob@partner.example');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => 'outbound_disabled'], $response->getData());
+	}//end testOutboundDisabledIsForbidden()
+
+	/**
 	 * Any other invalid lookup, such as an unknown recipient, is 404.
 	 *
 	 * @return void

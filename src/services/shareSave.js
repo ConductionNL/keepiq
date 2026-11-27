@@ -63,6 +63,22 @@ const PARTNER_GONE = new Map([
 ])
 
 /**
+ * Partner lookup refusals that may be temporary, so they stop the save as an
+ * unreachable partner does, each with the status this server answers it with.
+ */
+const PARTNER_PAUSED = new Map([
+	['partner_unreachable', 502],
+	['outbound_disabled', 403],
+])
+
+/**
+ * Certificate check failures in this browser that stop the save as an
+ * unreachable partner does: a renewed partner root waits for an
+ * administrator to re-pin it.
+ */
+const CERTIFICATE_PAUSED = new Set(['untrusted_root'])
+
+/**
  * How long one save waits in total on the partner lookup limit (60 per
  * minute per user) before it gives up.
  */
@@ -120,31 +136,15 @@ function retryAfterMs(response) {
 }
 
 /**
- * Whether a lookup failed at the partner rather than on this server: only
- * then may the user choose to suspend the share and save without it.
+ * Whether a lookup refusal is one of the given reasons with its own status.
  *
+ * @param {Map<string, number>} reasons Reasons by the status this server answers them with.
  * @param {object} error The lookup's axios error.
  * @return {boolean}
  */
-function partnerUnreachable(error) {
-	return (
-		error?.response?.status === 502
-		&& error.response.data?.message === 'partner_unreachable'
-	)
-}
-
-/**
- * Whether a lookup refusal says the partner share is gone for good.
- *
- * @param {object} error The lookup's axios error.
- * @return {boolean}
- */
-function partnerGone(error) {
+function refusedFor(reasons, error) {
 	const reason = error?.response?.data?.message
-	return (
-		PARTNER_GONE.has(reason)
-		&& PARTNER_GONE.get(reason) === error.response.status
-	)
+	return reasons.has(reason) && reasons.get(reason) === error.response.status
 }
 
 /**
@@ -154,7 +154,9 @@ function partnerGone(error) {
  * on before the partner value was built), `partner_lookup_limit` (the partner
  * lookup limit held for longer than the save waits), `view_only` (the caller's
  * copy has no write grade), `partner_unreachable` (`partners` names them,
- * each with its `reason`) or `partner_upgrade_required` (`partners` names the
+ * each with its `reason`: `partner_unreachable`, `untrusted_root` or
+ * `outbound_disabled`), `partner_clock` (a partner certificate is not valid by
+ * this device's clock) or `partner_upgrade_required` (`partners` names the
  * ones whose Keepiq cannot store a one-time code or passkeys the change gives
  * the login).
  */
@@ -576,7 +578,7 @@ export async function saveShared({
 		for (const share of found.unreachable) {
 			suspend.set(share.shareId, {
 				shareId: share.shareId,
-				reason: 'partner_unreachable',
+				reason: share.reason,
 			})
 		}
 	}
@@ -769,20 +771,29 @@ function isUnverifiedPartner(error) {
 
 /**
  * What a failed partner lookup means for its share: suspended (unverified or
- * gone for good) or unreachable, each with its reason. Any other failure is
- * this server's, not the partner's, so suspending would be wrong: it is
- * thrown on.
+ * gone for good) or paused like an unreachable partner (a refusal that may be
+ * temporary), each with its reason. A certificate not valid by this device's
+ * clock stops the save for every partner alike. Any other failure is this
+ * server's, not the partner's, so suspending would be wrong: it is thrown on.
  *
  * @param {Error} error The lookup error.
  * @return {{suspend: boolean, reason: string|undefined}}
  */
 function partnerLookupFailure(error) {
-	const unverified = isUnverifiedPartner(error)
-	const reason = unverified ? error.reason : error?.response?.data?.message
-	if (unverified || partnerGone(error)) {
+	if (isUnverifiedPartner(error)) {
+		if (error.reason === 'not_valid_now') {
+			throw new ShareSaveError('partner_clock', [], { cause: error })
+		}
+		return {
+			suspend: !CERTIFICATE_PAUSED.has(error.reason),
+			reason: error.reason,
+		}
+	}
+	const reason = error?.response?.data?.message
+	if (refusedFor(PARTNER_GONE, error)) {
 		return { suspend: true, reason }
 	}
-	if (partnerUnreachable(error)) {
+	if (refusedFor(PARTNER_PAUSED, error)) {
 		return { suspend: false, reason }
 	}
 	throw error
@@ -951,6 +962,18 @@ function viewOnlyText() {
 }
 
 /**
+ * The text for the `partner_clock` share save refusal.
+ *
+ * @return {string}
+ */
+function partnerClockText() {
+	return t(
+		'keepiq',
+		"The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.",
+	)
+}
+
+/**
  * The text for the `partner_share_owner_mismatch` share save refusal.
  *
  * @return {string}
@@ -970,6 +993,7 @@ const CODE_TEXTS = new Map([
 	['version_refused', versionRefusedText],
 	['incomplete', incompleteText],
 	['partner_lookup_limit', lookupLimitText],
+	['partner_clock', partnerClockText],
 	['view_only', viewOnlyText],
 	['partner_share_owner_mismatch', partnerOwnerMismatchText],
 	[SHARE_SCAN_PENDING, shareScanPendingText],
@@ -991,13 +1015,110 @@ function shareSaveCode(error) {
 	return code
 }
 
+// The sentence naming the partners a save stopped for, by the reason it stopped.
+const PAUSED_SENTENCES = new Map([
+	[
+		'partner_unreachable',
+		(partners) =>
+			t(
+				'keepiq',
+				'These partner organisations cannot be reached: {partners}.',
+				{ partners },
+			),
+	],
+	[
+		'untrusted_root',
+		(partners) =>
+			t(
+				'keepiq',
+				'The certificate of these partner organisations no longer matches the one pinned here. This can mean they renewed it; an administrator here has to check it with them before sharing resumes: {partners}.',
+				{ partners },
+			),
+	],
+	[
+		'outbound_disabled',
+		(partners) =>
+			t(
+				'keepiq',
+				'An administrator turned off sharing with these partner organisations: {partners}.',
+				{ partners },
+			),
+	],
+])
+
 /**
- * The text for a save stopped by unreachable partner organisations.
+ * The cloud ids of the named partners a save stopped for, by reason; an
+ * unknown reason counts as unreachable.
+ *
+ * @param {Array<{recipientCloudId?: string, reason?: string}>} partners The partner shares.
+ * @return {Map<string, Array<string>>}
+ */
+function pausedByReason(partners) {
+	const byReason = new Map()
+	for (const share of partners) {
+		if (!share?.recipientCloudId) {
+			continue
+		}
+		const reason = PAUSED_SENTENCES.has(share.reason)
+			? share.reason
+			: 'partner_unreachable'
+		byReason.set(reason, [
+			...(byReason.get(reason) ?? []),
+			share.recipientCloudId,
+		])
+	}
+	return byReason
+}
+
+/**
+ * The sentences naming the partners a save stopped for, one per reason, or
+ * an empty string when it names none. Each sentence escapes its partners.
+ *
+ * @param {Array<{recipientCloudId?: string, reason?: string}>} [partners] The partner shares.
+ * @return {string}
+ *
+ * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+ */
+export function pausedPartnersText(partners) {
+	return [...pausedByReason(partners ?? [])]
+		.map(([reason, names]) => PAUSED_SENTENCES.get(reason)(names.join(', ')))
+		.join(' ')
+}
+
+/**
+ * Whether a save stopped for a named partner for another reason than its
+ * being unreachable.
+ *
+ * @param {Array<{recipientCloudId?: string, reason?: string}>} [partners] The partner shares.
+ * @return {boolean}
+ *
+ * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+ */
+export function pausedForAnotherReason(partners) {
+	return [...pausedByReason(partners ?? []).keys()].some(
+		(reason) => reason !== 'partner_unreachable',
+	)
+}
+
+/**
+ * The text for a save stopped by partner organisations, naming why for each
+ * when one is not merely unreachable.
  *
  * @param {Error|object} error The thrown error, with its `partners` when it names them.
  * @return {string}
  */
 function partnerUnreachableText(error) {
+	if (pausedForAnotherReason(error.partners)) {
+		const reasons = pausedPartnersText(error.partners)
+		// Each sentence escaped its own partners already.
+		return t(
+			'keepiq',
+			'Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.',
+			{ reasons },
+			undefined,
+			{ escape: false },
+		)
+	}
 	const partners = (error.partners ?? [])
 		.map((share) => share.recipientCloudId)
 		.filter(Boolean)

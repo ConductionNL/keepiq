@@ -134,7 +134,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @return FederatedShare
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
-	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`,
+	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `outbound_disabled`, `unknown_recipient`, `already_shared`,
 	 *   `not_shareable` when the secret is a received copy of a secret the user does not own,
 	 *   or `copy_fields_mismatch` when its totp or passkeys does not mirror the source's
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row that may name it a copy
@@ -172,10 +172,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 			throw new InvalidArgumentException('unknown_recipient');
 		}
 
-		$partner = $this->partners->outboundPartnerForRemote(remote: $recipient->getRemote());
-		if ($partner === null) {
-			throw new InvalidArgumentException('not_a_partner');
-		}
+		$partner = $this->partners->requireOutboundPartner(remote: $recipient->getRemote());
 
 		$this->valueFields->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
 		$this->valueFields->assertMirrorsSource(partner: $partner, source: $source, ciphertext: $ciphertext);

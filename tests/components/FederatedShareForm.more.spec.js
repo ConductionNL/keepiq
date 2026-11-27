@@ -253,6 +253,10 @@ describe('FederatedShareForm sharing', () => {
 		],
 		['already_shared', 'This secret is already shared with that account.'],
 		[
+			'outbound_disabled',
+			'An administrator turned off sharing with that organisation.',
+		],
+		[
 			'not_shareable',
 			'This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.',
 		],

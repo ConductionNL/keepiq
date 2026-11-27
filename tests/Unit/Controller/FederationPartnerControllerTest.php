@@ -27,8 +27,11 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\FederationPartnerController;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederationPartnerChanges;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerRootRenewalNotifier;
+use OCA\Keepiq\Service\PartnerRootRenewalService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -81,7 +84,15 @@ class FederationPartnerControllerTest extends TestCase {
 		$this->root = $this->createMock(FederationRootService::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->shares = $this->createMock(FederatedShareService::class);
+		$this->renewals = $this->createMock(PartnerRootRenewalService::class);
 	}//end setUp()
+
+	/**
+	 * The mocked partner root renewal service.
+	 *
+	 * @var PartnerRootRenewalService&MockObject
+	 */
+	private PartnerRootRenewalService&MockObject $renewals;
 
 	/**
 	 * The controller under test.
@@ -94,9 +105,41 @@ class FederationPartnerControllerTest extends TestCase {
 			partners: $this->partners,
 			root: $this->root,
 			userSession: $this->session,
-			federatedShares: $this->shares,
+			changes: new FederationPartnerChanges(
+				partners: $this->partners,
+				federatedShares: $this->shares,
+				renewals: $this->renewals,
+				renewalNotices: $this->createMock(PartnerRootRenewalNotifier::class),
+			),
 		);
 	}//end controller()
+
+	/**
+	 * Accepting an offered renewal goes through the renewal service, which re-checks the announcement before the
+	 * re-pin; the plain re-pin is not called directly, and a refusal answers 400.
+	 *
+	 * @return void
+	 */
+	public function testAcceptingARenewalGoesThroughTheRenewalCheck(): void {
+		$admin = $this->createMock(IUser::class);
+		$admin->method('getUID')->willReturn('admin');
+		$this->session->method('getUser')->willReturn($admin);
+		$this->root->method('isSupported')->willReturn(true);
+		$this->partners->expects($this->never())->method('repin');
+		$this->renewals->expects($this->exactly(2))->method('accept')
+			->with('p-1', 'sha256:new', 'admin')
+			->willReturnOnConsecutiveCalls(
+				['partner' => $this->partner(['id' => 'p-1']), 'changed' => true],
+				$this->throwException(new InvalidArgumentException('The partner no longer announces this renewed certificate')),
+			);
+
+		$accepted = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:new', acceptRenewal: true);
+		$refused = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:new', acceptRenewal: true);
+
+		$this->assertSame(['partner' => ['id' => 'p-1'], 'changed' => true], $accepted->getData());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $refused->getStatus());
+		$this->assertSame(['message' => 'The partner no longer announces this renewed certificate'], $refused->getData());
+	}//end testAcceptingARenewalGoesThroughTheRenewalCheck()
 
 	/**
 	 * A partner that serializes to the given array.
@@ -235,6 +278,68 @@ class FederationPartnerControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $missing->getStatus());
 		$this->assertSame(['message' => 'Not found'], $missing->getData());
 	}//end testUpdateAnswersThePartnerOrA404()
+
+	/**
+	 * A re-pin passes the confirmed fingerprint and the administrator, and answers the partner with whether its pin
+	 * changed.
+	 *
+	 * @return void
+	 */
+	public function testRepinAnswersThePartnerAndWhetherItChanged(): void {
+		$admin = $this->createMock(IUser::class);
+		$admin->method('getUID')->willReturn('admin');
+		$this->session->method('getUser')->willReturn($admin);
+		$this->root->method('isSupported')->willReturn(true);
+		$this->partners->expects($this->exactly(2))->method('repin')
+			->with('p-1', 'sha256:new', 'admin')
+			->willReturnOnConsecutiveCalls(
+				['partner' => $this->partner(['id' => 'p-1']), 'changed' => true],
+				['partner' => $this->partner(['id' => 'p-1']), 'changed' => false],
+			);
+
+		$changed = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:new');
+		$unchanged = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:new');
+
+		$this->assertSame(Http::STATUS_OK, $changed->getStatus());
+		$this->assertSame(['partner' => ['id' => 'p-1'], 'changed' => true], $changed->getData());
+		$this->assertSame(['partner' => ['id' => 'p-1'], 'changed' => false], $unchanged->getData());
+	}//end testRepinAnswersThePartnerAndWhetherItChanged()
+
+	/**
+	 * A refused re-pin answers 400 with the service's message, an unknown partner 404.
+	 *
+	 * @return void
+	 */
+	public function testARefusedRepinAnswers400AndAnUnknownPartner404(): void {
+		$this->root->method('isSupported')->willReturn(true);
+		$this->partners->expects($this->exactly(2))->method('repin')
+			->willReturnOnConsecutiveCalls(
+				$this->throwException(new InvalidArgumentException('The partner root fingerprint is not the one you confirmed')),
+				$this->throwException(new DoesNotExistException('gone')),
+			);
+
+		$refused = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:x');
+		$missing = $this->controller()->repin(id: 'p-2', fingerprint: 'sha256:x');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $refused->getStatus());
+		$this->assertSame(['message' => 'The partner root fingerprint is not the one you confirmed'], $refused->getData());
+		$this->assertSame(Http::STATUS_NOT_FOUND, $missing->getStatus());
+		$this->assertSame(['message' => 'Not found'], $missing->getData());
+	}//end testARefusedRepinAnswers400AndAnUnknownPartner404()
+
+	/**
+	 * Below Nextcloud 33 a re-pin answers 409 before the partner service is asked.
+	 *
+	 * @return void
+	 */
+	public function testRepinAnswers409WhenFederationIsUnsupported(): void {
+		$this->root->method('isSupported')->willReturn(false);
+		$this->partners->expects($this->never())->method('repin');
+
+		$response = $this->controller()->repin(id: 'p-1', fingerprint: 'sha256:x');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	}//end testRepinAnswers409WhenFederationIsUnsupported()
 
 	/**
 	 * Removing a partner suspends the shares to it.

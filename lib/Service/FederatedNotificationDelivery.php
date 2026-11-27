@@ -69,7 +69,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 *
 	 * @var int
 	 */
-	private const FIRST_WAIT = 60;
+	public const FIRST_WAIT = 60;
 
 	/**
 	 * The longest wait between two attempts, in seconds: 6 hours.

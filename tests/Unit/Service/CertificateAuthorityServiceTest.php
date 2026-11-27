@@ -20,19 +20,29 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
+use Exception;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Service\CertificateAuthorityService;
 use OCA\Keepiq\Service\CertificateAuthorityStatusService;
+use OCA\Keepiq\Event\RootRenewedEvent;
 use OCA\Keepiq\Service\CertificateIssuanceService;
+use OCA\Keepiq\Service\CertificatePem;
+use OCA\Keepiq\Service\RootRenewalRecorder;
+use OCA\Keepiq\Service\RootRenewalSignature;
 use OCA\Keepiq\Service\X509CertificateAssembler;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use OCP\IDBConnection;
 use OCP\Security\ICrypto;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests for CertificateAuthorityService.
@@ -104,19 +114,204 @@ class CertificateAuthorityServiceTest extends TestCase {
 			assembler: new X509CertificateAssembler(logger: $logger),
 		);
 
-		$this->service = new CertificateAuthorityService(
+		$this->logger = $logger;
+		$this->db = $this->createMock(originalClassName: IDBConnection::class);
+		$this->dispatcher = $this->createMock(originalClassName: IEventDispatcher::class);
+		$this->service = $this->serviceSigningWith(signatures: new RootRenewalSignature());
+	}//end setUp()
+
+	/**
+	 * The logger the service under test writes to.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $logger;
+
+	/**
+	 * The mocked database connection the root renewal runs its transaction on.
+	 *
+	 * @var IDBConnection&MockObject
+	 */
+	private IDBConnection&MockObject $db;
+
+	/**
+	 * The mocked event dispatcher a stored root renewal is announced on.
+	 *
+	 * @var IEventDispatcher&MockObject
+	 */
+	private IEventDispatcher&MockObject $dispatcher;
+
+	/**
+	 * The service under test, signing renewed roots with the given signer.
+	 *
+	 * @param RootRenewalSignature $signatures The signer
+	 *
+	 * @return CertificateAuthorityService
+	 */
+	private function serviceSigningWith(RootRenewalSignature $signatures): CertificateAuthorityService {
+		return new CertificateAuthorityService(
 			caCertificateMapper: $this->caCertMapper,
-			appConfig: $this->appConfig,
 			crypto: $this->crypto,
-			logger: $logger,
+			logger: $this->logger,
 			issuanceService: $this->issuance,
 			statusService: new CertificateAuthorityStatusService(
 				caCertificateMapper: $this->caCertMapper,
 				suiteMapper: $this->suiteMapper,
 				appConfig: $this->appConfig,
 			),
+			renewals: new RootRenewalRecorder(
+				db: $this->db,
+				dispatcher: $this->dispatcher,
+				signatures: $signatures,
+				logger: $this->logger,
+			),
 		);
-	}//end setUp()
+	}//end serviceSigningWith()
+
+	/**
+	 * Renewing the root signs the new root's DER with the old root's key, stores that signature with the new root
+	 * inside one transaction, and announces the renewal right after the commit, before the suites are re-signed.
+	 *
+	 * @return void
+	 */
+	public function testRenewRootSignsTheNewRootWithTheOldRootsKey(): void {
+		[$oldRoot, $oldIntermediate] = $this->persistedCa();
+		$this->caCertMapper->method('findRoot')->willReturn($oldRoot);
+		$this->caCertMapper->method('findActiveIntermediate')->willReturn($oldIntermediate);
+		$inserted = $this->captureInserts();
+		$order = [];
+		$this->suiteMapper->method('findAllActiveWithLimit')->willReturnCallback(function () use (&$order): array {
+			$order[] = 'resign';
+			return [];
+		});
+		$this->db->method('beginTransaction')->willReturnCallback(function () use (&$order): void {
+			$order[] = 'begin';
+		});
+		$this->db->method('commit')->willReturnCallback(function () use (&$order): void {
+			$order[] = 'commit';
+		});
+		$this->dispatcher->expects($this->once())->method('dispatchTyped')->willReturnCallback(
+			function (object $event) use (&$order): void {
+				$this->assertInstanceOf(RootRenewedEvent::class, $event);
+				$order[] = 'announce';
+			}
+		);
+
+		$this->service->renewRoot();
+
+		$newRoot = $inserted['root'];
+		$signature = base64_decode((string)$newRoot->getPredecessorSignature(), true);
+		$this->assertIsString($signature);
+		$der = (new CertificatePem(pem: $newRoot->getCertificate()))->der();
+		$this->assertSame(1, openssl_verify($der, $signature, openssl_pkey_get_public($oldRoot->getCertificate()), OPENSSL_ALGO_SHA256));
+		$this->assertSame(['begin', 'commit', 'announce', 'resign'], array_values(array_unique($order)));
+	}//end testRenewRootSignsTheNewRootWithTheOldRootsKey()
+
+	/**
+	 * When the old root's key cannot be read, the root is still renewed: the new root is stored without a signature,
+	 * nothing is announced, a warning is logged and the caller learns that partners must re-pin by hand.
+	 *
+	 * @param string $privateKey The stored (encrypted) old root key
+	 * @param bool $decryptFails Whether decrypting it throws, as after a changed instance secret
+	 *
+	 * @return void
+	 */
+	#[DataProvider('unreadableOldRootKeys')]
+	public function testAnUnreadableOldRootKeyRenewsWithoutAnnouncing(string $privateKey, bool $decryptFails): void {
+		[$oldRoot, $oldIntermediate] = $this->persistedCa();
+		$oldRoot->setPrivateKey($privateKey);
+		if ($decryptFails === true) {
+			$this->crypto = $this->createMock(originalClassName: ICrypto::class);
+			$this->crypto->method('encrypt')->willReturnCallback(fn ($v) => 'enc:' . $v);
+			$this->crypto->method('decrypt')->willReturnCallback(function (string $v): string {
+				if (str_starts_with($v, 'enc:-----BEGIN') === false) {
+					throw new Exception('HMAC does not match.');
+				}
+
+				return substr($v, 4);
+			});
+			$this->service = $this->serviceSigningWith(signatures: new RootRenewalSignature());
+		}
+
+		$this->caCertMapper->method('findRoot')->willReturn($oldRoot);
+		$this->caCertMapper->method('findActiveIntermediate')->willReturn($oldIntermediate);
+		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
+		$inserted = $this->captureInserts();
+		$this->db->expects($this->once())->method('commit');
+		$this->dispatcher->expects($this->never())->method('dispatchTyped');
+		$this->logger->expects($this->once())->method('warning')
+			->with($this->stringContains('current root CA private key cannot be read'));
+
+		$renewal = $this->service->renewRoot();
+
+		$newFingerprint = (new CertificatePem(pem: $inserted['root']->getCertificate()))->fingerprint();
+		$this->assertSame(
+			expected: ['resignedCount' => 0, 'announced' => false, 'rootFingerprint' => $newFingerprint],
+			actual: $renewal
+		);
+		$this->assertNotSame((new CertificatePem(pem: $oldRoot->getCertificate()))->fingerprint(), $newFingerprint);
+		$this->assertNull($inserted['root']->getPredecessorSignature());
+		$this->assertSame(expected: $inserted['root']->getId(), actual: $oldRoot->getSuccessorId());
+		$this->assertFalse($oldIntermediate->getIsActive());
+	}//end testAnUnreadableOldRootKeyRenewsWithoutAnnouncing()
+
+	/**
+	 * Old root keys that cannot be read: one that is no key, and one whose decryption fails.
+	 *
+	 * @return array<string,array{string,bool}>
+	 */
+	public static function unreadableOldRootKeys(): array {
+		return [
+			'not a key' => ['enc:not a key', false],
+			'decryption fails' => ['other-secret:ciphertext', true],
+		];
+	}//end unreadableOldRootKeys()
+
+	/**
+	 * When the old root's key loads but signing the new root fails, the renewal stores nothing, changes no row and
+	 * announces nothing.
+	 *
+	 * @return void
+	 */
+	public function testAFailedSigningStoresNoNewRoot(): void {
+		[$oldRoot, $oldIntermediate] = $this->persistedCa();
+		$this->caCertMapper->method('findRoot')->willReturn($oldRoot);
+		$this->caCertMapper->method('findActiveIntermediate')->willReturn($oldIntermediate);
+		$this->caCertMapper->expects($this->never())->method('insert');
+		$this->caCertMapper->expects($this->never())->method('update');
+		$this->db->expects($this->never())->method('beginTransaction');
+		$this->dispatcher->expects($this->never())->method('dispatchTyped');
+		$signatures = $this->createMock(originalClassName: RootRenewalSignature::class);
+		$signatures->expects($this->once())->method('sign')->willReturn(null);
+
+		try {
+			$this->serviceSigningWith(signatures: $signatures)->renewRoot();
+			$this->fail('The renewal did not fail');
+		} catch (RuntimeException $exception) {
+			$this->assertStringContainsString('Failed to sign the new root CA with the current root', $exception->getMessage());
+		}
+
+		$this->assertNull($oldRoot->getSuccessorId());
+		$this->assertTrue($oldIntermediate->getIsActive());
+	}//end testAFailedSigningStoresNoNewRoot()
+
+	/**
+	 * A failing store inside the transaction rolls it back and announces nothing.
+	 *
+	 * @return void
+	 */
+	public function testAFailedStoreRollsBackAndAnnouncesNothing(): void {
+		[$oldRoot, $oldIntermediate] = $this->persistedCa();
+		$this->caCertMapper->method('findRoot')->willReturn($oldRoot);
+		$this->caCertMapper->method('findActiveIntermediate')->willReturn($oldIntermediate);
+		$this->caCertMapper->method('insert')->willThrowException(new RuntimeException('database down'));
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+		$this->dispatcher->expects($this->never())->method('dispatchTyped');
+
+		$this->expectException(RuntimeException::class);
+		$this->service->renewRoot();
+	}//end testAFailedStoreRollsBackAndAnnouncesNothing()
 
 	/**
 	 * Test that bootstrap skips when a CA already exists (root + active intermediate).
@@ -387,7 +582,16 @@ class CertificateAuthorityServiceTest extends TestCase {
 		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
 		$this->caCertMapper->expects($this->once())->method('update')->with($oldRoot);
 
-		$this->assertSame(expected: 0, actual: $this->service->renewRoot());
+		$renewal = $this->service->renewRoot();
+
+		$this->assertSame(
+			expected: [
+				'resignedCount' => 0,
+				'announced' => true,
+				'rootFingerprint' => (new CertificatePem(pem: $inserted['root']->getCertificate()))->fingerprint(),
+			],
+			actual: $renewal
+		);
 		$this->assertSame(expected: ['root', 'intermediate'], actual: array_keys($inserted->getArrayCopy()));
 	}//end testRenewRootWithoutAnActiveIntermediate()
 
@@ -902,9 +1106,9 @@ class CertificateAuthorityServiceTest extends TestCase {
 
 		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
 
-		$count = $this->service->renewRoot();
+		$renewal = $this->service->renewRoot();
 
-		$this->assertEquals(expected: 0, actual: $count);
+		$this->assertSame(expected: 0, actual: $renewal['resignedCount']);
 		$this->assertNotNull(actual: $oldRoot->getSuccessorId());
 	}//end testRenewRoot()
 

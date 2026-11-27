@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq a trimis, pentru o persoană cu care este partajat acest element, o cheie de criptare pe care acest browser nu a putut-o citi. Nu s-a salvat nimic.
   unverified: Acest element este partajat cu organizații partenere, iar acest browser nu poate confirma că l-ar primi exact așa cum l-ați văzut. Nu s-a salvat nimic; faceți această modificare în aplicația web Keepiq.
   partnerUnreachable: "Nu s-a salvat nimic: una sau mai multe organizații partenere cu care este partajat acest element nu pot fi accesate ({cloudIds}). Încercați din nou mai târziu sau salvați fără ele, ceea ce suspendă partajarea acestui element cu ele până când îl partajați din nou."
+  partnerPaused: "Nu s-a salvat nimic. {reasons} Încercați din nou mai târziu sau salvați fără ele, ceea ce suspendă partajarea acestui element cu ele până când îl partajați din nou."
+  partnerPausedUnreachable: "Aceste organizații partenere nu pot fi accesate: {cloudIds}."
+  partnerPausedRootChanged: "Certificatul acestor organizații partenere nu mai corespunde cu cel fixat în Keepiq-ul dumneavoastră. Acest lucru poate însemna că l-au reînnoit; un administrator al Keepiq-ului dumneavoastră trebuie să verifice acest lucru cu ele înainte ca partajarea să fie reluată: {cloudIds}."
+  partnerPausedSharingOff: "Un administrator a dezactivat partajarea cu aceste organizații partenere: {cloudIds}."
   partnerUpgradeRequired: "Nu s-a salvat nimic: Keepiq de la {cloudIds} este prea vechi pentru a primi o cheie de autentificare. Eliminați cheia sau cereți-le să actualizeze Keepiq."
   partnerUpgradeRequiredUnnamed: "Nu s-a salvat nimic: o organizație parteneră cu care este partajat acest element folosește o versiune Keepiq prea veche pentru a primi o cheie de autentificare. Eliminați cheia sau cereți-i să actualizeze Keepiq."
   partnerUpgradeVersion: Au nevoie de Keepiq {version} sau mai nou.

@@ -85,6 +85,8 @@ class KeepiqNotifierGoldenTest extends TestCase {
 				'device_label' => 'Laptop',
 				'confirmedBy' => 'judy',
 				'memberIds' => ['kim', 'lee'],
+				'partner' => 'https://cloud.partner.example',
+				'partner_id' => 'p 1',
 			],
 			'camel' => [
 				'secretId' => 'secret-2',

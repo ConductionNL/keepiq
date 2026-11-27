@@ -207,7 +207,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 				$this->createMock(IClientService::class),
 				$config
 			),
-			root: new FederationRootService($this->caMapper()),
+			root: $this->rootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $this->createMock(ISecureRandom::class),
@@ -534,9 +534,20 @@ class FederatedShareOwnerChangesTest extends TestCase {
 	public function testRemovingThePartnerSuspendsItsShares(): void {
 		$partners = $this->createMock(FederationPartnerService::class);
 		$partners->expects($this->once())->method('remove')->with('p-cloud.partner.example');
-		$root = new FederationRootService($this->caMapper());
+		$root = $this->rootService($this->caMapper());
 		$session = $this->createMock(IUserSession::class);
-		$controller = new FederationPartnerController($this->createMock(IRequest::class), $partners, $root, $session, $this->service);
+		$controller = new FederationPartnerController(
+			$this->createMock(IRequest::class),
+			$partners,
+			$root,
+			$session,
+			new \OCA\Keepiq\Service\FederationPartnerChanges(
+				$partners,
+				$this->service,
+				$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalService::class),
+				$this->createMock(\OCA\Keepiq\Service\PartnerRootRenewalNotifier::class)
+			)
+		);
 
 		$controller->destroy('p-cloud.partner.example');
 

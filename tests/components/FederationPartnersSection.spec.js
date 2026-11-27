@@ -15,6 +15,7 @@ import { confirmPassword } from '@nextcloud/password-confirmation'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import FederationPartnersSection from '../../src/components/settings/FederationPartnersSection.vue'
+import { announceRootRenewed } from '../../src/utils/rootFingerprint.js'
 
 vi.mock('@nextcloud/password-confirmation', () => ({
 	confirmPassword: vi.fn(async () => {}),
@@ -146,5 +147,26 @@ describe('FederationPartnersSection', () => {
 		expect(del.mock.calls[0][0]).toContain(
 			'/apps/keepiq/api/v1/federation/partners/p1',
 		)
+	})
+
+	it('shows the renewed root as its own fingerprint without a reload, until it is unmounted', async () => {
+		const wrapper = await mountWith({
+			supported: true,
+			localRootFingerprint: 'cd'.repeat(32),
+			partners: [],
+		})
+
+		announceRootRenewed(FP)
+		await flush()
+
+		expect(
+			wrapper.find('[data-testid="federation-own-fingerprint"]').text(),
+		).toBe(Array(32).fill('AB').join(':'))
+		expect(axios.get).toHaveBeenCalledTimes(1)
+
+		const vm = wrapper.vm
+		wrapper.unmount()
+		announceRootRenewed('ef'.repeat(32))
+		expect(vm.localRootFingerprint).toBe(FP)
 	})
 })

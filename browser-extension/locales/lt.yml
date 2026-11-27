@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq atsiuntė šifravimo raktą asmeniui, su kuriuo bendrinamas šis elementas, tačiau ši naršyklė negalėjo jo perskaityti. Niekas neįrašyta.
   unverified: Šis elementas bendrinamas su partnerių organizacijomis, o ši naršyklė negali patvirtinti, kad jos gaus jį tiksliai tokį, kokį matėte. Niekas neįrašyta; atlikite šį pakeitimą Keepiq žiniatinklio programėlėje.
   partnerUnreachable: "Niekas neįrašyta: nepavyksta pasiekti partnerio organizacijos, su kuria bendrinamas šis elementas ({cloudIds}). Bandykite vėliau arba įrašykite be jų – tada bendrinimas su jais bus pristabdytas, kol vėl su jais pasidalinsite."
+  partnerPaused: "Niekas neįrašyta. {reasons} Bandykite vėliau arba įrašykite be jų – tada bendrinimas su jais bus pristabdytas, kol vėl su jais pasidalinsite."
+  partnerPausedUnreachable: "Nepavyksta pasiekti šių partnerių organizacijų: {cloudIds}."
+  partnerPausedRootChanged: "Šių partnerių organizacijų sertifikatas nebeatitinka jūsų Keepiq prisegto. Tai gali reikšti, kad jie jį atnaujino; jūsų Keepiq administratorius turi tai su jais patikrinti prieš atnaujinant bendrinimą: {cloudIds}."
+  partnerPausedSharingOff: "Administratorius išjungė bendrinimą su šiomis partnerių organizacijomis: {cloudIds}."
   partnerUpgradeRequired: "Niekas neįrašyta: gavėjų {cloudIds} Keepiq versija per sena autentifikatoriaus raktui priimti. Pašalinkite raktą arba paprašykite jų atnaujinti Keepiq."
   partnerUpgradeRequiredUnnamed: "Niekas neįrašyta: partnerio organizacija, su kuria bendrinamas šis elementas, naudoja per seną Keepiq versiją autentifikatoriaus raktui priimti. Pašalinkite raktą arba paprašykite jų atnaujinti Keepiq."
   partnerUpgradeVersion: Jiems reikia Keepiq {version} ar naujesnės versijos.

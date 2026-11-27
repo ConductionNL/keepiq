@@ -111,6 +111,25 @@ interface FederationPartnerServiceInterface {
 	public function remove(string $id): void;
 
 	/**
+	 * Pin the root fingerprint a partner publishes now, as add() pins it: only when it is the fingerprint the
+	 * administrator confirmed. A fingerprint equal to the pin stores nothing. A stored re-pin is audited with the
+	 * administrator as the actor.
+	 *
+	 * @param string $id The partner UUID
+	 * @param string $confirmedFingerprint The fingerprint the administrator compared
+	 * @param string $adminId The administrator
+	 *
+	 * @return array{partner:FederationPartner,changed:bool}
+	 *
+	 * @throws DoesNotExistException When the partner does not exist
+	 * @throws InvalidArgumentException When the partner cannot be read, its stored address and host disagree, or its
+	 *   fingerprint is not the one the administrator confirmed
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 */
+	public function repin(string $id, string $confirmedFingerprint, string $adminId): array;
+
+	/**
 	 * Change a partner's directions.
 	 *
 	 * @param string $id The partner UUID

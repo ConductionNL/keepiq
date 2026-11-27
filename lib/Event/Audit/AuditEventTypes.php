@@ -266,4 +266,6 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_RECIPIENT_RESUMED = 'federated_share.recipient_resumed';
 	// A partner's lookup answer advertised other value fields than recorded (keepiq#1325).
 	public const FEDERATION_PARTNER_VALUE_FIELDS_CHANGED = 'federation_partner.value_fields_changed';
+	// An administrator pinned the root fingerprint a partner publishes now; the actor is that administrator.
+	public const FEDERATION_PARTNER_REPINNED = 'federation_partner.repinned';
 }//end class

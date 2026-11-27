@@ -29,6 +29,8 @@ use OCA\Keepiq\Kernel\Contracts\FederatedDeclineReceiverInterface;
 use OCA\Keepiq\Kernel\Contracts\FederatedRemoteChangeServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareReceiverInterface;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
+use OCA\Keepiq\Service\PartnerRootRenewalService;
+use OCA\Keepiq\Service\RootRenewalNoticeDelivery;
 use OCP\Federation\ICloudFederationShare;
 use OCP\Federation\ISignedCloudFederationProvider;
 
@@ -44,6 +46,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * @param FederatedShareReceiverInterface $receiver Takes incoming shares in
 	 * @param FederatedRemoteChangeServiceInterface $remoteChanges Applies updates and revocations
 	 * @param FederatedDeclineReceiverInterface|null $declines The owner's side of a recipient deleting their copy
+	 * @param PartnerRootRenewalService|null $renewals Takes a partner's root renewal notice
 	 *
 	 * @return void
 	 *
@@ -53,6 +56,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 		private FederatedShareReceiverInterface $receiver,
 		private FederatedRemoteChangeServiceInterface $remoteChanges,
 		private ?FederatedDeclineReceiverInterface $declines = null,
+		private ?PartnerRootRenewalService $renewals = null,
 	) {
 	}//end __construct()
 
@@ -92,11 +96,20 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * @return array<array-key,string> Nothing is sent back: always an empty array.
 	 *
 	 * @throws \OCP\Share\Exceptions\ShareNotFound For every refusal
+	 * @throws \OCA\Keepiq\Exception\PartnerUnreachableException When a root renewal notice cannot be checked yet;
+	 *   Nextcloud answers it with 400 without throttling, so the sender retries
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-restores-his-copy
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function notificationReceived(string $notificationType, string $providerId, array $notification) {
+		// A partner renewed its root: tied to no share, it only starts the check of its announcement.
+		if ($notificationType === RootRenewalNoticeDelivery::ROOT_RENEWED && $this->renewals !== null) {
+			$this->renewals->noticeReceived(payload: $notification);
+			return [];
+		}
+
 		// The recipient removed their copy: the owner's side (task 4.4).
 		if ($notificationType === FederatedCopyDeclineServiceInterface::SHARE_DECLINED && $this->declines !== null) {
 			return $this->declines->handle(providerId: $providerId, notification: $notification);
@@ -114,9 +127,10 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * Whose signature a notification carries: the sender of the share the
 	 * presented hash belongs to (an update or unshare from the owner), else
 	 * the recipient of the share the presented secret belongs to (a decline
-	 * from the recipient, task 4.4). Nextcloud 35 verifies a notification's
-	 * signature against it; without it no RFC 9421 signed notification can
-	 * be read.
+	 * from the recipient, task 4.4). A root renewal notice presents a fixed
+	 * value that matches no share and is signed by the listed partner it
+	 * names. Nextcloud 35 verifies a notification's signature against it;
+	 * without it no RFC 9421 signed notification can be read.
 	 *
 	 * @param string $sharedSecret What the notification presents (the secret's SHA-256, or the secret in a decline)
 	 * @param array<array-key,mixed> $payload The notification, with `providerId`
@@ -124,8 +138,13 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * @return string The other side's cloud id, or '' when no share matches
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function getFederationIdFromSharedSecret(string $sharedSecret, array $payload): string {
+		if ($sharedSecret === RootRenewalNoticeDelivery::NOTICE_ID && $this->renewals !== null) {
+			return $this->renewals->noticeIdentity(payload: $payload);
+		}
+
 		$sender = $this->remoteChanges->senderOf(presented: $sharedSecret, notification: $payload);
 		if ($sender !== '' || $this->declines === null) {
 			return $sender;

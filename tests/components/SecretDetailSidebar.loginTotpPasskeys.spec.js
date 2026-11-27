@@ -295,6 +295,52 @@ describe('deleting a passkey', () => {
 		expect(message).not.toMatch(/without/)
 	})
 
+	it.each([
+		[
+			'partner_unreachable',
+			'These partner organisations cannot be reached: bob@partner.',
+		],
+		[
+			'untrusted_root',
+			'The certificate of these partner organisations no longer matches the one pinned here. This can mean they renewed it; an administrator here has to check it with them before sharing resumes: bob@partner.',
+		],
+		[
+			'outbound_disabled',
+			'An administrator turned off sharing with these partner organisations: bob@partner.',
+		],
+	])(
+		'names why it stopped for a partner with %s, without offering to save without them',
+		async (reason, sentence) => {
+			const wrapper = await mountSecret()
+			const store = useSecretStore()
+			vi.spyOn(store, 'writeBackSettled').mockResolvedValue(null)
+			vi.spyOn(store, 'updateSecret').mockRejectedValue(
+				Object.assign(new Error('stopped'), {
+					code: 'partner_unreachable',
+					partners: [
+						{ shareId: 'p1', recipientCloudId: 'bob@partner', reason },
+					],
+				}),
+			)
+
+			const translate = vi.spyOn(globalThis, 't')
+
+			await deleteFirst(wrapper)
+
+			expect(vi.mocked(showError).mock.calls[0][0]).toBe(
+				'{reasons} The passkey was not deleted. Try again later.',
+			)
+			expect(translate).toHaveBeenCalledWith(
+				'keepiq',
+				'{reasons} The passkey was not deleted. Try again later.',
+				{ reasons: sentence },
+				undefined,
+				{ escape: false },
+			)
+			expect(sentence).not.toMatch(/without/)
+		},
+	)
+
 	it('moves focus to the list once the row is gone', async () => {
 		const wrapper = await mountSecret()
 		const store = useSecretStore()

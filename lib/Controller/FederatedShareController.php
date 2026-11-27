@@ -70,7 +70,8 @@ class FederatedShareController extends Controller {
 	 * Share one of the user's secrets with a user of an outbound partner.
 	 *
 	 * A secret that was shared with the user, a received copy, is refused with the message `not_shareable`,
-	 * unless the user owns its source: their own copy of a secret they own is shared from that source.
+	 * unless the user owns its source: their own copy of a secret they own is shared from that source, which the
+	 * response's `sourceSecretId` names.
 	 *
 	 * Every federated recipient is a new party, so the vault key proof of
 	 * user-sharing ("Sharing with a new party requires a verified key proof")
@@ -125,7 +126,10 @@ class FederatedShareController extends Controller {
 				],
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+			// A partner with outbound off answers 403, as the lookups do; any other refusal, `not_a_partner` too, 400.
+			$status = (['outbound_disabled' => Http::STATUS_FORBIDDEN][$exception->getMessage()] ?? Http::STATUS_BAD_REQUEST);
+
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
 		} catch (PartnerUpgradeRequiredException $exception) {
 			return $this->upgradeRequired(exception: $exception, shareId: null);
 		} catch (ShareScanPendingException $exception) {
@@ -142,6 +146,8 @@ class FederatedShareController extends Controller {
 
 	/**
 	 * The federated shares of one of the user's own secrets.
+	 * For the user's own received copy of a secret they own, the source's federated shares are listed first, followed
+	 * by those of the copy.
 	 *
 	 * @param string $secretId The owner's secret
 	 *

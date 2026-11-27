@@ -213,7 +213,7 @@ class FederatedValueFieldsTest extends TestCase {
 				$this->createMock(IClientService::class),
 				$config
 			),
-			root: new FederationRootService($this->caMapper()),
+			root: $this->rootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $random,

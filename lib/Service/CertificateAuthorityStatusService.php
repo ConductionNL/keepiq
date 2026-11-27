@@ -4,13 +4,14 @@
  * Keepiq Certificate Authority Status Service
  *
  * Reports the health of the private CA and the counts of certificates it
- * has issued (certificate-lifecycle §2.6). This is a READ-ONLY view: it
- * derives `healthy` / `expiring_soon` / `action_required` /
- * `not_configured` from the stored root and intermediate, and counts
- * active suites plus stored certificate-type secrets. It emits counts
- * only — never an identifier, PEM, or key material — and it never
- * mutates the CA, which keeps it cleanly separable from
- * CertificateAuthorityService's bootstrap/renewal write paths.
+ * has issued (certificate-lifecycle §2.6). It derives `healthy` /
+ * `expiring_soon` / `action_required` / `not_configured` from the stored
+ * root and intermediate and the `ca_status` flag, and counts active suites
+ * plus stored certificate-type secrets. It emits counts only — never an
+ * identifier, PEM, or key material — and it never mutates the CA's
+ * certificates or keys, which keeps it cleanly separable from
+ * CertificateAuthorityService's bootstrap/renewal write paths. Those paths
+ * set the `ca_status` flag through it, so the flag has one owner.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -39,7 +40,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
 /**
- * Read-only health and issued-certificate counts for the private CA.
+ * Health and issued-certificate counts for the private CA, and the `ca_status` flag behind the health.
  */
 class CertificateAuthorityStatusService {
 	/**
@@ -106,6 +107,28 @@ class CertificateAuthorityStatusService {
 			'issued' => $this->issuedCounts(),
 		];
 	}//end getStatus()
+
+	/**
+	 * Record that the CA is bootstrapped and usable.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-bootstrap
+	 */
+	public function markHealthy(): void {
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+	}//end markHealthy()
+
+	/**
+	 * Record that the CA bootstrap failed; getStatus() then reports `not_configured`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-bootstrap
+	 */
+	public function markDegraded(): void {
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'degraded');
+	}//end markDegraded()
 
 	/**
 	 * The health of a configured CA.

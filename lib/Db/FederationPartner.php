@@ -47,6 +47,20 @@ use OCP\AppFramework\Db\Entity;
  * @method void setAddedAt(DateTime $addedAt)
  * @method string|null getValueFields()
  * @method void setValueFields(?string $valueFields)
+ * @method string|null getPendingRootFingerprint()
+ * @method void setPendingRootFingerprint(?string $pendingRootFingerprint)
+ * @method DateTime|null getPendingRootVerifiedAt()
+ * @method void setPendingRootVerifiedAt(?DateTime $pendingRootVerifiedAt)
+ * @method DateTime|null getPendingRootWindowEndsAt()
+ * @method void setPendingRootWindowEndsAt(?DateTime $pendingRootWindowEndsAt)
+ * @method int|null getPendingRootReminded()
+ * @method void setPendingRootReminded(?int $pendingRootReminded)
+ * @method int|null getRenewalNoticeAttempts()
+ * @method void setRenewalNoticeAttempts(?int $renewalNoticeAttempts)
+ * @method DateTime|null getRenewalNoticeNextAt()
+ * @method void setRenewalNoticeNextAt(?DateTime $renewalNoticeNextAt)
+ *
+ * @SuppressWarnings(PHPMD.LongVariable) Property names mirror the columns.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
@@ -112,6 +126,49 @@ class FederationPartner extends Entity implements JsonSerializable {
 	protected ?string $valueFields = null;
 
 	/**
+	 * The fingerprint of a renewed root the partner announced and that passed every check, waiting for an
+	 * administrator to accept it; null when none is offered.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $pendingRootFingerprint = null;
+
+	/**
+	 * When the offered renewal was verified.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $pendingRootVerifiedAt = null;
+
+	/**
+	 * When the offered renewal stops being acceptable: 30 days after the renewal time the partner publishes.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $pendingRootWindowEndsAt = null;
+
+	/**
+	 * The smallest reminder threshold (days before the window ends) already sent for the offered renewal.
+	 *
+	 * @var integer|null
+	 */
+	protected ?int $pendingRootReminded = null;
+
+	/**
+	 * Failed attempts at telling this partner that this instance renewed its root.
+	 *
+	 * @var integer|null
+	 */
+	protected ?int $renewalNoticeAttempts = null;
+
+	/**
+	 * When the renewal notice to this partner is sent next; null when none is waiting.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $renewalNoticeNextAt = null;
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -133,7 +190,68 @@ class FederationPartner extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'addedBy', type: 'string');
 		$this->addType(fieldName: 'addedAt', type: 'datetime');
 		$this->addType(fieldName: 'valueFields', type: 'string');
+		$this->addType(fieldName: 'pendingRootFingerprint', type: 'string');
+		$this->addType(fieldName: 'pendingRootVerifiedAt', type: 'datetime');
+		$this->addType(fieldName: 'pendingRootWindowEndsAt', type: 'datetime');
+		$this->addType(fieldName: 'pendingRootReminded', type: 'integer');
+		$this->addType(fieldName: 'renewalNoticeAttempts', type: 'integer');
+		$this->addType(fieldName: 'renewalNoticeNextAt', type: 'datetime');
 	}//end __construct()
+
+	/**
+	 * Offer a verified renewed root: replaces any offered one and starts its reminders over.
+	 *
+	 * @param string $fingerprint The renewed root's fingerprint
+	 * @param DateTime $verifiedAt When it was verified
+	 * @param DateTime $windowEndsAt When it stops being acceptable
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+	 */
+	public function offerRenewal(string $fingerprint, DateTime $verifiedAt, DateTime $windowEndsAt): void {
+		$this->setPendingRootFingerprint($fingerprint);
+		$this->setPendingRootVerifiedAt($verifiedAt);
+		$this->setPendingRootWindowEndsAt($windowEndsAt);
+		$this->setPendingRootReminded(null);
+	}//end offerRenewal()
+
+	/**
+	 * Withdraw the offered renewal, if any.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+	 */
+	public function withdrawRenewal(): void {
+		$this->setPendingRootFingerprint(null);
+		$this->setPendingRootVerifiedAt(null);
+		$this->setPendingRootWindowEndsAt(null);
+		$this->setPendingRootReminded(null);
+	}//end withdrawRenewal()
+
+	/**
+	 * The offered renewal while it is still acceptable at `$now`, or null.
+	 *
+	 * @param DateTime $now The current time
+	 *
+	 * @return array{fingerprint:string,verifiedAt:string|null,windowEndsAt:string}|null
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-offered-renewal-expires-after-30-days-with-reminders
+	 */
+	public function offeredRenewal(DateTime $now): ?array {
+		$fingerprint = $this->pendingRootFingerprint;
+		$endsAt = $this->pendingRootWindowEndsAt;
+		if ($fingerprint === null || $endsAt === null || $endsAt <= $now) {
+			return null;
+		}
+
+		return [
+			'fingerprint' => $fingerprint,
+			'verifiedAt' => $this->pendingRootVerifiedAt?->format(DATE_ATOM),
+			'windowEndsAt' => $endsAt->format(DATE_ATOM),
+		];
+	}//end offeredRenewal()
 
 	/**
 	 * Serialize for the admin API.
@@ -159,6 +277,7 @@ class FederationPartner extends Entity implements JsonSerializable {
 			'addedAt' => $this->addedAt?->format(DATE_ATOM),
 			// What its last lookup answer advertised it stores; null before any.
 			'valueFields' => $valueFields,
+			'pendingRenewal' => $this->offeredRenewal(now: new DateTime()),
 		];
 	}//end jsonSerialize()
 }//end class

@@ -22,8 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -96,4 +98,41 @@ class FederationPartnerMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findAllPartners()
+
+	/**
+	 * The partners with an offered root renewal.
+	 *
+	 * @return FederationPartner[]
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-offered-renewal-expires-after-30-days-with-reminders
+	 */
+	public function findWithOfferedRenewal(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->isNotNull('pending_root_fingerprint'));
+
+		return $this->findEntities(query: $qb);
+	}//end findWithOfferedRenewal()
+
+	/**
+	 * The partners whose renewal notice is due to be sent at `$now`, first time or retry.
+	 *
+	 * @param DateTime $now The current time
+	 *
+	 * @return FederationPartner[]
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
+	 */
+	public function findDueRenewalNotices(DateTime $now): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->isNotNull('renewal_notice_next_at'))
+			->andWhere(
+				$qb->expr()->lte('renewal_notice_next_at', $qb->createNamedParameter($now, IQueryBuilder::PARAM_DATETIME_MUTABLE))
+			);
+
+		return $this->findEntities(query: $qb);
+	}//end findDueRenewalNotices()
 }//end class

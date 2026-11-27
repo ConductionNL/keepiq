@@ -183,10 +183,7 @@ class DiscoveryController extends Controller {
 				// Federated recipients (sharing-federated-recipients D1): a
 				// partner's administrator reads this root fingerprint and
 				// compares it out of band before pinning this instance.
-				'federation' => [
-					'enabled' => ($this->federationRoot?->isSupported() === true),
-					'rootFingerprint' => $this->federationRoot?->localRootFingerprint(),
-				],
+				'federation' => $this->federation(),
 				// Additive capabilities of this apiVersion: PUT honours
 				// If-Match (412 on a stale ETag), and the envelope carries
 				// secret.expiresAt.
@@ -219,6 +216,29 @@ class DiscoveryController extends Controller {
 			]
 		);
 	}//end document()
+
+	/**
+	 * The federation block: whether this instance federates, its root fingerprint, and after a root renewal the
+	 * announcement partners that pinned the previous root check it against (`rootRenewal`).
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
+	 */
+	private function federation(): array {
+		$federation = [
+			'enabled' => ($this->federationRoot?->isSupported() === true),
+			'rootFingerprint' => $this->federationRoot?->localRootFingerprint(),
+		];
+
+		$renewal = $this->federationRoot?->localRootRenewal();
+		if ($renewal !== null) {
+			$federation['rootRenewal'] = $renewal;
+		}
+
+		return $federation;
+	}//end federation()
+
 	/**
 	 * Serve the same document on the pre-rename discovery path.
 	 *

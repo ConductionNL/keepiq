@@ -224,6 +224,8 @@ final class AuditMetadataPolicy {
 		AuditEventTypes::FEDERATED_SHARE_RECIPIENT_RESUMED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
 		// Field names only, never a value.
 		AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED => ['partnerId', 'from', 'to'],
+		// Root fingerprints are public: the partner publishes them in its discovery document.
+		AuditEventTypes::FEDERATION_PARTNER_REPINNED => ['partnerId', 'oldFingerprint', 'newFingerprint'],
 	];
 
 	/**

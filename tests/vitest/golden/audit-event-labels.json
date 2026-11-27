@@ -13,6 +13,10 @@
    "label": "[keepiq] Another organisation did not get a change"
   },
   {
+   "id": "federation_partner.repinned",
+   "label": "[keepiq] Another organisation's root re-pinned"
+  },
+  {
    "id": "application.approved",
    "label": "[keepiq] Application approved"
   },
@@ -257,6 +261,7 @@
   "federated_share.sent": "[keepiq] Shared with another organisation",
   "federated_share.suspended": "[keepiq] Sharing with another organisation stopped",
   "federated_share.updated": "[keepiq] Change sent to another organisation",
+  "federation_partner.repinned": "[keepiq] Another organisation's root re-pinned",
   "federation_partner.value_fields_changed": "[keepiq] Another organisation changed the fields it stores",
   "folder.deleted_cascade": "[keepiq] Folder deleted with contents",
   "key_proof.refused": "[keepiq] Master password proof refused",

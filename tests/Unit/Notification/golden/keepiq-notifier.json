@@ -1622,6 +1622,282 @@
         ],
         "outcome": "prepared"
     },
+    "partner_root_renewal camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A partner renewed its root certificate",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A partner renewed its root certificate][]"
+            ],
+            [
+                "t",
+                "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).",
+                [
+                    "",
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).][\"\",0]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "partner_root_renewal empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A partner renewed its root certificate",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A partner renewed its root certificate][]"
+            ],
+            [
+                "t",
+                "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).",
+                [
+                    "",
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).][\"\",0]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "partner_root_renewal full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A partner renewed its root certificate",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A partner renewed its root certificate][]"
+            ],
+            [
+                "t",
+                "%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).",
+                [
+                    "https://cloud.partner.example",
+                    5
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s renewed its Keepiq root certificate, and its previous root signed the new one. Accept the renewed certificate in the partner settings within %2$d day(s).][\"https:\\/\\/cloud.partner.example\",5]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/#federation-partner-p%201"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "partner_root_renewal_reminder camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Renewed partner certificate not accepted yet",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Renewed partner certificate not accepted yet][]"
+            ],
+            [
+                "t",
+                "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.",
+                [
+                    "",
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.][\"\",0]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "partner_root_renewal_reminder empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Renewed partner certificate not accepted yet",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Renewed partner certificate not accepted yet][]"
+            ],
+            [
+                "t",
+                "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.",
+                [
+                    "",
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.][\"\",0]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "partner_root_renewal_reminder full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Renewed partner certificate not accepted yet",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Renewed partner certificate not accepted yet][]"
+            ],
+            [
+                "t",
+                "The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.",
+                [
+                    "https://cloud.partner.example",
+                    5
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The renewed certificate of %1$s can be accepted for %2$d more day(s). After that, it can only be re-pinned by hand after comparing its fingerprint with the partner's administrator.][\"https:\\/\\/cloud.partner.example\",5]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/#federation-partner-p%201"
+            ]
+        ],
+        "outcome": "prepared"
+    },
     "privileged_access_requested camel": {
         "calls": [
             [

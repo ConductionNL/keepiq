@@ -125,22 +125,32 @@ class CACertificateController extends OCSController {
 	}//end renewIntermediate()
 
 	/**
-	 * Trigger root renewal.
+	 * Trigger root renewal. `announced` is false when the old root's key could not be read: partners are not told, and
+	 * each has to re-pin the new root by hand after comparing `rootFingerprint` out of band.
 	 *
 	 * @AuthorizedAdminSetting(AdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#scenario-a-root-whose-key-cannot-be-read-is-renewed-unannounced
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function renewRoot(): JSONResponse {
 		try {
-			$count = $this->caService->renewRoot();
+			$renewal = $this->caService->renewRoot();
+			$count   = $renewal['resignedCount'];
+			$message = "Root renewed, {$count} suites re-signed";
+			if ($renewal['announced'] === false) {
+				$message .= '. Partners were not told: each has to re-pin this server by hand after an out-of-band fingerprint check.';
+			}
+
 			return new JSONResponse(
 				data: [
-					'message' => "Root renewed, {$count} suites re-signed",
+					'message' => $message,
 					'resignedCount' => $count,
+					'announced' => $renewal['announced'],
+					'rootFingerprint' => $renewal['rootFingerprint'],
 					'status' => $this->caService->getStatus(),
 				]
 			);

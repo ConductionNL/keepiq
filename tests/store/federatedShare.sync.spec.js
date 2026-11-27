@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { importSpkiPublicKey } from '../../src/crypto/rsa.js'
 import {
 	forgetVerifiedPartners,
 	saveShared,
@@ -30,6 +31,12 @@ import {
 	settleWithTimers,
 	shareSaveServer,
 } from '../fixtures/shareSaveServer.js'
+
+// Counts the partner keys imported to encrypt to.
+vi.mock('../../src/crypto/rsa.js', async (importOriginal) => {
+	const actual = await importOriginal()
+	return { ...actual, importSpkiPublicKey: vi.fn(actual.importSpkiPublicKey) }
+})
 
 const F = JSON.parse(
 	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
@@ -88,11 +95,13 @@ describe('a value change reaches federated recipients', () => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
 		forgetVerifiedPartners()
+		importSpkiPublicKey.mockClear()
 	})
 
 	it('encrypts the whole new value for a verified recipient and sends only ciphertext', async () => {
 		const { log, result } = await save(VALID)
 
+		expect(importSpkiPublicKey).toHaveBeenCalledOnce()
 		expect(result.federated.written).toBe(1)
 		const [entry] = log.saves.at(-1).federated
 		expect(entry.shareId).toBe('fs-1')
@@ -106,13 +115,106 @@ describe('a value change reaches federated recipients', () => {
 		expect(log.saves.at(-1).suspend).toEqual([])
 	})
 
-	it('suspends a share whose certificate no longer chains to the pinned root', async () => {
-		const { log } = await save(OTHER_ROOT)
+	it('saves nothing and encrypts nothing while a partner root is not the pinned one', async () => {
+		const { log, result } = await save(OTHER_ROOT)
 
+		expect(result).toBeInstanceOf(ShareSaveError)
+		expect(result.code).toBe('partner_unreachable')
+		expect(result.partners).toEqual([
+			{ ...PARTNERS[0], reason: 'untrusted_root' },
+		])
+		expect(log.saves).toHaveLength(1)
+		expect(importSpkiPublicKey).not.toHaveBeenCalled()
+	})
+
+	it('suspends a share whose partner root is not the pinned one only when the user saves without it, encrypting nothing for it', async () => {
+		const { log, result } = await save(OTHER_ROOT, {
+			withoutUnreachable: ['fs-1'],
+		})
+
+		expect(result.federated.suspended).toBe(1)
 		expect(log.saves.at(-1).federated).toEqual([])
 		expect(log.saves.at(-1).suspend).toEqual([
 			{ shareId: 'fs-1', reason: 'untrusted_root' },
 		])
+		expect(importSpkiPublicKey).not.toHaveBeenCalled()
+	})
+
+	it('saves nothing while sharing to the partner is turned off, and suspends with that reason when the user saves without it', async () => {
+		const off = { reject: httpError(403, { message: 'outbound_disabled' }) }
+		const stopped = await save(off)
+
+		expect(stopped.result).toBeInstanceOf(ShareSaveError)
+		expect(stopped.result.code).toBe('partner_unreachable')
+		expect(stopped.result.partners).toEqual([
+			{ ...PARTNERS[0], reason: 'outbound_disabled' },
+		])
+		expect(stopped.log.saves).toHaveLength(1)
+
+		vi.restoreAllMocks()
+		const { log, result } = await save(off, { withoutUnreachable: ['fs-1'] })
+
+		expect(result.federated.suspended).toBe(1)
+		expect(log.saves.at(-1).suspend).toEqual([
+			{ shareId: 'fs-1', reason: 'outbound_disabled' },
+		])
+	})
+
+	it('names every partner a save stopped for with its own reason, and suspends each with it when the user saves without them', async () => {
+		const CAROL = 'carol@cloud.down.example'
+		const DAVE = 'dave@cloud.off.example'
+		const three = [
+			...PARTNERS,
+			{ shareId: 'fs-2', recipientCloudId: CAROL },
+			{ shareId: 'fs-3', recipientCloudId: DAVE },
+		]
+		const lookup = {
+			[BOB]: OTHER_ROOT,
+			[CAROL]: { reject: httpError(502, { message: 'partner_unreachable' }) },
+			[DAVE]: { reject: httpError(403, { message: 'outbound_disabled' }) },
+		}
+		shareSaveServer({ id: 'src', partners: three, lookup })
+		const failed = await saveShared(SAVE).catch((e) => e)
+
+		expect(failed.code).toBe('partner_unreachable')
+		expect(failed.partners).toEqual([
+			{ ...three[0], reason: 'untrusted_root' },
+			{ ...three[1], reason: 'partner_unreachable' },
+			{ ...three[2], reason: 'outbound_disabled' },
+		])
+
+		vi.restoreAllMocks()
+		const log = shareSaveServer({ id: 'src', partners: three, lookup })
+		await saveShared({
+			...SAVE,
+			withoutUnreachable: failed.partners.map((share) => share.shareId),
+		})
+
+		expect(log.saves.at(-1).federated).toEqual([])
+		expect(log.saves.at(-1).suspend).toEqual([
+			{ shareId: 'fs-1', reason: 'untrusted_root' },
+			{ shareId: 'fs-2', reason: 'partner_unreachable' },
+			{ shareId: 'fs-3', reason: 'outbound_disabled' },
+		])
+	})
+
+	it("stops with partner_clock while a partner certificate is not valid by this device's clock, suspending nobody, also when asked to save without it", async () => {
+		const notYetValid = {
+			...VALID,
+			chain: [F.intermediateANotYetValid, F.rootA],
+		}
+		for (const options of [{}, { withoutUnreachable: ['fs-1'] }]) {
+			vi.restoreAllMocks()
+			forgetVerifiedPartners()
+			const { log, result } = await save(notYetValid, options)
+
+			expect(result).toBeInstanceOf(ShareSaveError)
+			expect(result.code).toBe('partner_clock')
+			expect(result.partners).toEqual([])
+			expect(log.saves).toHaveLength(1)
+			expect(log.saves[0].suspend).toEqual([])
+			expect(importSpkiPublicKey).not.toHaveBeenCalled()
+		}
 	})
 
 	it.each([
@@ -399,6 +501,50 @@ describe('a follow-up save after a failed one', () => {
 			reason: 'unknown_recipient',
 		})
 	})
+
+	it.each([
+		[
+			'an administrator re-pinned the renewed partner root',
+			OTHER_ROOT,
+			{ ...OTHER_ROOT, partnerRootFingerprint: F.rootBFingerprint },
+		],
+		[
+			'an administrator turned outbound sharing on again',
+			{ reject: httpError(403, { message: 'outbound_disabled' }) },
+			VALID,
+		],
+	])(
+		'once %s, the next save looks the stopped partner up again and encrypts for it, the other from the kept certificate',
+		async (_, stopped, lifted) => {
+			const MALLORY = 'mallory@cloud.partner.example'
+			const both = [
+				{ shareId: 'fs-1', recipientCloudId: BOB },
+				{ shareId: 'fs-2', recipientCloudId: MALLORY },
+			]
+			const lookup = {
+				[BOB]: stopped,
+				[MALLORY]: { ...VALID, cloudId: MALLORY, certificate: F.mallory },
+			}
+			const log = shareSaveServer({ id: 'src', partners: both, lookup })
+			const failed = await saveShared(SAVE).catch((e) => e)
+			expect(failed.code).toBe('partner_unreachable')
+			expect(shown(failed)).toEqual(['fs-1'])
+			const first = [...log.partnerLookups]
+
+			lookup[BOB] = lifted
+			const result = await saveShared(SAVE)
+
+			expect(first).toEqual([BOB, MALLORY])
+			expect(log.partnerLookups.slice(first.length)).toEqual([BOB])
+			expect(result.federated.written).toBe(2)
+			const final = log.saves.at(-1)
+			expect(final.federated.map((f) => f.shareId).sort()).toEqual([
+				'fs-1',
+				'fs-2',
+			])
+			expect(final.suspend).toEqual([])
+		},
+	)
 
 	it(`keeps a certificate for ${VERIFIED_PARTNER_TTL_MS / 60000} minutes only`, async () => {
 		vi.useFakeTimers({ toFake: ['Date'] })

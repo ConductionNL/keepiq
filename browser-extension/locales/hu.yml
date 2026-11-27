@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: A Keepiq egy olyan titkosítási kulcsot küldött az elem egyik címzettjéhez, amelyet ez a böngésző nem tudott beolvasni. Semmi sem lett mentve.
   unverified: Ez az elem partnerszervezetekkel van megosztva, és ez a böngésző nem tudja megerősíteni, hogy pontosan úgy kapnák meg, ahogy te láttad. Semmi sem lett mentve; ezt a módosítást a Keepiq webalkalmazásban végezd el.
   partnerUnreachable: "Semmi sem lett mentve: egy partnerszervezet, amellyel az elem meg van osztva, nem érhető el ({cloudIds}). Próbáld újra később, vagy mentsd nélkülük, ami szünetelteti velük a megosztást, amíg újra meg nem osztod velük."
+  partnerPaused: "Semmi sem lett mentve. {reasons} Próbáld újra később, vagy mentsd nélkülük, ami szünetelteti velük a megosztást, amíg újra meg nem osztod velük."
+  partnerPausedUnreachable: "Ezek a partnerszervezetek nem érhetők el: {cloudIds}."
+  partnerPausedRootChanged: "Ezeknek a partnerszervezeteknek a tanúsítványa már nem egyezik a Keepiqedben rögzítettel. Ez azt is jelentheti, hogy megújították; a Keepiqed egyik rendszergazdájának egyeztetnie kell velük, mielőtt a megosztás folytatódik: {cloudIds}."
+  partnerPausedSharingOff: "Egy rendszergazda kikapcsolta a megosztást ezekkel a partnerszervezetekkel: {cloudIds}."
   partnerUpgradeRequired: "Semmi sem lett mentve: a Keepiq túl régi ezeknél a hitelesítőkulcs fogadásához: {cloudIds}. Távolítsd el a kulcsot, vagy kérd meg őket, hogy frissítsék a Keepiqet."
   partnerUpgradeRequiredUnnamed: "Semmi sem lett mentve: egy partnerszervezet, amellyel az elem meg van osztva, túl régi Keepiqet futtat a hitelesítőkulcs fogadásához. Távolítsd el a kulcsot, vagy kérd meg őket, hogy frissítsék a Keepiqet."
   partnerUpgradeVersion: Keepiq {version} vagy újabb kell nekik.

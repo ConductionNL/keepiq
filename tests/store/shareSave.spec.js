@@ -534,6 +534,11 @@ describe('saveShared on the owner path', () => {
 			[500, 'not_a_partner'],
 			[500, 'bad_chain'],
 			[404, 'not_a_partner'],
+			// So does a reason that stops the save.
+			[500, 'outbound_disabled'],
+			[502, 'outbound_disabled'],
+			[404, 'outbound_disabled'],
+			[403, 'partner_unreachable'],
 		]) {
 			const log = shareSaveServer({
 				id: 's1',
@@ -1311,7 +1316,7 @@ describe("saveShared by the secret's owner through their own copy", () => {
 		sourceUpdatedAt: BASE,
 	}
 	const required = [{ secretId: 'src', holder: 'owner', targetUserId: null }]
-	const save = () =>
+	const save = (options = {}) =>
 		saveShared({
 			id: 'copy-me',
 			plainDiff: { key: 'new-pw' },
@@ -1324,6 +1329,7 @@ describe("saveShared by the secret's owner through their own copy", () => {
 				additionalFields: null,
 				updatedAt: BASE,
 			}),
+			...options,
 		})
 
 	it('looks up and verifies the partner certificates the server requires and sends their ciphertext', async () => {
@@ -1351,22 +1357,35 @@ describe("saveShared by the secret's owner through their own copy", () => {
 		expect(final.suspend).toEqual([])
 	})
 
-	it('suspends a partner share whose certificate does not verify', async () => {
-		const log = shareSaveServer({
-			id: 'copy-me',
-			context,
-			required,
-			partners: [{ shareId: 'fs-1', recipientCloudId: PARTNER }],
-			lookup: {
-				[PARTNER]: {
-					...VALID,
-					certificate: F.bobOtherRoot,
-					chain: [F.intermediateB, F.rootB],
+	it('stops for a partner root that is not the pinned one, and suspends its share only when the user saves without it', async () => {
+		const server = () =>
+			shareSaveServer({
+				id: 'copy-me',
+				context,
+				required,
+				partners: [{ shareId: 'fs-1', recipientCloudId: PARTNER }],
+				lookup: {
+					[PARTNER]: {
+						...VALID,
+						certificate: F.bobOtherRoot,
+						chain: [F.intermediateB, F.rootB],
+					},
 				},
-			},
-		})
+			})
+		const stopped = server()
 
-		await save()
+		const error = await save().catch((e) => e)
+
+		expect(error).toBeInstanceOf(ShareSaveError)
+		expect(error.code).toBe('partner_unreachable')
+		expect(error.partners).toEqual([
+			{ shareId: 'fs-1', recipientCloudId: PARTNER, reason: 'untrusted_root' },
+		])
+		expect(stopped.saves.some((s) => 'federated' in s)).toBe(false)
+
+		vi.restoreAllMocks()
+		const log = server()
+		await save({ withoutUnreachable: ['fs-1'] })
 
 		expect(log.saves.at(-1).federated).toEqual([])
 		expect(log.saves.at(-1).suspend).toEqual([
@@ -1528,7 +1547,9 @@ describe('what a save tells about partner shares it did not write', () => {
 			)
 
 			expect(showWarning).toHaveBeenCalledTimes(1)
-			expect(showWarning.mock.calls[0][0]).toContain('2 recipients at partner organisations')
+			expect(showWarning.mock.calls[0][0]).toContain(
+				'2 recipients at partner organisations',
+			)
 			expect(showInfo).not.toHaveBeenCalled()
 		},
 	)

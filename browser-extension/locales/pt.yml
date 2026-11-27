@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: O Keepiq enviou, para alguém com quem este item é partilhado, uma chave de encriptação que este navegador não conseguiu ler. Nada foi guardado.
   unverified: Este item é partilhado com organizações parceiras e este navegador não consegue confirmar que o receberiam exatamente como o viu. Nada foi guardado; faça esta alteração na aplicação web do Keepiq.
   partnerUnreachable: "Nada foi guardado: não é possível contactar uma organização parceira com quem este item é partilhado ({cloudIds}). Tente novamente mais tarde ou guarde sem elas; a partilha deste item com elas fica em pausa até voltar a partilhá-lo."
+  partnerPaused: "Nada foi guardado. {reasons} Tente novamente mais tarde ou guarde sem elas; a partilha deste item com elas fica em pausa até voltar a partilhá-lo."
+  partnerPausedUnreachable: "Não é possível contactar estas organizações parceiras: {cloudIds}."
+  partnerPausedRootChanged: "O certificado destas organizações parceiras já não corresponde ao que está fixado no seu Keepiq. Isto pode significar que o renovaram; um administrador do seu Keepiq tem de o verificar com elas antes de a partilha ser retomada: {cloudIds}."
+  partnerPausedSharingOff: "Um administrador desativou a partilha com estas organizações parceiras: {cloudIds}."
   partnerUpgradeRequired: "Nada foi guardado: o Keepiq de {cloudIds} é demasiado antigo para receber uma chave de autenticação. Remova a chave ou peça-lhes que atualizem o Keepiq."
   partnerUpgradeRequiredUnnamed: "Nada foi guardado: uma organização parceira com quem este item é partilhado usa um Keepiq demasiado antigo para receber uma chave de autenticação. Remova a chave ou peça-lhe que atualize o Keepiq."
   partnerUpgradeVersion: Precisam do Keepiq {version} ou posterior.

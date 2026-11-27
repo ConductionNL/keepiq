@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\DiscoveryController;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Exception\PartnerUnreachableException;
 use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Http\Client\IClientService;
@@ -40,9 +41,9 @@ use Throwable;
 /**
  * Partner allowlist: add, pin, permissions, and lookups by host or id.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 14 against a threshold of 10.
  *   Each is one allowlist operation or lookup; find() lets a share write read its own partner
- *   instead of loading every partner.
+ *   instead of loading every partner, and announcedRenewal() reads the document preview() reads.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
@@ -60,6 +61,7 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 * @param FederationPartnerMapper $partnerMapper The partner mapper
 	 * @param IClientService $clientService HTTP client for partner discovery
 	 * @param IConfig $config System config (allow_local_remote_servers)
+	 * @param FederationPartnerAuditTrail $audit Audits a re-pin
 	 *
 	 * @return void
 	 *
@@ -69,6 +71,7 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 		private FederationPartnerMapper $partnerMapper,
 		private IClientService $clientService,
 		private IConfig $config,
+		private FederationPartnerAuditTrail $audit = new FederationPartnerAuditTrail(),
 	) {
 	}//end __construct()
 
@@ -150,26 +153,44 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function preview(string $url): array {
+		return $this->announcedRenewal(url: $url)['preview'];
+	}//end preview()
+
+	/**
+	 * Read a partner's discovery document as preview() does, with the root renewal it announces, unchecked.
+	 *
+	 * @param string $url The partner address
+	 *
+	 * @return array{preview:array{baseUrl:string,host:string,rootFingerprint:string},rootRenewal:mixed}
+	 *
+	 * @throws PartnerUnreachableException When the document cannot be fetched
+	 * @throws InvalidArgumentException When the partner cannot federate
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+	 */
+	public function announcedRenewal(string $url): array {
 		$baseUrl = $this->normaliseBaseUrl(url: $url);
 		try {
+			// A redirect is not followed, so the document is only ever read from the partner's own address.
 			$response = $this->clientService->newClient()->get(
 				$baseUrl . '/index.php/apps/keepiq' . DiscoveryController::CANONICAL_DISCOVERY_PATH,
-				['timeout' => self::DISCOVERY_TIMEOUT, 'headers' => ['Accept' => 'application/json']]
+				[
+					'timeout' => self::DISCOVERY_TIMEOUT,
+					'headers' => ['Accept' => 'application/json'],
+					'allow_redirects' => false,
+				]
 			);
+			if ($response->getStatusCode() >= 300) {
+				throw new PartnerUnreachableException(message: PartnerUnreachableException::MESSAGE);
+			}
+
 			$document = json_decode((string)$response->getBody(), true);
 		} catch (Throwable) {
-			throw new InvalidArgumentException('The partner could not be reached');
+			throw new PartnerUnreachableException(message: PartnerUnreachableException::MESSAGE);
 		}
 
-		$federation = null;
-		if (is_array($document) === true) {
-			$federation = ($document['federation'] ?? null);
-		}
-
-		$fingerprint = null;
-		if (is_array($federation) === true) {
-			$fingerprint = ($federation['rootFingerprint'] ?? null);
-		}
+		$federation = (((array)$document)['federation'] ?? null);
+		$fingerprint = ((array)$federation + ['rootFingerprint' => null])['rootFingerprint'];
 
 		if (is_array($federation) === false || ($federation['enabled'] ?? false) !== true
 			|| is_string($fingerprint) === false || preg_match('/^[0-9a-f]{64}$/', $fingerprint) !== 1
@@ -178,11 +199,14 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 		}
 
 		return [
-			'baseUrl' => $baseUrl,
-			'host' => (string)$this->hostOf(url: $baseUrl),
-			'rootFingerprint' => $fingerprint,
+			'preview' => [
+				'baseUrl' => $baseUrl,
+				'host' => (string)$this->hostOf(url: $baseUrl),
+				'rootFingerprint' => $fingerprint,
+			],
+			'rootRenewal' => ($federation['rootRenewal'] ?? null),
 		];
-	}//end preview()
+	}//end announcedRenewal()
 
 	/**
 	 * Add a partner. The fingerprint the administrator confirmed must still be
@@ -229,6 +253,49 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 
 		return $this->partnerMapper->insert(entity: $partner);
 	}//end add()
+
+	/**
+	 * Pin the root fingerprint a partner publishes now, as add() pins it: only when it is the fingerprint the
+	 * administrator confirmed. A fingerprint equal to the pin stores no new pin. A stored re-pin is audited with the
+	 * administrator as the actor. Either way, any offered root renewal is withdrawn.
+	 *
+	 * @param string $id The partner UUID
+	 * @param string $confirmedFingerprint The fingerprint the administrator compared
+	 * @param string $adminId The administrator
+	 *
+	 * @return array{partner:FederationPartner,changed:bool}
+	 *
+	 * @throws DoesNotExistException When the partner does not exist
+	 * @throws InvalidArgumentException When the partner cannot be read, its stored address and host disagree, or its
+	 *   fingerprint is not the one the administrator confirmed
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+	 */
+	public function repin(string $id, string $confirmedFingerprint, string $adminId): array {
+		$partner = $this->partnerMapper->findById(id: $id);
+		$preview = $this->preview(url: $partner->getBaseUrl());
+		// The previewed host comes from the stored address, so this only refuses a row whose address and host disagree.
+		if ($preview['host'] !== $partner->getHost()) {
+			throw new InvalidArgumentException('The stored partner address does not match its pinned host');
+		}
+
+		if (hash_equals($preview['rootFingerprint'], strtolower(trim($confirmedFingerprint))) === false) {
+			throw new InvalidArgumentException('The partner root fingerprint is not the one you confirmed');
+		}
+
+		$old = $partner->getRootFingerprint();
+		$changed = hash_equals($old, $preview['rootFingerprint']) === false;
+		$partner->setRootFingerprint($preview['rootFingerprint']);
+		$partner->withdrawRenewal();
+		// An unchanged row is not written: the mapper skips an update without changed fields.
+		$partner = $this->partnerMapper->update(entity: $partner);
+		if ($changed === true) {
+			$this->audit->repinned(partner: $partner, oldFingerprint: $old, adminId: $adminId);
+		}
+
+		return ['partner' => $partner, 'changed' => $changed];
+	}//end repin()
 
 	/**
 	 * Change a partner's directions.
@@ -337,13 +404,37 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function outboundPartnerForRemote(string $remote): ?FederationPartner {
-		$partner = $this->findByHost(host: (string)$this->hostOf(url: $remote));
-		if ($partner === null || $partner->getAllowOutbound() !== true) {
+		try {
+			return $this->requireOutboundPartner(remote: $remote);
+		} catch (InvalidArgumentException) {
 			return null;
+		}
+	}//end outboundPartnerForRemote()
+
+	/**
+	 * The partner users here may share to, by the host of a cloud id's remote, or why there is none.
+	 *
+	 * @param string $remote The cloud id's remote (URL or host)
+	 *
+	 * @return FederationPartner
+	 *
+	 * @throws InvalidArgumentException `not_a_partner` when that host is no partner, `outbound_disabled` when it is
+	 *   one whose outbound sharing is off
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-sharing-to-bobs-partner-is-turned-off
+	 */
+	public function requireOutboundPartner(string $remote): FederationPartner {
+		$partner = $this->findByHost(host: (string)$this->hostOf(url: $remote));
+		if ($partner === null) {
+			throw new InvalidArgumentException('not_a_partner');
+		}
+
+		if ($partner->getAllowOutbound() !== true) {
+			throw new InvalidArgumentException('outbound_disabled');
 		}
 
 		return $partner;
-	}//end outboundPartnerForRemote()
+	}//end requireOutboundPartner()
 
 	/**
 	 * A partner by host, or null.

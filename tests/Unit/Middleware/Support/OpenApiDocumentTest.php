@@ -93,6 +93,28 @@ class OpenApiDocumentTest extends TestCase {
 	}//end testTheDocumentMatchesTheRoutes()
 
 	/**
+	 * The recipient certificate lookup documents its refusals. It takes them from
+	 * PartnerCertificateBatchService::refusalStatus(), which the generator does not read.
+	 *
+	 * @return void
+	 */
+	public function testTheRecipientCertificateLookupDocumentsItsRefusals(): void {
+		$statuses = null;
+		foreach (self::document()['paths'] as $item) {
+			foreach ($item as $operation) {
+				if (is_array($operation) === true && ($operation['operationId'] ?? null) === 'federation-recipient-certificate') {
+					$statuses = array_map('strval', array_keys($operation['responses'] ?? []));
+				}
+			}
+		}
+
+		$this->assertIsArray(actual: $statuses, message: 'federation-recipient-certificate is not documented');
+		foreach (['403', '404', '409', '502'] as $status) {
+			$this->assertContains(needle: $status, haystack: $statuses, message: 'federation-recipient-certificate does not document '.$status);
+		}
+	}//end testTheRecipientCertificateLookupDocumentsItsRefusals()
+
+	/**
 	 * The decoded openapi.json.
 	 *
 	 * @return array<string,mixed>

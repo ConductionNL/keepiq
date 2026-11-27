@@ -33,10 +33,8 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
-use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -77,21 +75,21 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	 * Constructor for CertificateAuthorityService.
 	 *
 	 * @param CACertificateMapper $caCertificateMapper The CA certificate mapper
-	 * @param IAppConfig $appConfig The app config interface
 	 * @param ICrypto $crypto The crypto service
 	 * @param LoggerInterface $logger The logger interface
 	 * @param CertificateIssuanceService $issuanceService The leaf-certificate issuer
-	 * @param CertificateAuthorityStatusService $statusService The CA health/counts reporter
+	 * @param CertificateAuthorityStatusService $statusService The CA health/counts reporter, and the health flag
+	 * @param RootRenewalRecorder $renewals Signs a renewed root with the root it replaces, stores and announces it
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private CACertificateMapper $caCertificateMapper,
-		private IAppConfig $appConfig,
 		private ICrypto $crypto,
 		private LoggerInterface $logger,
 		private CertificateIssuanceService $issuanceService,
 		private CertificateAuthorityStatusService $statusService,
+		private RootRenewalRecorder $renewals,
 	) {
 	}//end __construct()
 
@@ -147,7 +145,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 			$this->logger->info('Keepiq: CA already bootstrapped, skipping');
 			// Healthy state — make sure ca_status reflects it in case a prior
 			// partial-state install left it unset or degraded.
-			$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+			$this->statusService->markHealthy();
 		} catch (DoesNotExistException) {
 			// Partial state: root exists but intermediate does not.
 			// Recover by issuing only the missing intermediate against the existing root.
@@ -156,7 +154,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 			);
 			$recovered = $this->recoverIntermediate(root: $root);
 			$this->logger->info('Keepiq: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
-			$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+			$this->statusService->markHealthy();
 			$this->logger->info('Keepiq: CA partial-state recovery complete');
 		}//end try
 	}//end ensureIntermediate()
@@ -182,7 +180,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 		// Generate and sign the intermediate certificate.
 		$this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
-		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
+		$this->statusService->markHealthy();
 		$this->logger->info('Keepiq: CA bootstrap complete');
 	}//end bootstrapFresh()
 
@@ -308,40 +306,61 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	}//end rollIntermediate()
 
 	/**
-	 * Renew the root certificate and generate a new intermediate.
+	 * Renew the root certificate and generate a new intermediate. The current root's key signs the new root, and the
+	 * signature is stored with it in the same transaction; when that signing fails, nothing is stored. Right after the
+	 * commit, RootRenewedEvent queues the notices to partners. When the current root's key cannot be read, the root is
+	 * renewed anyway, without a signature and unannounced, so every partner has to re-pin it by hand.
 	 *
-	 * @return int Number of suites re-signed.
+	 * @return array{resignedCount:int,announced:bool,rootFingerprint:string} The number of suites re-signed, whether
+	 *     partners are told, and the new root's fingerprint as the discovery document publishes it
+	 *
+	 * @throws RuntimeException When the current root's key cannot sign the new root
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
 	 */
-	public function renewRoot(): int {
+	public function renewRoot(): array {
 		$oldRoot = $this->caCertificateMapper->findRoot();
+		$oldKey  = $this->renewals->previousKey(
+			decrypt: fn (): string => $this->crypto->decrypt((string)$oldRoot->getPrivateKey())
+		);
 
 		$rootKey  = $this->newRsaKey();
 		$rootCert = $this->signRoot(rootKey: $rootKey);
+		$pems = $this->exportPems(key: $rootKey, certificate: $rootCert);
 
-		// Store new root.
-		$newRoot = $this->insertCa(type: 'root', pems: $this->exportPems(key: $rootKey, certificate: $rootCert));
-
-		// Link old root to successor.
-		$oldRoot->setSuccessorId($newRoot->getId());
-		$this->caCertificateMapper->update($oldRoot);
-
-		// Deactivate old intermediate and create new one.
-		$oldIntermediate = $this->deactivateIntermediate();
-		$newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
-
-		// Link old intermediate to new one.
-		if ($oldIntermediate !== null) {
-			$oldIntermediate->setSuccessorId($newIntermediate->getId());
-			$this->caCertificateMapper->update($oldIntermediate);
+		// The old root vouches for the new one, so partners that pinned it can check the renewal.
+		$signature = null;
+		if ($oldKey !== null) {
+			$signature = $this->renewals->sign(newRootPem: $pems['certificate'], previousKey: $oldKey);
 		}
+
+		$store = function () use ($oldRoot, $pems, $signature, $rootKey, $rootCert): void {
+			$newRoot = $this->insertCa(type: 'root', pems: $pems, predecessorSignature: $signature);
+			$oldRoot->setSuccessorId($newRoot->getId());
+			$this->caCertificateMapper->update($oldRoot);
+
+			$oldIntermediate = $this->deactivateIntermediate();
+			$newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
+			if ($oldIntermediate !== null) {
+				$oldIntermediate->setSuccessorId($newIntermediate->getId());
+				$this->caCertificateMapper->update($oldIntermediate);
+			}
+		};
+		match ($signature) {
+			null => $this->renewals->recordUnannounced(store: $store),
+			default => $this->renewals->record(store: $store),
+		};
 
 		$resignedCount = $this->issuanceService->resignAllActiveSuites();
 
 		$this->logger->info("Keepiq: Root renewed, {$resignedCount} suites re-signed");
 
-		return $resignedCount;
+		return [
+			'resignedCount' => $resignedCount,
+			'announced' => $signature !== null,
+			'rootFingerprint' => (new CertificatePem(pem: $pems['certificate']))->fingerprint(),
+		];
 	}//end renewRoot()
 
 	/**
@@ -504,10 +523,11 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	 *
 	 * @param string $type 'root' or 'intermediate'
 	 * @param array<string,string> $pems The PEM-encoded certificate and key
+	 * @param string|null $predecessorSignature On a renewed root, the replaced root's signature over it
 	 *
 	 * @return CACertificate
 	 */
-	private function insertCa(string $type, array $pems): CACertificate {
+	private function insertCa(string $type, array $pems, ?string $predecessorSignature = null): CACertificate {
 		$isRoot = $type === 'root';
 		$days   = self::INTERMEDIATE_LIFETIME_DAYS;
 		if ($isRoot === true) {
@@ -522,6 +542,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 		$entity->setCreatedAt(new DateTime());
 		$entity->setExpiresAt(new DateTime('+' . $days . ' days'));
 		$entity->setIsActive($isRoot === false);
+		$entity->setPredecessorSignature($predecessorSignature);
 		$this->caCertificateMapper->insert($entity);
 
 		return $entity;
@@ -552,7 +573,7 @@ class CertificateAuthorityService implements CertificateAuthorityServiceInterfac
 	 * @codeCoverageIgnore
 	 */
 	private function setDegraded(): void {
-		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'degraded');
+		$this->statusService->markDegraded();
 		$this->logger->error('Keepiq: CA bootstrap failed, entering degraded state');
 	}//end setDegraded()
 }//end class

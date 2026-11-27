@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Keepiq",
-        "version": "0.3.38-unstable.20261127130910",
+        "version": "0.3.38-unstable.20261127134357",
         "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json, and as application/problem+json when the request's Accept header asks for it.",
         "contact": {
             "name": "Conduction B.V.",
@@ -4917,7 +4917,7 @@
             "post": {
                 "operationId": "c-a-certificate-renew-root",
                 "summary": "Trigger root renewal",
-                "description": "Trigger root renewal.",
+                "description": "Trigger root renewal. `announced` is false when the old root's key could not be read: partners are not told, and each has to re-pin the new root by hand after comparing `rootFingerprint` out of band.",
                 "tags": [
                     "c-a-certificate"
                 ],
@@ -9050,11 +9050,132 @@
                 }
             }
         },
+        "/federation/partners/{id}/root": {
+            "put": {
+                "operationId": "federation-partner-repin",
+                "summary": "Pin the root fingerprint the partner publishes now, after the administrator compared it again",
+                "description": "Pin the root fingerprint the partner publishes now, after the administrator compared it again. The answer is `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint. With `acceptRenewal`, the fingerprint is the offered renewal the administrator accepts: the offer must still be open and the partner's announcement is checked again before the same re-pin.",
+                "tags": [
+                    "federation-partner"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fingerprint": {
+                                        "type": "string"
+                                    },
+                                    "acceptRenewal": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/federation/recipient-certificate": {
             "post": {
                 "operationId": "federation-recipient-certificate",
                 "summary": "Look up a federated recipient's certificate at their partner instance",
-                "description": "Look up a federated recipient's certificate at their partner instance. The answer is `{cloudId, certificate, chain, partnerRootFingerprint, valueFields}`, where `valueFields` lists the value fields beyond `key`, `login` and `additionalFields` the partner stores, empty for an older Keepiq.",
+                "description": "Look up a federated recipient's certificate at their partner instance. The answer is `{cloudId, certificate, chain, partnerRootFingerprint, valueFields}`, where `valueFields` lists the value fields beyond `key`, `login` and `additionalFields` the partner stores, empty for an older Keepiq. A refusal answers `{message}` with the status the batch route gives it: 403, 404, 409 or 502.",
                 "tags": [
                     "federation"
                 ],
@@ -18443,6 +18564,28 @@
                     },
                     "401": {
                         "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed",
                         "content": {
                             "application/problem+json": {
                                 "schema": {

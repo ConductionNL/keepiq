@@ -818,7 +818,7 @@ describe('replay', () => {
 		const [failed] = reloaded.failedEntries
 		expect(failed.failure).toEqual({
 			code: 'partner_unreachable',
-			partners: ['bob@partner'],
+			partners: [{ cloudId: 'bob@partner', reason: 'partner_unreachable' }],
 		})
 		expect(failureText(failed.failure)).toContain('bob@partner')
 	})
@@ -885,7 +885,95 @@ describe('replay', () => {
 		expect(failureText(failed.failure)).toContain('try again in a minute')
 	})
 
-	it('a partner share that is not the owner\'s fails the entry, not a version conflict, and the queue goes on', async () => {
+	it.each([
+		[
+			'untrusted_root',
+			{
+				...BOB_VERIFIED,
+				certificate: CHAIN.bobOtherRoot,
+				chain: [CHAIN.intermediateB, CHAIN.rootB],
+			},
+			'The certificate of these partner organisations no longer matches the one pinned here',
+		],
+		[
+			'outbound_disabled',
+			{ reject: httpError(403, { message: 'outbound_disabled' }) },
+			'An administrator turned off sharing with these partner organisations',
+		],
+	])(
+		'a partner the save stopped for with %s fails the entry naming why, and the queue goes on',
+		async (reason, lookup, text) => {
+			await goOffline()
+			await secrets.updateSecret('s1', { key: 'new' })
+			await secrets.createSecret({ name: 'B', key: 'v' })
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+				rows: { s1: { id: 's1', updatedAt: BASE } },
+				posts: { '/api/v1/secrets': { id: 'created' } },
+				lookup: { [BOB]: lookup },
+			})
+
+			const result = await offline.replayQueue()
+
+			expect(result).toEqual({ synced: 1, stopped: false })
+			expect(log.saves.flatMap((s) => s.suspend)).toEqual([])
+			const [failed] = offline.failedEntries
+			expect(failed.secretId).toBe('s1')
+			expect(failed.failure).toEqual({
+				code: 'partner_unreachable',
+				partners: [{ cloudId: BOB, reason }],
+			})
+			expect(failureText(failed.failure)).toContain(text)
+			expect(failureText(failed.failure)).toContain(BOB)
+			expect(failureText(failed.failure)).not.toContain('cannot be reached')
+		},
+	)
+
+	it("a partner certificate this device's clock rejects fails the entry with the clock text, and later entries are not held", async () => {
+		await goOffline()
+		await secrets.updateSecret('s1', { key: 'new' })
+		await secrets.createSecret({ name: 'B', key: 'v' })
+		goOnline()
+		const log = shareSaveServer({
+			id: 's1',
+			partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+			rows: { s1: { id: 's1', updatedAt: BASE } },
+			posts: { '/api/v1/secrets': { id: 'created' } },
+			lookup: {
+				[BOB]: {
+					...BOB_VERIFIED,
+					chain: [CHAIN.intermediateANotYetValid, CHAIN.rootA],
+				},
+			},
+		})
+
+		const result = await offline.replayQueue()
+
+		expect(result).toEqual({ synced: 1, stopped: false })
+		expect(log.saves.flatMap((s) => s.suspend)).toEqual([])
+		expect(offline.entries.map((e) => e.secretId)).toEqual(['s1'])
+		const [failed] = offline.failedEntries
+		expect(failed.secretId).toBe('s1')
+		expect(failed.failure).toEqual({ code: 'partner_clock' })
+		expect(failureText(failed.failure)).toContain(
+			"check this device's date and time",
+		)
+	})
+
+	it('reads a failure stored as plain cloud ids as unreachable partners', () => {
+		const old = { code: 'partner_unreachable', partners: ['bob@partner'] }
+		const current = {
+			code: 'partner_unreachable',
+			partners: [{ cloudId: 'bob@partner', reason: 'partner_unreachable' }],
+		}
+
+		expect(failureText(old)).toBe(failureText(current))
+		expect(failureText(old)).toContain('cannot be reached (bob@partner)')
+	})
+
+	it("a partner share that is not the owner's fails the entry, not a version conflict, and the queue goes on", async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { key: 'new' })
 		await secrets.createSecret({ name: 'B', key: 'v' })
@@ -897,7 +985,7 @@ describe('replay', () => {
 			onSave: () => {
 				throw httpError(409, {
 					error: 'partner_share_owner_mismatch',
-					message: 'A partner share of this secret is not its owner\'s',
+					message: "A partner share of this secret is not its owner's",
 				})
 			},
 		})

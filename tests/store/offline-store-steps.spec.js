@@ -162,7 +162,28 @@ describe('the failure a replay error stores', () => {
 	const CASES = {
 		'partner unreachable': [
 			new ShareSaveError('partner_unreachable', PARTNERS),
-			{ code: 'partner_unreachable', partners: ['a@x', 'b@y'] },
+			{
+				code: 'partner_unreachable',
+				partners: [
+					{ cloudId: 'a@x', reason: 'partner_unreachable' },
+					{ cloudId: 'b@y', reason: 'partner_unreachable' },
+				],
+			},
+		],
+		'partners stopped for each reason': [
+			new ShareSaveError('partner_unreachable', [
+				{ recipientCloudId: 'a@x', reason: 'partner_unreachable' },
+				{ recipientCloudId: 'b@y', reason: 'untrusted_root' },
+				{ recipientCloudId: 'c@z', reason: 'outbound_disabled' },
+			]),
+			{
+				code: 'partner_unreachable',
+				partners: [
+					{ cloudId: 'a@x', reason: 'partner_unreachable' },
+					{ cloudId: 'b@y', reason: 'untrusted_root' },
+					{ cloudId: 'c@z', reason: 'outbound_disabled' },
+				],
+			},
 		],
 		'partner unreachable without partners': [
 			new ShareSaveError('partner_unreachable'),
@@ -171,6 +192,10 @@ describe('the failure a replay error stores', () => {
 		'partner lookup limit': [
 			new ShareSaveError('partner_lookup_limit'),
 			{ code: 'partner_lookup_limit' },
+		],
+		'partner clock': [
+			new ShareSaveError('partner_clock'),
+			{ code: 'partner_clock' },
 		],
 		'view only': [new ShareSaveError('view_only'), { code: 'view_only' }],
 		'upgrade required as a share save error': [

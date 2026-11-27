@@ -82,6 +82,30 @@ class CACertificateMapper extends QBMapper {
 	}//end findRoot()
 
 	/**
+	 * The root a renewal replaced with the given root, or null when that root replaced none.
+	 *
+	 * @param string $rootId The id of the newer root
+	 *
+	 * @return CACertificate|null
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-a-renewed-root-is-announced-to-partners
+	 */
+	public function findPredecessorOf(string $rootId): ?CACertificate {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('type', $qb->createNamedParameter('root')))
+			->andWhere($qb->expr()->eq('successor_id', $qb->createNamedParameter($rootId)))
+			->setMaxResults(1);
+
+		try {
+			return $this->findEntity(query: $qb);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end findPredecessorOf()
+
+	/**
 	 * Find certificates expiring within the given number of days.
 	 *
 	 * @param int $days The number of days to check

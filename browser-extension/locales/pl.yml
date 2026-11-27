@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq przesłał klucz szyfrowania jednej z osób, którym udostępniono ten element, a ta przeglądarka nie mogła go odczytać. Nic nie zapisano.
   unverified: Ten element jest udostępniony organizacjom partnerskim, a ta przeglądarka nie może potwierdzić, że otrzymają go dokładnie w takiej postaci, w jakiej go widzisz. Nic nie zapisano; wprowadź tę zmianę w aplikacji webowej Keepiq.
   partnerUnreachable: "Nic nie zapisano: organizacja partnerska, której udostępniono ten element, jest nieosiągalna ({cloudIds}). Spróbuj ponownie później lub zapisz bez nich, co wstrzyma udostępnianie im tego elementu, dopóki ponownie im go nie udostępnisz."
+  partnerPaused: "Nic nie zapisano. {reasons} Spróbuj ponownie później lub zapisz bez nich, co wstrzyma udostępnianie im tego elementu, dopóki ponownie im go nie udostępnisz."
+  partnerPausedUnreachable: "Te organizacje partnerskie są nieosiągalne: {cloudIds}."
+  partnerPausedRootChanged: "Certyfikat tych organizacji partnerskich nie zgadza się już z przypiętym w Twoim Keepiq. Może to oznaczać, że go odnowiły; administrator Twojego Keepiq musi to z nimi sprawdzić, zanim udostępnianie zostanie wznowione: {cloudIds}."
+  partnerPausedSharingOff: "Administrator wyłączył udostępnianie tym organizacjom partnerskim: {cloudIds}."
   partnerUpgradeRequired: "Nic nie zapisano: Keepiq u {cloudIds} jest zbyt stary, aby odebrać klucz uwierzytelniający. Usuń klucz lub poproś o aktualizację Keepiq."
   partnerUpgradeRequiredUnnamed: "Nic nie zapisano: organizacja partnerska, której udostępniono ten element, ma zbyt starą wersję Keepiq, aby odebrać klucz uwierzytelniający. Usuń klucz lub poproś ją o aktualizację Keepiq."
   partnerUpgradeVersion: Potrzebna jest wersja Keepiq {version} lub nowsza.

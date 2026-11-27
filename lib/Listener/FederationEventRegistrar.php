@@ -23,10 +23,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
+use OCA\Keepiq\Event\RootRenewedEvent;
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Listener\FederationOcmRequestListener;
+use OCA\Keepiq\Listener\RootRenewedListener;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Federation\ICloudFederationProviderManager;
@@ -40,7 +42,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
  */
 final class FederationEventRegistrar {
 	/**
-	 * Bind the OCM discovery and endpoint listeners.
+	 * Bind the OCM discovery and endpoint listeners, and the listener that queues root renewal notices.
 	 *
 	 * @param IRegistrationContext $context The registration context
 	 *
@@ -56,6 +58,10 @@ final class FederationEventRegistrar {
 		$context->registerEventListener(
 			event: OCMEndpointRequestEvent::class,
 			listener: FederationOcmRequestListener::class
+		);
+		$context->registerEventListener(
+			event: RootRenewedEvent::class,
+			listener: RootRenewedListener::class
 		);
 	}//end register()
 
