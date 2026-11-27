@@ -131,6 +131,61 @@ import {
 import { useSecretStore } from '../../store/modules/secret.js'
 import { isShareScanPending } from '../../utils/shareScanPending.js'
 
+/**
+ * The words for each refusal of a share that needs no more than its message.
+ *
+ * @return {{[message: string]: string}} The text for each refusal message.
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
+ * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+ */
+function refusalTexts() {
+	return {
+		not_a_partner: t('keepiq', 'That organisation is not one of your partners.'),
+
+		outbound_disabled: t(
+			'keepiq',
+			'An administrator turned off sharing with that organisation.',
+		),
+
+		unknown_recipient: t(
+			'keepiq',
+			'No one with that account can receive secrets from you.',
+		),
+
+		partner_unreachable: t(
+			'keepiq',
+			'The other organisation did not answer. Try again later.',
+		),
+
+		// The owner's server refused the partner's chain before the browser saw it.
+		bad_chain: t(
+			'keepiq',
+			'The certificate could not be verified. Nothing was shared.',
+		),
+
+		delivery_failed: t(
+			'keepiq',
+			'The other organisation did not answer. Try again later.',
+		),
+
+		already_shared: t(
+			'keepiq',
+			'This secret is already shared with that account.',
+		),
+
+		not_shareable: t(
+			'keepiq',
+			'This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.',
+		),
+
+		// The login holds a one-time code or passkeys this client does not send yet.
+		copy_fields_mismatch: t(
+			'keepiq',
+			'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+		),
+	}
+}
+
 export default {
 	name: 'FederatedShareForm',
 
@@ -346,54 +401,7 @@ export default {
 					'The certificate could not be verified. Nothing was shared.',
 				)
 			}
-			const texts = {
-				not_a_partner: t(
-					'keepiq',
-					'That organisation is not one of your partners.',
-				),
-
-				outbound_disabled: t(
-					'keepiq',
-					'An administrator turned off sharing with that organisation.',
-				),
-
-				unknown_recipient: t(
-					'keepiq',
-					'No one with that account can receive secrets from you.',
-				),
-
-				partner_unreachable: t(
-					'keepiq',
-					'The other organisation did not answer. Try again later.',
-				),
-
-				// The owner's server refused the partner's chain before the browser saw it.
-				bad_chain: t(
-					'keepiq',
-					'The certificate could not be verified. Nothing was shared.',
-				),
-
-				delivery_failed: t(
-					'keepiq',
-					'The other organisation did not answer. Try again later.',
-				),
-
-				already_shared: t(
-					'keepiq',
-					'This secret is already shared with that account.',
-				),
-
-				not_shareable: t(
-					'keepiq',
-					'This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.',
-				),
-
-				// The login holds a one-time code or passkeys this client does not send yet.
-				copy_fields_mismatch: t(
-					'keepiq',
-					'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
-				),
-			}
+			const texts = refusalTexts()
 			return (
 				texts[e?.response?.data?.message]
 				?? t('keepiq', 'Something went wrong. Try again.')
