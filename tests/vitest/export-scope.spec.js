@@ -5,7 +5,7 @@
  * The export dialog's scope and options (portability-export-choice-and-restore-fidelity task 1.2),
  * checked against the real serializer.
  *
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 
 import { describe, expect, it } from 'vitest'

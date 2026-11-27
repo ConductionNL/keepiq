@@ -2916,7 +2916,7 @@ export default {
 		 * @param {string} passkeys The remaining passkeys value, '' for none.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async onDeletePasskey(passkeys) {
 			if (!this.canChangeValue || this.passkeySaving) {
@@ -2957,7 +2957,7 @@ export default {
 		 *
 		 * @param {Error} e The failure.
 		 * @return {string}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
 		passkeyDeleteErrorText(e) {
 			if (e?.code === 'partner_unreachable') {
@@ -3008,7 +3008,7 @@ export default {
 		 * @param {string} id The secret.
 		 * @param {object|null|undefined} writeBack The settled write-back.
 		 * @return {string|null}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		sourceBaseFor(id, writeBack) {
 			const offline = useOfflineStore()

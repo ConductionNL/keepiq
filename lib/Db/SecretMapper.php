@@ -126,7 +126,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return array<string,Secret>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function findByIds(array $ids): array {
 		$found = [];
@@ -156,7 +156,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return int The number of rows changed: 0 when the row moved on or is gone
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function advanceVersion(string $id, DateTime $base, DateTime $savedAt): int {
 		$qb = $this->db->getQueryBuilder();
@@ -357,6 +357,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Each argument is one optional
 	 *   filter of the paged list; a parameter object would only rename them.
@@ -385,7 +386,7 @@ class SecretMapper extends QBMapper {
 		);
 
 		$qb = $this->selectAll();
-		$filter->narrow(qb: $qb);
+		$filter->narrow(qb: $qb, types: new SecretTypeMatch(db: $this->db));
 		$this->excludeAccessExpired(qb: $qb);
 		$organisation = $filter->organise(qb: $qb);
 		$organisation->order(
@@ -506,6 +507,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function countByOwner(
 		string $ownerType,
@@ -527,7 +529,7 @@ class SecretMapper extends QBMapper {
 		);
 
 		$qb = $this->selectCount();
-		$filter->narrow(qb: $qb);
+		$filter->narrow(qb: $qb, types: new SecretTypeMatch(db: $this->db));
 		$this->excludeAccessExpired(qb: $qb);
 		$filter->organise(qb: $qb);
 

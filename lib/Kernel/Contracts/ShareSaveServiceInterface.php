@@ -54,8 +54,8 @@ interface ShareSaveServiceInterface {
 	 * @throws StaleWriteException When `{id}` changed since the base
 	 * @throws ShareSaveRefusal A refusal with its code; nothing was written
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function save(string $id, ShareSaveRequest $request, string $userId): array;
 
@@ -68,7 +68,7 @@ interface ShareSaveServiceInterface {
 	 *
 	 * @return array{stageId:string,expiresAt:string,staged:array{copies:int,federated:int}}
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function stage(string $id, ShareSaveRequest $request, string $userId): array;
 }//end interface

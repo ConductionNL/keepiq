@@ -341,7 +341,7 @@ export default {
 		 * The folders to choose from.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		folderOptions() {
 			return this.folders.map((folder) => ({
@@ -354,7 +354,7 @@ export default {
 		 * The types to choose from.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => ({
@@ -367,7 +367,7 @@ export default {
 		 * The fields a user can leave out.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		omitChoices() {
 			return [
@@ -384,7 +384,7 @@ export default {
 		 * The serializer options: the types, so the file names them, and the fields left out.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		exportOptions() {
 			return serializerOptions(useSecretTypeStore().types, this.omitFields)
@@ -414,7 +414,7 @@ export default {
 		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/secret-export/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canSubmit() {
 			if (this.exportBlocked) {
@@ -451,7 +451,7 @@ export default {
 		 * @param {boolean} open Whether the dialog is open now.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		async open(open) {
 			if (open !== true) {
@@ -513,7 +513,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async onExport() {
 			this.error = null

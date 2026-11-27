@@ -22,14 +22,16 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Db;
 
+use Closure;
 use DateTime;
 use DateTimeZone;
 use OCP\IDBConnection;
+use Throwable;
 
 /**
  * The version lock of `keepiq_secrets` rows.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 class SecretVersionLock {
 	/**
@@ -54,7 +56,7 @@ class SecretVersionLock {
 	 *
 	 * @return DateTime|null The version, in UTC; null when the row is gone
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function lock(string $id): ?DateTime {
 		$lock = $this->db->getQueryBuilder();
@@ -77,4 +79,33 @@ class SecretVersionLock {
 
 		return new DateTime($value, new DateTimeZone('UTC'));
 	}//end lock()
+
+	/**
+	 * Run `$work` in a transaction that holds the secret's row lock, with the
+	 * version the row holds (null when it is gone). The transaction commits
+	 * when `$work` returns and rolls back when it throws.
+	 *
+	 * @param string $id The secret ID
+	 * @param Closure(?DateTime):T $work What to do while the row is locked
+	 *
+	 * @return T What `$work` returned
+	 *
+	 * @throws Throwable What `$work` threw, after the rollback
+	 *
+	 * @template T
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+	 */
+	public function whileLocked(string $id, Closure $work): mixed {
+		$this->db->beginTransaction();
+		try {
+			$result = $work($this->lock(id: $id));
+			$this->db->commit();
+		} catch (Throwable $exception) {
+			$this->db->rollBack();
+			throw $exception;
+		}
+
+		return $result;
+	}//end whileLocked()
 }//end class

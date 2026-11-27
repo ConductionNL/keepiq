@@ -21,3 +21,9 @@ The build MUST produce a loadable extension package for Chromium browsers (Chrom
 - **GIVEN** a macOS build runner
 - **WHEN** the Safari conversion step runs
 - **THEN** an Xcode project or app extension bundle is produced and its build log is kept
+
+#### Scenario: Firefox reaches a server on its own port
+
+- **GIVEN** the Firefox package and a server on a port other than the default one, such as `https://cloud.example.org:8443`
+- **WHEN** the user adds the account and allows Keepiq to reach the server
+- **THEN** the host permission the extension asks for is the host without the port (`https://cloud.example.org/*`), because Firefox keeps requests to a pattern with a port under CORS, and the account is added

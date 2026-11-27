@@ -61,7 +61,7 @@ interface FederatedShareServiceInterface {
 	 * @return array<string,mixed>|null
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 */
 	public function answerPull(?string $signer, string $shareId, array $payload): ?array;
 
@@ -137,7 +137,7 @@ interface FederatedShareServiceInterface {
 	 * @throws NotFoundException When it is not the user's live share
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function suspend(string $shareId, string $userId, string $reason): FederatedShare;
 
@@ -151,26 +151,4 @@ interface FederatedShareServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function suspendForPartner(string $partnerId): int;
-
-	/**
-	 * Replace a share's ciphertext after the owner changed the secret, and
-	 * tell the recipient's instance to pull again (task 4.1). The owner's
-	 * browser made the new ciphertext for a freshly verified certificate.
-	 *
-	 * @param string $shareId The federated share
-	 * @param string $userId The owner
-	 * @param string $certFingerprint SHA-256 of the certificate the browser verified now
-	 * @param array{key:string,login:?string,additionalFields:?string,totp?:?string,passkeys?:?string} $ciphertext For the recipient,
-	 *   see writeCiphertext() for an absent `totp` or `passkeys`
-	 *
-	 * @return FederatedShare
-	 *
-	 * @throws NotFoundException When it is not the user's live share
-	 * @throws InvalidArgumentException `invalid`, or `copy_fields_mismatch` when its totp or passkeys does not mirror
-	 *   the source's
-	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
-	 *
-	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
-	 */
-	public function update(string $shareId, string $userId, string $certFingerprint, array $ciphertext): FederatedShare;
 }//end interface

@@ -16,6 +16,7 @@ import kotlinx.serialization.json.longOrNull
 import nl.conduction.keepiq.shared.account.AccountLimitException
 import nl.conduction.keepiq.shared.account.AccountStore
 import nl.conduction.keepiq.shared.account.SecureStorage
+import nl.conduction.keepiq.shared.account.SharedLockState
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.InsecureServerException
 import nl.conduction.keepiq.shared.api.KeepiqApi
@@ -75,6 +76,13 @@ class KeepiqClient(
 
     val accounts: AccountStore = AccountStore(storage)
     val pins: PinUnlock = PinUnlock(storage)
+
+    /**
+     * The lock state the app shares with its autofill extension (task 2.5).
+     *
+     * @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
+     */
+    val lockState: SharedLockState = SharedLockState(storage, clock)
 
     /** Called with the account id on unpair, before the account is removed. */
     var onWipe: (String) -> Unit = {}
@@ -206,10 +214,16 @@ class KeepiqClient(
         return revoked
     }
 
-    /** Deletes every trace of an account on the device. */
+    /**
+     * Deletes every trace of an account on the device, the shared lock state
+     * included.
+     *
+     * @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
+     */
     fun wipe(accountId: String) {
         runCatching { onWipe(accountId) }
         pins.remove(accountId)
+        lockState.forget(accountId)
         storage.delete(suiteKey(accountId))
         accounts.remove(accountId)
     }

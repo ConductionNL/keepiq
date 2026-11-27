@@ -5,7 +5,7 @@
  * Every branch of the restore's type resolution
  * (portability-export-choice-and-restore-fidelity D3, task 2.2).
  *
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
  */
 
 import { describe, expect, it, vi } from 'vitest'

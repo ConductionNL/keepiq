@@ -6,7 +6,7 @@
  * server answers `stale_source` is encrypted again from the current version
  * and sent once more (#1255).
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 
 import axios from '@nextcloud/axios'

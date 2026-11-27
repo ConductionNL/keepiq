@@ -37,7 +37,7 @@ use OCP\IDBConnection;
  * Reassigns a secret's owner together with its partner shares and the
  * previous owner's link shares.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
  */
 class SecretOwnerTransferService {
 	use TTransactional;
@@ -77,7 +77,7 @@ class SecretOwnerTransferService {
 	 * @return int The link shares handed over
 	 *
 	 * @spec openspec/specs/gdpr-compliance/spec.md
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-share-follows-the-secret-to-a-new-owner
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-manual-revocation
 	 */
 	public function transfer(string $secretId, string $fromOwnerId, string $newOwnerId): int {

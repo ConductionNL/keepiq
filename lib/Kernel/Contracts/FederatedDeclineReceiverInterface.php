@@ -50,7 +50,7 @@ interface FederatedDeclineReceiverInterface {
 	 * @throws ShareNotFound For every refusal
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
 	 */
 	public function handle(string $providerId, array $notification): array;
 

@@ -82,7 +82,7 @@ describe('ExportDialog.onExport', () => {
 	})
 
 	it('scopes the export to the chosen folders and leaves out the chosen fields', async () => {
-		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		// @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		const wrapper = mountExport()
 		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
 		wrapper.vm.scopeKind = 'folders'
@@ -94,7 +94,7 @@ describe('ExportDialog.onExport', () => {
 	})
 
 	it('narrows the chosen folders to the chosen types', async () => {
-		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		// @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		const wrapper = mountExport()
 		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
 		wrapper.vm.scopeKind = 'folders'
@@ -108,7 +108,7 @@ describe('ExportDialog.onExport', () => {
 	})
 
 	it('offers the type choice with chosen folders and chosen types only', async () => {
-		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		// @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		const wrapper = mountExport()
 		const shown = (id) => wrapper.find(`[data-testid="${id}"]`).exists()
 		expect(shown('export-scope-types')).toBe(false)

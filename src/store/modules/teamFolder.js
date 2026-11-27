@@ -76,7 +76,7 @@ function copyRow(pair, blob, version = {}) {
  * @param {string} copyId The caller's own copy.
  * @param {string} sourceId The source the row hangs on.
  * @return {Promise<{sourceUpdatedAt?: string}>}
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 async function copySourceVersion(shareStore, copyId, sourceId) {
 	try {
@@ -95,7 +95,7 @@ async function copySourceVersion(shareStore, copyId, sourceId) {
  *
  * @param {object|undefined} data The server answer.
  * @return {Array<{secretId: string, userId: string}>}
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
 function stalePairs(data) {
 	return (data?.skipped ?? [])
@@ -159,7 +159,7 @@ function fanOutError(e) {
  *   as `stale_source` is encrypted again from the current version and sent
  *   once more, at most three times (#1255).
  * @return {Promise<number>} How many copies the server created.
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
 async function postFanOutChunk(store, teamFolderId, chunk, ctx) {
 	const { certByUser, refs, refused } = ctx

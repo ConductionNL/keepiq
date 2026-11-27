@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Keepiq",
-        "version": "0.3.22-unstable.20261124044130",
+        "version": "0.3.35-unstable.20261127092030",
         "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json, and as application/problem+json when the request's Accept header asks for it.",
         "contact": {
             "name": "Conduction B.V.",
@@ -127,6 +127,9 @@
         },
         {
             "name": "federated-share"
+        },
+        {
+            "name": "federated-share-resume"
         },
         {
             "name": "federation"
@@ -8144,42 +8147,73 @@
             }
         },
         "/federated-shares/{id}": {
-            "put": {
-                "operationId": "federated-share-update",
-                "summary": "Replace a share's ciphertext after the owner changed the secret; the recipient's instance is told to pull again (task 4.1)",
-                "description": "Replace a share's ciphertext after the owner changed the secret; the recipient's instance is told to pull again (task 4.1).",
+            "delete": {
+                "operationId": "federated-share-destroy",
+                "summary": "Revoke a share; the recipient's instance deletes its copy (task 4.2)",
+                "description": "Revoke a share; the recipient's instance deletes its copy (task 4.2).",
                 "tags": [
                     "federated-share"
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "certFingerprint": {
-                                        "type": "string"
-                                    },
-                                    "key": {
-                                        "type": "string"
-                                    },
-                                    "login": {
-                                        "type": "string"
-                                    },
-                                    "additionalFields": {
-                                        "type": "string"
-                                    },
-                                    "totp": {
-                                        "type": "string"
-                                    },
-                                    "passkeys": {
-                                        "type": "string"
-                                    }
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
                                 }
                             }
                         }
                     }
-                },
+                }
+            }
+        },
+        "/federated-shares/{id}/resume": {
+            "post": {
+                "operationId": "federated-share-resume-resume",
+                "summary": "Resume a suspended share with a value encrypted now",
+                "description": "Resume a suspended share with a value encrypted now. The body carries `certFingerprint` (SHA-256 of the certificate the browser verified), `sourceUpdatedAt` (the version it encrypted from) and the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`.",
+                "tags": [
+                    "federated-share-resume"
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8250,45 +8284,9 @@
                                 }
                             }
                         }
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "federated-share-destroy",
-                "summary": "Revoke a share; the recipient's instance deletes its copy (task 4.2)",
-                "description": "Revoke a share; the recipient's instance deletes its copy (task 4.2).",
-                "tags": [
-                    "federated-share"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "additionalProperties": true
-                                }
-                            }
-                        }
                     },
-                    "401": {
-                        "description": "Not logged in",
+                    "404": {
+                        "description": "Not found",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -16106,7 +16104,7 @@
             "put": {
                 "operationId": "secret-update-update",
                 "summary": "Update a secret",
-                "description": "Update a secret. Only the fields present in the request change: `name`, `url`, `typeId`, `folderId`, the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`, plus `mergedPending` (request-filled blobs the client merged, keepiq#750) and `baseUpdatedAt` (the version an offline edit was made from). A field the request leaves out keeps its stored value, and an empty string clears it. A JSON null counts as left out, as Nextcloud's getParam() reads it.",
+                "description": "Update a secret. Only the fields present in the request change: `name`, `url`, `typeId`, `folderId`, the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`, plus `mergedPending` (request-filled blobs the client merged, keepiq#750) and `baseUpdatedAt` (the version an offline edit was made from). A field the request leaves out keeps its stored value, and an empty string clears it. A JSON null counts as left out, as Nextcloud's getParam() reads it. A value change of a shared secret answers 409 `share_save_required`: it goes through the share-save, which writes every copy (keepiq#1300).",
                 "tags": [
                     "secret-update"
                 ],
@@ -16161,28 +16159,6 @@
                     },
                     "401": {
                         "description": "Not logged in",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Problem"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Error"
-                                        }
-                                    ]
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Not allowed",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -18983,131 +18959,6 @@
                     },
                     "401": {
                         "description": "Not logged in",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Problem"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Error"
-                                        }
-                                    ]
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/secrets/{secretId}/sync": {
-            "put": {
-                "operationId": "share-sync",
-                "summary": "Push an updated encrypted blob to every recipient",
-                "description": "Push an updated encrypted blob to every recipient.",
-                "tags": [
-                    "share"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "updates": {
-                                        "type": "array",
-                                        "items": {}
-                                    },
-                                    "expectedUpdatedAt": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "updates"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "secretId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "headers": {
-                            "API-Version": {
-                                "$ref": "#/components/headers/API-Version"
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "additionalProperties": true
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not logged in",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Problem"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Error"
-                                        }
-                                    ]
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Not allowed",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/Problem"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/Error"
-                                        }
-                                    ]
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict with the current state",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -23994,7 +23845,7 @@
             "post": {
                 "operationId": "secret-version-restore",
                 "summary": "Restore a version onto this one row",
-                "description": "Restore a version onto this one row. The web app restores through share-save (`restoredFrom`). A copy whose holder may not write its source is view-only and its restore is refused.",
+                "description": "Restore a version onto this one row. The web app restores through share-save (`restoredFrom`). A copy whose holder may not write its source is view-only and its restore is refused, and a restore that changes the value of a shared secret answers 409 `share_save_required`.",
                 "tags": [
                     "secret-version"
                 ],

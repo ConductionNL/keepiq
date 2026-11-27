@@ -32,7 +32,7 @@ use OCP\AppFramework\Http;
  * The version history and audit a share-save adds to the row save: the
  * version a restore comes from, the restore audit and the team-write audit.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
  */
 class ShareSaveHistory {
 	/**
@@ -63,7 +63,7 @@ class ShareSaveHistory {
 	 *
 	 * @throws ShareSaveRefusal `version_refused`, or `privileged_access_required` for a privileged copy outside its window
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function versionToRestore(string $versionId, Secret $row, string $userId): SecretVersion {
 		try {
@@ -95,7 +95,7 @@ class ShareSaveHistory {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function recordRestore(Secret $secret, SecretVersion $version, string $userId): void {
 		$this->versions->recordRestored(secret: $secret, version: $version, userId: $userId, via: 'share-save');
@@ -111,7 +111,7 @@ class ShareSaveHistory {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function logRestore(Secret $secret, SecretVersion $version, string $userId): void {
 		$this->versions->logRestored(secret: $secret, version: $version, userId: $userId);
@@ -132,7 +132,7 @@ class ShareSaveHistory {
 	 * @return void
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function recordTeamWrite(ShareSavePath $path, string $userId, array $skipped = [], array $copies = []): void {
 		if ($path->isCopyEditor() === false) {

@@ -66,7 +66,7 @@ function uuid() {
  * @param {object} entry The opened entry, with `body` and, when failed, `failure`.
  * @param {string} certificatePem The owner's own certificate.
  * @return {Promise<object>} The entry as stored.
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export async function sealEntry(entry, certificatePem) {
 	return {
@@ -99,7 +99,7 @@ export async function sealEntry(entry, certificatePem) {
  * @param {object} stored The stored entry.
  * @param {CryptoKey} privateKey The owner's private key.
  * @return {Promise<object>} The entry with its `body`, and `failure` when it has one.
- * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 export async function openEntry(stored, privateKey) {
 	const { sealed, sealedFailure, ...plain } = stored

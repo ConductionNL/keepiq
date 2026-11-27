@@ -24,7 +24,7 @@ namespace OCA\Keepiq\Service\ShareSave;
  * out for want of a vault key, partner shares and partner shares to suspend.
  * ShareSaveEntryParser documents the shape of each entry.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
 final class ShareSaveEntries {
 	/**
@@ -52,7 +52,7 @@ final class ShareSaveEntries {
 	 *
 	 * @return ShareSaveEntries
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function merge(ShareSaveEntries $other): ShareSaveEntries {
 		return new ShareSaveEntries(
@@ -68,7 +68,7 @@ final class ShareSaveEntries {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function copyCount(): int {
 		return count($this->copies) + count($this->skipped);
@@ -79,7 +79,7 @@ final class ShareSaveEntries {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function federatedCount(): int {
 		return count($this->federated) + count($this->suspend);
@@ -90,7 +90,7 @@ final class ShareSaveEntries {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function copyIds(): array {
 		return array_merge(array_column($this->copies, 'secretId'), array_column($this->skipped, 'secretId'));
@@ -101,7 +101,7 @@ final class ShareSaveEntries {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function shareIds(): array {
 		return array_merge(array_column($this->federated, 'shareId'), array_column($this->suspend, 'shareId'));
@@ -116,7 +116,7 @@ final class ShareSaveEntries {
 	 *
 	 * @throws ShareSaveRefusal `duplicate_entry`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertNoDuplicates(): void {
 		foreach ([$this->copyIds(), $this->shareIds()] as $ids) {
@@ -131,7 +131,7 @@ final class ShareSaveEntries {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function toJson(): string {
 		return json_encode(

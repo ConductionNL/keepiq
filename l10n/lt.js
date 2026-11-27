@@ -1686,6 +1686,8 @@ OC.L10N.register(
         "Change sent to another organisation": "Pakeitimas išsiųstas kitai organizacijai",
         "Share with another organisation revoked": "Bendrinimas su kita organizacija atšauktas",
         "Sharing with another organisation stopped": "Bendrinimas su kita organizacija sustabdytas",
+        "Resume": "Atnaujinti",
+        "Sharing with another organisation resumed": "Bendrinimas su kita organizacija atnaujintas",
         "Another organisation did not get a change": "Kita organizacija negavo pakeitimo",
         "Secret received from another organisation": "Gauta paslaptis iš kitos organizacijos",
         "Secret from another organisation accepted": "Paslaptis iš kitos organizacijos priimta",

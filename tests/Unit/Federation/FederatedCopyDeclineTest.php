@@ -615,13 +615,16 @@ class FederatedCopyDeclineTest extends TestCase {
 	}
 
 	/**
-	 * Only the owner ends a suspension. A decline that made the share
-	 * declined would let Bob's later accept make it live again. The trail
-	 * still tells Alice that Bob's copy is gone.
+	 * A decline of a suspended share declines it for good (decision of
+	 * 25 Nov 2026): its ciphertext goes, so neither Bob's later accept nor
+	 * Alice's Resume can serve it again. The trail tells Alice that Bob's
+	 * copy is gone and that the share was suspended.
 	 *
 	 * @dataProvider suspensions
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
 	 */
-	public function testADeclineLeavesASuspendedShareSuspended(bool $meanwhile): void {
+	public function testADeclineEndsASuspendedShareForGood(bool $meanwhile): void {
 		$this->signer = 'cloud.partner.example';
 		$suspend = function (): void {
 			$this->outbound->setStatus(FederatedShare::STATUS_SUSPENDED);
@@ -636,12 +639,27 @@ class FederatedCopyDeclineTest extends TestCase {
 		$result = $provider->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 
 		$this->assertSame([], $result);
-		$this->assertSame(FederatedShare::STATUS_SUSPENDED, $this->outbound->getStatus());
+		$this->assertSame(
+			expected: [FederatedShare::STATUS_DECLINED, null, null, null, null, null],
+			actual: [
+				$this->outbound->getStatus(),
+				$this->outbound->getKey(),
+				$this->outbound->getLogin(),
+				$this->outbound->getAdditionalFields(),
+				$this->outbound->getTotp(),
+				$this->outbound->getPasskeys(),
+			]
+		);
 		$this->assertCount(1, $this->audit);
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
 		$this->assertNull($this->audit[0]->getActorId());
 		$this->assertSame(
-			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'kept' => 'suspended'],
+			[
+				'federatedShareId' => self::SHARE_ID,
+				'recipientCloudId' => 'bob@cloud.partner.example',
+				'partnerId' => 'p-cloud.partner.example',
+				'was' => 'suspended',
+			],
 			$this->audit[0]->getMetadata()
 		);
 		$this->assertIdentifiersOnly();

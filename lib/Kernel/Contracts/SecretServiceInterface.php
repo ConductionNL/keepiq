@@ -308,7 +308,7 @@ interface SecretServiceInterface {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$restoring` only tells the
 	 *   compromise rule that the totp and passkeys written are old values; the
 	 *   write itself is the same.

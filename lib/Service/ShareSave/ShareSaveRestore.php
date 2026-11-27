@@ -27,7 +27,7 @@ use OCA\Keepiq\Db\SecretVersion;
  * the head: a field the version holds as null predates the field and the head keeps its value; `''` was empty then
  * and clears the head's; a value must be in the patch.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
  */
 final class ShareSaveRestore {
 	/**
@@ -56,7 +56,7 @@ final class ShareSaveRestore {
 	 *
 	 * @throws ShareSaveRefusal `invalid_body` naming the field the patch gets wrong
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function split(array $patch, SecretVersion $version, ShareSaveEntries $entries, Secret $head): array {
 		$held = ['totp' => $version->getTotp(), 'passkeys' => $version->getPasskeys()];

@@ -50,7 +50,7 @@ use OCP\AppFramework\Db\Entity;
  *
  * @SuppressWarnings(PHPMD.LongVariable) Property names mirror the columns.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  */
 class ShareSaveStage extends Entity {
 
