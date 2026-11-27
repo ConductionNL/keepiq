@@ -11,6 +11,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -52,6 +53,7 @@ class ShareRevocationServiceTest extends TestCase {
 		$this->auth->method('loadSecret')->willReturn($this->secret('src-1', 'alice'));
 
 		$this->service = new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: $this->mapper,
 			secretMapper: $this->secretMapper,
 			db: $this->createMock(IDBConnection::class),
@@ -247,6 +249,7 @@ class ShareRevocationServiceTest extends TestCase {
 		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('quarantined'));
 		$this->quarantined->method('findQuarantinedById')->willReturn($this->row('victim', 'victim'));
 		$service = new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: $this->mapper,
 			secretMapper: $this->secretMapper,
 			db: $this->createMock(IDBConnection::class),
@@ -269,6 +272,7 @@ class ShareRevocationServiceTest extends TestCase {
 	public function testWithoutTheQuarantineMapperAnUnknownIdIsNotFound(): void {
 		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('none'));
 		$service = new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: $this->mapper,
 			secretMapper: $this->secretMapper,
 			db: $this->createMock(IDBConnection::class),

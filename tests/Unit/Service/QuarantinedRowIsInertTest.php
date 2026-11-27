@@ -59,6 +59,7 @@ use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -376,6 +377,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 		$row     = $this->plant(quarantined: $quarantined);
 		$secrets = new SecretMapper(db: $this->db);
 		$service = new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: new ShareTargetMapper(db: $this->db),
 			secretMapper: $secrets,
 			db: $this->db,
@@ -418,6 +420,7 @@ class QuarantinedRowIsInertTest extends TestCase {
 		$this->plant(quarantined: $quarantined);
 		$secrets = new SecretMapper(db: $this->db);
 		(new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: new ShareTargetMapper(db: $this->db),
 			secretMapper: $secrets,
 			db: $this->db,

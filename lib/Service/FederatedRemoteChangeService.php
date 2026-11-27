@@ -10,6 +10,7 @@
  * shared secret (see FederatedShareMessenger). Then an update pulls the
  * ciphertext again and replaces the copy whole, and an unshare deletes the
  * copy. Every refusal is the same "share not found".
+ * An unshare for a share that already ended, once verified the same way, is taken and changes nothing.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -91,7 +92,7 @@ class FederatedRemoteChangeService implements FederatedRemoteChangeServiceInterf
 	/**
 	 * Handle one notification from the sending instance.
 	 *
-	 * @param string $type `SHARE_UPDATED` or `SHARE_UNSHARED`; others are acknowledged and ignored
+	 * @param string $type `SHARE_UPDATED` or `SHARE_UNSHARED`; others are acknowledged and ignored while the share has not ended
 	 * @param string $providerId The share id on the sender
 	 * @param array<array-key,mixed> $notification The payload, `{sharedSecret}` (its SHA-256)
 	 *
@@ -103,6 +104,9 @@ class FederatedRemoteChangeService implements FederatedRemoteChangeServiceInterf
 	 */
 	public function handle(string $type, string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
+		if ($row->getStatus() === FederatedInbound::STATUS_REVOKED) {
+			return $this->answerEnded(type: $type);
+		}
 
 		if ($type === self::SHARE_UPDATED) {
 			$this->applyUpdate(row: $row);
@@ -114,6 +118,26 @@ class FederatedRemoteChangeService implements FederatedRemoteChangeServiceInterf
 
 		return [];
 	}//end handle()
+
+	/**
+	 * Answer a verified notification for a share that already ended. An unshare is taken without changing anything,
+	 * as the answer to an earlier one may have been lost and a refusal would count against the sender; anything else is refused.
+	 *
+	 * @param string $type The notification
+	 *
+	 * @return array<array-key,string>
+	 *
+	 * @throws ShareNotFound For every notification but `SHARE_UNSHARED`
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-repeated-unshare-is-taken
+	 */
+	private function answerEnded(string $type): array {
+		if ($type !== self::SHARE_UNSHARED) {
+			throw new ShareNotFound();
+		}
+
+		return [];
+	}//end answerEnded()
 
 	/**
 	 * Pull again when the share is accepted; a pending share pulls on
@@ -192,6 +216,7 @@ class FederatedRemoteChangeService implements FederatedRemoteChangeServiceInterf
 	 * The share this notification is about, when the presented hash matches
 	 * the shared secret held here and the request is signed by that share's
 	 * own partner, verified against the share's sender.
+	 * An ended share is checked the same way; the caller decides what it may still take.
 	 *
 	 * @param string $providerId The share id on the sender
 	 * @param mixed $presented The hash the sender presented
@@ -206,7 +231,7 @@ class FederatedRemoteChangeService implements FederatedRemoteChangeServiceInterf
 			$row = $this->rowFor(providerId: $providerId, presented: $presented);
 		}
 
-		if ($row === null || $row->getStatus() === FederatedInbound::STATUS_REVOKED) {
+		if ($row === null) {
 			throw new ShareNotFound();
 		}
 

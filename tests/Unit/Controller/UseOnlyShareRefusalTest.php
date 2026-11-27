@@ -21,6 +21,7 @@ use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -161,6 +162,7 @@ class UseOnlyShareRefusalTest extends TestCase {
 				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $this->targets), suites: $this->suites, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
+				copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 				mapper: $this->targets,
 				secretMapper: $this->secrets,
 				db: $db,

@@ -35,6 +35,8 @@ use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\FolderOwnershipGuard;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -122,6 +124,7 @@ class SecretServiceTest extends TestCase {
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			folderOwnership: $this->folderOwnership,
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 	}//end setUp()
 
@@ -986,6 +989,7 @@ class SecretServiceTest extends TestCase {
 			shareService: null,
 			groupShareMapper: $groupShareMapper,
 			secretDelegationMapper: $delegationMapper,
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 
 		$this->mapper->method('findById')->willReturn($this->makeSecret());

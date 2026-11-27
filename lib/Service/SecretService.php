@@ -37,7 +37,6 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
-use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -58,6 +57,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -152,7 +152,8 @@ class SecretService implements SecretServiceInterface {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
-	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
+	 * @param SecretDeleteCascade|null $deleteCascade Ends a deleted secret's partner shares and removes its extra website addresses;
+	 *                                                without it a delete is refused
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
 	 *
@@ -183,7 +184,7 @@ class SecretService implements SecretServiceInterface {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
-		private ?SecretUrlMapper $urlMapper = null,
+		private ?SecretDeleteCascade $deleteCascade = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
 		private ?BrokerMintRecorder $brokerMints = null,
 	) {
@@ -1605,25 +1606,41 @@ class SecretService implements SecretServiceInterface {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws RuntimeException When the partner shares cannot be ended; nothing is deleted then
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
 	 */
 	public function delete(string $id, string $userId, ?string $purgeReason = null): void {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$deletion = new SecretDeletion(userId: $userId, purgeReason: $purgeReason);
 
+		// First, so a delete that stops part-way leaves the partner shares revoked rather than live.
+		$this->endPartnerShares(secretId: $id, deletion: $deletion);
 		$this->deleteSharingGraph(secretId: $id);
 		$this->deleteSecretData(secretId: $id);
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
-		$this->dispatchAudit(
-			event: $this->deletionEvent(
-				secret: $secret,
-				deletion: new SecretDeletion(userId: $userId, purgeReason: $purgeReason)
-			)
-		);
+		$this->dispatchAudit(event: $this->deletionEvent(secret: $secret, deletion: $deletion));
 	}//end delete()
+
+	/**
+	 * Revoke the partner shares of a secret that is deleted for good, so each partner deletes its copy.
+	 * The owner's delete tells every partner now; the retention job leaves that to the retry job.
+	 *
+	 * @param string         $secretId The secret ID
+	 * @param SecretDeletion $deletion Who deletes it, and why when it is a purge
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
+	 */
+	private function endPartnerShares(string $secretId, SecretDeletion $deletion): void {
+		$cascade = $this->deleteCascade ?? throw new RuntimeException('The partner shares of a deleted secret cannot be ended');
+		$cascade->endPartnerShares(secretId: $secretId, deletion: $deletion);
+	}//end endPartnerShares()
 
 	/**
 	 * Remove the sharing graph of a secret: derived link shares, secret
@@ -1676,7 +1693,7 @@ class SecretService implements SecretServiceInterface {
 		$this->versionService?->deleteForSecret($secretId);
 		$this->rotationService?->deleteForSecret($secretId);
 		$this->tagMapper?->deleteBySecret($secretId);
-		$this->urlMapper?->deleteBySecret($secretId);
+		$this->deleteCascade?->deleteUrls(secretId: $secretId);
 	}//end deleteSecretData()
 
 	/**

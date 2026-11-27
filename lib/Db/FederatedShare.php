@@ -98,8 +98,8 @@ class FederatedShare extends Entity implements JsonSerializable {
 	public const STATUS_FAILED = 'failed';
 
 	/**
-	 * The owner revoked it; the SHARE_UNSHARED notification is still on its
-	 * way. Nothing is served; the row goes once the notification arrives.
+	 * The share ended: its owner revoked it, or its secret was deleted for good. The SHARE_UNSHARED notification is still on its way.
+	 * Nothing is served; the row goes once the notification arrives, or when that of a deleted secret still has not after 30 days.
 	 *
 	 * @var string
 	 */

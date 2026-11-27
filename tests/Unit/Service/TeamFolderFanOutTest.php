@@ -35,6 +35,8 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRowJudge;
@@ -165,7 +167,7 @@ class TeamFolderFanOutTest extends TestCase {
 			shareTargetMapper: $this->targets,
 			rowJudge: $this->createMock(ShareRowJudge::class),
 			bulkGrantMapper: $this->createMock(BulkGrantShareTargetMapper::class),
-			copies: new RecipientSecretCopyService(secretMapper: $this->secrets, suiteMapper: $suites, typeService: $types),
+			copies: new RecipientSecretCopyService(secretMapper: $this->secrets, copies: new RecipientSecretCopyFactory(secretMapper: $this->secrets, suiteMapper: $suites, typeService: $types), partnerShares: $this->createStub(PartnerShareRevoker::class)),
 			notificationService: $notifications,
 			db: $this->db,
 			logger: $this->createMock(LoggerInterface::class),

@@ -43,6 +43,11 @@ use OCA\Keepiq\Event\AccountDataDeletedEvent;
 use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
+use OCA\Keepiq\Service\FederatedNotificationDelivery;
+use OCA\Keepiq\Service\FederatedShareAuditTrail;
+use OCA\Keepiq\Service\FederationPartnerService;
+use OCA\Keepiq\Service\OwnedSecretCleanup;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\TeamFolderMember;
@@ -157,7 +162,15 @@ class AccountDeletionServiceTest extends TestCase {
 				emergencyMapper: $this->m['emergency'],
 				passkeyMapper: $this->m['passkey'],
 			),
-			childData: new SecretChildDataCleaner(secretMapper: $this->m['secret']),
+			ownSecretCleanup: new OwnedSecretCleanup(
+				childData: new SecretChildDataCleaner(secretMapper: $this->m['secret']),
+				partnerShares: new PartnerShareRevoker(
+					shareMapper: $this->m['federated'],
+					delivery: $this->createMock(FederatedNotificationDelivery::class),
+					audit: new FederatedShareAuditTrail(),
+					partners: $this->createStub(FederationPartnerService::class),
+				),
+			),
 		);
 	}//end build()
 

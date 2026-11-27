@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.36-unstable.20261127101951</version>
+    <version>0.3.37-unstable.20261127115910</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -87,12 +87,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
         name per app, taken ahead of the App Store launch.
     -->
     <dependencies>
-        <php min-version="8.3"/>
+        <php min-version="8.3.37"/>
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
         <!--
-            Floor is 32, fleet-wide, so PHP 8.3 is guaranteed by the platform.
+            Floor is 32, fleet-wide. The PHP minimum above is a patch release,
+            8.3.37, matching composer's config.platform.php: the platform alone
+            does not guarantee it.
 
             31 was never actually deliverable: the CI matrix is derived from
             this `<nextcloud>` range (no leg below 32), and OpenRegister, whose
