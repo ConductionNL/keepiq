@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -85,6 +86,7 @@ class ShareRevocationServiceRollbackTest extends TestCase {
 		$auth->method('loadSecret')->willReturn($owner);
 
 		return new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: $this->mapper,
 			secretMapper: $this->secrets,
 			db: $this->db,

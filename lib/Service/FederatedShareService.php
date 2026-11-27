@@ -79,6 +79,13 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	private readonly FederatedValueFields $valueFields;
 
 	/**
+	 * Ends partner shares: one its owner revokes, or all of a secret deleted for good.
+	 *
+	 * @var PartnerShareRevoker
+	 */
+	private readonly PartnerShareRevoker $revoker;
+
+	/**
 	 * Constructor for FederatedShareService.
 	 *
 	 * @param FederatedShareMapper $shareMapper Outbound share rows
@@ -111,6 +118,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		private ?LoggerInterface $logger = null,
 	) {
 		$this->valueFields = new FederatedValueFields();
+		$this->revoker = new PartnerShareRevoker(shareMapper: $shareMapper, delivery: $delivery, audit: $audit, partners: $partners);
 	}//end __construct()
 
 	/**
@@ -356,7 +364,10 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	/**
 	 * Revoke a share: nothing is served any more, and the recipient's
 	 * instance is told to delete its copy (task 4.2). The row goes once that
-	 * notification arrives; until then the retry job keeps trying.
+	 * notification arrives.
+	 * A failed notification is tried up to 6 times in all while the secret exists, after which the owner sees the share failed.
+	 * Once the secret is deleted for good it is tried for 30 days, but a refusal (a 4xx other than 429) from the 6th try on drops the share.
+	 * A partner removed meanwhile is not told: the retry job drops the share unsent.
 	 *
 	 * @param string $shareId The federated share
 	 * @param string $userId The owner
@@ -368,13 +379,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 	 */
 	public function revoke(string $shareId, string $userId): void {
-		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
-		$row->setStatus(FederatedShare::STATUS_REVOKED);
-		$row->stamp(now: new DateTime());
-		$this->shareMapper->update(entity: $row);
-
-		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_REVOKED, row: $row, actorId: $userId);
-		$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UNSHARED);
+		$this->revoker->revoke(row: $this->ownedShare(shareId: $shareId, userId: $userId), actorId: $userId);
 	}//end revoke()
 
 	/**

@@ -168,6 +168,7 @@ class FederatedSourceDetailsTest extends TestCase {
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $this->createMock(IUserManager::class));
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
+		$delivery = new FederatedNotificationDelivery($shareMapper, $messenger, $audit, $secrets);
 		$federated = new FederatedShareService(
 			shareMapper: $shareMapper,
 			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
@@ -180,7 +181,7 @@ class FederatedSourceDetailsTest extends TestCase {
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $this->createMock(ISecureRandom::class),
-			delivery: new FederatedNotificationDelivery($shareMapper, $messenger, $audit),
+			delivery: $delivery,
 			audit: $audit,
 		);
 

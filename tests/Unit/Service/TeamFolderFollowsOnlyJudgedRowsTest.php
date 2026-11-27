@@ -37,6 +37,8 @@ use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ConfirmerCopyResolver;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
@@ -411,8 +413,8 @@ class TeamFolderFollowsOnlyJudgedRowsTest extends TestCase {
 			bulkGrantMapper: $bulk,
 			copies: new RecipientSecretCopyService(
 				secretMapper: $secrets,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				typeService: $this->createMock(SecretTypeService::class),
+				copies: new RecipientSecretCopyFactory(secretMapper: $secrets, suiteMapper: $this->createMock(EncryptionSuiteMapper::class), typeService: $this->createMock(SecretTypeService::class)),
+				partnerShares: $this->createStub(PartnerShareRevoker::class),
 			),
 			notificationService: $this->createMock(NotificationService::class),
 			db: $this->createMock(IDBConnection::class),

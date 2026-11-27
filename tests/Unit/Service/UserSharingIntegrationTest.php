@@ -56,10 +56,12 @@ use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -184,6 +186,7 @@ class UserSharingIntegrationTest extends TestCase {
 				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $shareTargetMapper), suites: $suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
+				copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 				mapper: $shareTargetMapper,
 				secretMapper: $secretMapper,
 				db: $db,
@@ -283,6 +286,7 @@ class UserSharingIntegrationTest extends TestCase {
 			shareService: $shareService,
 			groupShareMapper: $groupShareMapper,
 			secretDelegationMapper: $delegationMapper,
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 
 		$secret = $this->makeSecret('s-1', 'alice');

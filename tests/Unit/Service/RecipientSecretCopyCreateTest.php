@@ -33,6 +33,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Service\RecipientCiphertext;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -167,7 +168,7 @@ class RecipientSecretCopyCreateTest extends TestCase {
 	 * @return void
 	 */
 	public function testServiceMintsTheCopy(): void {
-		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
+		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService), partnerShares: $this->createStub(PartnerShareRevoker::class));
 
 		$copy = $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: 'LOGIN', additionalFields: null, totp: 'TOTP', passkeys: null));
 
@@ -181,7 +182,7 @@ class RecipientSecretCopyCreateTest extends TestCase {
 	 */
 	public function testAnInvisibleTypeFallsBackToTheDefault(): void {
 		$this->source->setTypeId('private-type');
-		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
+		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService), partnerShares: $this->createStub(PartnerShareRevoker::class));
 		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
 
 		$this->assertSame('type-default-bob', $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: 'LOGIN', additionalFields: null, totp: 'TOTP', passkeys: null))->getTypeId());
@@ -194,7 +195,7 @@ class RecipientSecretCopyCreateTest extends TestCase {
 	 * @return void
 	 */
 	public function testServiceRefusals(): void {
-		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
+		$service = new RecipientSecretCopyService(secretMapper: $this->secretMapper, copies: new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService), partnerShares: $this->createStub(PartnerShareRevoker::class));
 
 		$this->assertSame('not_found', $service->createCopy(sourceSecretId: 'gone', ciphertext: new RecipientCiphertext(recipientId: 'bob', key: 'KEY', login: null, additionalFields: null, totp: 'TOTP', passkeys: null)));
 		$this->assertSame('copy_fields_mismatch', $service->createCopy(sourceSecretId: 'src-1', ciphertext: new RecipientCiphertext(recipientId: 'nobody', key: 'KEY', login: null, additionalFields: null, totp: null, passkeys: null)));
