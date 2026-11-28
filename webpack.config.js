@@ -442,4 +442,9 @@ webpackConfig.module.rules.push({
 	generator: { filename: '[name][ext]' },
 })
 
+// nextcloud-vue's stylesheet is linked by templates/index.php as css/nextcloud-vue.css
+// (LibraryStylesheetCopy) instead of inserted from the bundle as text.
+const { LibraryStylesheetCopy } = require('@conduction/nextcloud-vue/webpack')
+webpackConfig.plugins.push(new LibraryStylesheetCopy())
+
 module.exports = webpackConfig
