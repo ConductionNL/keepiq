@@ -59,12 +59,16 @@ class SecretSharingRevoker {
 	 *
 	 * @return void
 	 *
+	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the pending share quarantine scan cannot judge
+	 *   one of its user shares; nothing is revoked then
+	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-deleting-a-secret-moves-it-to-the-trash
 	 */
 	public function revokeAll(string $secretId): void {
+		// User shares first: they are the only step that may be refused.
+		$this->shareService->revokeAllForSecret($secretId);
 		$this->linkShareService->deleteBySecretId($secretId);
 		$this->secretRequestService->deleteAllForSecret($secretId);
-		$this->shareService->deleteAllForSecret($secretId);
 		$this->groupShareMapper->deleteBySecret($secretId);
 		$this->delegationMapper->deleteBySecret($secretId);
 	}//end revokeAll()

@@ -25,8 +25,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\DashboardService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\DashboardServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -42,17 +43,17 @@ class DashboardSettingsController extends OCSController {
 	 * Constructor for DashboardSettingsController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param DashboardService $service The dashboard-settings service
+	 * @param DashboardServiceInterface $service The dashboard-settings service
 	 * @param IUserSession $session The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private DashboardService $service,
+		private DashboardServiceInterface $service,
 		private IUserSession $session,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -95,10 +96,7 @@ class DashboardSettingsController extends OCSController {
 		try {
 			$value = $this->service->get($user->getUID(), $key);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: ['key' => $key, 'value' => $value]);
@@ -130,10 +128,7 @@ class DashboardSettingsController extends OCSController {
 		try {
 			$result = $this->applyUpdate(userId: $userId, params: $params);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $result);

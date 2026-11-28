@@ -93,49 +93,23 @@ class CertificateMetadataService {
 	 *
 	 * @throws DoesNotExistException When the secret does not exist
 	 * @throws InvalidArgumentException When not owned, wrong type, or unparseable dates
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When the secret moved twice while its expiry was set
 	 *
 	 * @spec openspec/specs/certificate-lifecycle/spec.md
 	 */
 	public function submitMetadata(string $secretId, string $userId, array $fields): CertificateMetadata {
-		$secret = $this->secretMapper->findById($secretId);
-		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-			throw new InvalidArgumentException('Only the owner may submit certificate metadata');
-		}
-
-		$certTypeId = $this->certificateTypeId();
-		if ($certTypeId === null || $secret->getTypeId() !== $certTypeId) {
-			throw new InvalidArgumentException('Secret is not a certificate-type secret');
-		}
-
+		$this->requireOwnedCertificate(secretId: $secretId, userId: $userId);
 		$notBefore = $this->parseClientDate(value: $fields['notBefore'] ?? null);
 		$notAfter = $this->parseClientDate(value: $fields['notAfter'] ?? null);
 
-		$isNew = false;
-		try {
-			$row = $this->metadataMapper->findBySecretId($secretId);
-		} catch (DoesNotExistException) {
-			$isNew = true;
-			$row = new CertificateMetadata();
-			$row->setId(Uuid::uuid4()->toString());
-			$row->setSecretId($secretId);
-		}
-
+		$existing = $this->storedRow(secretId: $secretId);
+		$row = ($existing ?? $this->newRow(secretId: $secretId));
 		$row->setOwnerId($userId);
-		$row->setSubject($this->optionalString(value: $fields['subject'] ?? null));
-		$row->setIssuer($this->optionalString(value: $fields['issuer'] ?? null));
-		$row->setSerial($this->optionalString(value: $fields['serial'] ?? null));
-		$row->setFingerprintSha256($this->optionalString(value: $fields['fingerprintSha256'] ?? null));
+		$this->applyDescriptors(row: $row, fields: $fields);
 		$row->setNotBefore($notBefore);
 		$row->setNotAfter($notAfter);
 		$row->setParsedAt(new DateTime());
-
-		if ($isNew === true) {
-			$row = $this->metadataMapper->insert($row);
-		}
-
-		if ($isNew === false) {
-			$row = $this->metadataMapper->update($row);
-		}
+		$row = $this->saveRow(row: $row, isNew: $existing === null);
 
 		// Mirror notAfter into the rotation-expiry per-secret expiry so the
 		// existing ScanExpiringSecretsJob reminds on it. setExpiry touches
@@ -146,6 +120,89 @@ class CertificateMetadataService {
 
 		return $row;
 	}//end submitMetadata()
+
+	/**
+	 * Refuse unless the caller owns the secret and it is certificate-typed.
+	 *
+	 * @param string $secretId The secret UUID
+	 * @param string $userId   The calling owner
+	 *
+	 * @return void
+	 *
+	 * @throws DoesNotExistException When the secret does not exist
+	 * @throws InvalidArgumentException When not owned or not a certificate-type secret
+	 */
+	private function requireOwnedCertificate(string $secretId, string $userId): void {
+		$secret = $this->secretMapper->findById($secretId);
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			throw new InvalidArgumentException('Only the owner may submit certificate metadata');
+		}
+
+		$certTypeId = $this->certificateTypeId();
+		if ($certTypeId === null || $secret->getTypeId() !== $certTypeId) {
+			throw new InvalidArgumentException('Secret is not a certificate-type secret');
+		}
+	}//end requireOwnedCertificate()
+
+	/**
+	 * The stored metadata row of a secret.
+	 *
+	 * @param string $secretId The secret UUID
+	 *
+	 * @return CertificateMetadata|null Null when none is stored yet
+	 */
+	private function storedRow(string $secretId): ?CertificateMetadata {
+		try {
+			return $this->metadataMapper->findBySecretId($secretId);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end storedRow()
+
+	/**
+	 * A new metadata row for a secret.
+	 *
+	 * @param string $secretId The secret UUID
+	 *
+	 * @return CertificateMetadata
+	 */
+	private function newRow(string $secretId): CertificateMetadata {
+		$row = new CertificateMetadata();
+		$row->setId(Uuid::uuid4()->toString());
+		$row->setSecretId($secretId);
+		return $row;
+	}//end newRow()
+
+	/**
+	 * Set the submitted subject, issuer, serial and fingerprint.
+	 *
+	 * @param CertificateMetadata $row    The row
+	 * @param array<string,mixed> $fields The submitted fields
+	 *
+	 * @return void
+	 */
+	private function applyDescriptors(CertificateMetadata $row, array $fields): void {
+		$row->setSubject($this->optionalString(value: $fields['subject'] ?? null));
+		$row->setIssuer($this->optionalString(value: $fields['issuer'] ?? null));
+		$row->setSerial($this->optionalString(value: $fields['serial'] ?? null));
+		$row->setFingerprintSha256($this->optionalString(value: $fields['fingerprintSha256'] ?? null));
+	}//end applyDescriptors()
+
+	/**
+	 * Insert a new row or update the stored one.
+	 *
+	 * @param CertificateMetadata $row   The row
+	 * @param bool                $isNew Whether it is not stored yet
+	 *
+	 * @return CertificateMetadata The saved row
+	 */
+	private function saveRow(CertificateMetadata $row, bool $isNew): CertificateMetadata {
+		if ($isNew === true) {
+			return $this->metadataMapper->insert($row);
+		}
+
+		return $this->metadataMapper->update($row);
+	}//end saveRow()
 
 	/**
 	 * Parse a client-submitted ISO date, rejecting garbage (D5: the

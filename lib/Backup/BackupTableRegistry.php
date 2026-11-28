@@ -33,16 +33,26 @@ final class BackupTableRegistry {
 	public const PREFIX = 'keepiq_';
 
 	/**
-	 * Every Keepiq table, unprefixed, in a stable order.
+	 * Tables a backup leaves out and a restore leaves alone: short-lived
+	 * working state that is worthless once restored.
+	 *
+	 * @var string[]
+	 */
+	public const NOT_BACKED_UP = ['share_save_stages'];
+
+	/**
+	 * Every other Keepiq table, unprefixed, in a stable order.
 	 *
 	 * @var string[]
 	 */
 	public const TABLES = [
+		'access_requests',
 		'app_lease_policies',
 		'applications',
 		'attachment_grants',
 		'attachments',
 		'audit_log',
+		'broker_mints',
 		'ca_certs',
 		'certificate_metadata',
 		'compliance_reports',
@@ -63,9 +73,11 @@ final class BackupTableRegistry {
 		'machine_leases',
 		'migration_failures',
 		'passkey_credentials',
+		'privileged_logins',
 		'recovery_approvals',
 		'recovery_enrolments',
 		'recovery_keys',
+		'recovery_kits',
 		'recovery_officers',
 		'recovery_requests',
 		'rotation_flags',
@@ -73,6 +85,7 @@ final class BackupTableRegistry {
 		'secret_requests',
 		'secret_tags',
 		'secret_types',
+		'secret_urls',
 		'secret_versions',
 		'secrets',
 		'share_targets',
@@ -89,5 +102,5 @@ final class BackupTableRegistry {
 	 *
 	 * @var string[]
 	 */
-	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'used_proofs'];
+	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'secret_urls', 'used_proofs'];
 }//end class

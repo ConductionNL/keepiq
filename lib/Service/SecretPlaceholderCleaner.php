@@ -118,11 +118,52 @@ class SecretPlaceholderCleaner {
 			);
 		}
 
+		$claim  = new PlaceholderOwnerClaim(ownerType: $expectedOwnerType, ownerId: $expectedOwnerId);
+		$secret = $this->unfilledPlaceholder(request: $request);
+		if ($secret === null || $this->claimAllowsRemoval(secret: $secret, claim: $claim) === false) {
+			return;
+		}
+
+		$this->deleteFailSoft(request: $request, secret: $secret);
+	}//end removeIfUnfilled()
+
+	/**
+	 * Delete the placeholder, logging a failure instead of throwing it.
+	 *
+	 * @param SecretRequest $request The request whose placeholder goes
+	 * @param Secret        $secret  The placeholder
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	private function deleteFailSoft(SecretRequest $request, Secret $secret): void {
+		try {
+			$this->deleteOwned(secret: $secret, ownerId: (string)$secret->getOwnerId());
+		} catch (Throwable $exception) {
+			$this->logger->error(
+				'Keepiq: could not delete the placeholder for request '
+				. $request->getId() . ': ' . $exception->getMessage(),
+				['exception' => $exception]
+			);
+		}
+	}//end deleteFailSoft()
+
+	/**
+	 * The request's Secret, when it still exists and never held a value.
+	 *
+	 * @param SecretRequest $request The request whose placeholder may go
+	 *
+	 * @return Secret|null
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	private function unfilledPlaceholder(SecretRequest $request): ?Secret {
 		try {
 			$secret = $this->secretMapper->findById($request->getSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			// Already gone, or ambiguous — nothing safe to delete either way.
-			return;
+			return null;
 		}
 
 		// The predicate lives on the entity because it is a fact about the row and two
@@ -134,31 +175,32 @@ class SecretPlaceholderCleaner {
 			// Holds a value: a re-request target, a plain request's own Secret, or a
 			// placeholder that has since been filled. Ending a request must never
 			// cost the owner a working credential.
-			return;
+			return null;
 		}
 
+		return $secret;
+	}//end unfilledPlaceholder()
+
+	/**
+	 * Whether the caller may remove this placeholder: it has an owner, and it sits
+	 * in a vault the caller has a claim on.
+	 *
+	 * @param Secret                $secret The unfilled placeholder
+	 * @param PlaceholderOwnerClaim $claim  The vault the caller may delete from
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	private function claimAllowsRemoval(Secret $secret, PlaceholderOwnerClaim $claim): bool {
 		$ownerId = (string)$secret->getOwnerId();
 		if ($ownerId === '') {
-			return;
+			return false;
 		}
 
-		if ($expectedOwnerType !== null
-			&& ($secret->getOwnerType() !== $expectedOwnerType || $ownerId !== $expectedOwnerId)
-		) {
-			// The Secret belongs to a vault this caller has no claim on.
-			return;
-		}
-
-		try {
-			$this->deleteOwned(secret: $secret, ownerId: $ownerId);
-		} catch (Throwable $exception) {
-			$this->logger->error(
-				'Keepiq: could not delete the placeholder for request '
-				. $request->getId() . ': ' . $exception->getMessage(),
-				['exception' => $exception]
-			);
-		}
-	}//end removeIfUnfilled()
+		// A Secret in a vault this caller has no claim on stays.
+		return $claim->covers(secret: $secret, ownerId: $ownerId);
+	}//end claimAllowsRemoval()
 
 	/**
 	 * Delete a Secret through the path its owning vault requires.

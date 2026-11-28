@@ -90,16 +90,25 @@
 						</span>
 						<!-- Permission grade (folder-permission-grades;
 						     sharing-team-folder-manager-role D5): Viewer, Editor,
-						     Manager. Only the owner makes or changes a manager;
-						     a manager sees a manager's row read-only. -->
+						     Manager. Only the owner makes or changes a manager, or
+						     a membership that covers a manager (ownerOnlyMemberIds);
+						     a manager sees those rows read-only, with the reason. -->
 						<select
 							class="team-folder-dialog__grade"
 							:value="member.grade || 'read'"
 							:disabled="busy || !canChangeMember(member)"
+							:title="
+								canChangeMember(member) ? undefined : ownerOnlyReason
+							"
 							:aria-label="
 								t('keepiq', 'Role of {member}', {
 									member: member.memberId,
 								})
+							"
+							:aria-describedby="
+								canChangeMember(member)
+									? undefined
+									: `team-folder-owner-only-${member.id}`
 							"
 							:data-testid="`team-folder-grade-${member.memberId}`"
 							@change="onGradeChange(member, $event.target.value)">
@@ -113,6 +122,13 @@
 								{{ t('keepiq', 'Manager') }}
 							</option>
 						</select>
+						<span
+							v-if="!canChangeMember(member)"
+							:id="`team-folder-owner-only-${member.id}`"
+							class="hidden-visually"
+							:data-testid="`team-folder-owner-only-${member.memberId}`">
+							{{ ownerOnlyReason }}
+						</span>
 						<NcButton
 							v-if="canRemoveMember(member)"
 							variant="tertiary"
@@ -212,6 +228,18 @@
 						)
 					}}
 				</NcNoteCard>
+				<NcNoteCard
+					v-if="refusedSecrets.length > 0"
+					type="warning"
+					data-testid="team-folder-refused">
+					{{
+						t(
+							'keepiq',
+							'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+							{ names: refusedSecrets.join(', ') },
+						)
+					}}
+				</NcNoteCard>
 
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
 				<div
@@ -253,6 +281,7 @@
 								memberId
 							}}</span>
 							<NcButton
+								v-if="canApprove(memberId)"
 								variant="secondary"
 								:aria-label="
 									t('keepiq', 'Approve {member}', {
@@ -322,6 +351,10 @@ import { useGroupStore } from '../store/modules/group.js'
 import { useShareStore } from '../store/modules/share.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 import { restrictionPayload } from '../utils/shareRestriction.js'
+import {
+	isShareScanPending,
+	shareScanPendingText,
+} from '../utils/shareScanPending.js'
 
 /**
  * How long a candidate search waits after the last keystroke.
@@ -377,6 +410,8 @@ export default {
 			newRestriction: { useOnly: false, endDate: '' },
 			/** Folder secrets the last fan-out skipped: this user holds no copy. */
 			skippedSecrets: [],
+			/** Folder secrets the server would not copy: their one-time code or passkeys cannot be copied yet. */
+			refusedSecrets: [],
 			pendingCount: 0,
 			/** Members still waiting for their copies, one Approve button each (keepiq#747). */
 			pendingMembers: [],
@@ -434,6 +469,19 @@ export default {
 		 */
 		members() {
 			return this.teamFolder?.members ?? []
+		},
+
+		/**
+		 * Why a manager sees a membership's role read-only.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		ownerOnlyReason() {
+			return this.t(
+				'keepiq',
+				'Only the owner can change a manager, or a membership that covers a manager.',
+			)
 		},
 
 		/**
@@ -749,26 +797,50 @@ export default {
 
 		/**
 		 * Whether the current user may change this member's role: the owner
-		 * any member, a manager anyone below manager.
+		 * any member, a manager anyone below manager, except a row the server
+		 * lists as the owner's to set (one that covers a manager).
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canChangeMember(member) {
-			return this.isOwner || member.grade !== 'manage'
+			if (this.isOwner) {
+				return true
+			}
+			const ownerOnly = this.teamFolder?.ownerOnlyMemberIds ?? []
+			return member.grade !== 'manage' && !ownerOnly.includes(member.id)
+		},
+
+		/**
+		 * Whether the current user may approve a waiting member: anyone who
+		 * manages the folder, except a manager approving themselves, which
+		 * the owner does (the server refuses it too).
+		 *
+		 * @param {string} memberId The waiting member's user id.
+		 * @return {boolean}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		canApprove(memberId) {
+			if (this.isOwner) {
+				return true
+			}
+			const uid = getCurrentUser()?.uid ?? ''
+			return memberId.toLowerCase() !== uid.toLowerCase()
 		},
 
 		/**
 		 * Whether the current user may remove this member: the owner any
-		 * member, a manager anyone below manager and themselves (leaving).
+		 * member, a manager anyone below manager (removing only narrows
+		 * access, so a row that covers a manager may go) and themselves
+		 * (leaving).
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canRemoveMember(member) {
-			if (this.canChangeMember(member)) {
+			if (this.isOwner || member.grade !== 'manage') {
 				return true
 			}
 			return (
@@ -789,7 +861,7 @@ export default {
 				await this.store.removeMember(this.teamFolder.id, member.id)
 				await this.refresh()
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error = this.failureText(e)
 			} finally {
 				this.busy = false
 			}
@@ -829,8 +901,13 @@ export default {
 		async onApproveMember(memberId) {
 			this.busy = true
 			this.error = null
+			this.refusedSecrets = []
 			try {
-				await this.store.approveMember(this.teamFolder.id, memberId)
+				const result = await this.store.approveMember(
+					this.teamFolder.id,
+					memberId,
+				)
+				this.refusedSecrets = result?.refused ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -849,13 +926,31 @@ export default {
 		async onRunFanOut() {
 			this.error = null
 			this.skippedSecrets = []
+			this.refusedSecrets = []
 			try {
 				const result = await this.store.runFanOut(this.teamFolder.id)
 				this.skippedSecrets = result?.skipped ?? []
+				this.refusedSecrets = result?.refused ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}
+		},
+
+		/**
+		 * The text for a failed removal or unshare: the translated
+		 * share-scan-pending text for a 409 that waits for the share
+		 * quarantine scan, else the server's message.
+		 *
+		 * @param {Error|object} e The thrown error.
+		 * @return {string|undefined}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+		 */
+		failureText(e) {
+			if (isShareScanPending(e)) {
+				return shareScanPendingText()
+			}
+			return e?.response?.data?.message || e?.message
 		},
 
 		/**
@@ -873,7 +968,7 @@ export default {
 				await this.store.unshareFolder(this.teamFolder.id)
 				this.$emit('update:open', false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error = this.failureText(e)
 			} finally {
 				this.busy = false
 			}

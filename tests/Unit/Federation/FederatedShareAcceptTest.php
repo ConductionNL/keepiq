@@ -40,6 +40,7 @@ use OCA\Keepiq\Service\FederatedInboundService;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedSharePuller;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\NotificationService;
@@ -60,6 +61,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -67,6 +69,7 @@ require_once __DIR__ . '/FederationFixtures.php';
 
 class FederatedShareAcceptTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const SHARE_ID = '6d1f6c1e-0000-4000-8000-000000000001';
 	private const SHARED_SECRET = 'the-shared-secret';
@@ -201,7 +204,7 @@ class FederatedShareAcceptTest extends TestCase {
 			'keepiq',
 			'https://cloud.city.example',
 			'keepiq/shares/' . self::SHARE_ID,
-			['sharedSecret' => self::SHARED_SECRET, 'sender' => 'bob@cloud.here.example'],
+			['sharedSecret' => self::SHARED_SECRET, 'sender' => 'bob@cloud.here.example', 'valueFields' => ['totp', 'passkeys']],
 			'post',
 		);
 
@@ -301,6 +304,8 @@ class FederatedShareAcceptTest extends TestCase {
 		$source = new Secret();
 		$source->setId('src');
 		$source->setName('Supplier portal');
+		$source->setOwnerType('user');
+		$source->setOwnerId('alice');
 		$source->setKey('ALICE-OWN-CIPHERTEXT');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);
@@ -315,7 +320,7 @@ class FederatedShareAcceptTest extends TestCase {
 
 		$service = new FederatedShareService(
 			shareMapper: $shares,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: $partners,
 			root: new FederationRootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),

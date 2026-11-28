@@ -27,8 +27,11 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -67,7 +70,11 @@ class SecretServiceTrashStateTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			eventDispatcher: $dispatcher,
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 
 		$secret = new Secret();

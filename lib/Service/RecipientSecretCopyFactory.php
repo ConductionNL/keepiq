@@ -46,6 +46,7 @@ class RecipientSecretCopyFactory {
 	 * @param SecretMapper $secretMapper The Secret mapper (copy writes)
 	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (recipient suite)
 	 * @param SecretTypeService|null $typeService The type service (recipient-copy type resolution)
+	 * @param SecretUrlService|null $urls The extra website addresses a copy carries from its source
 	 *
 	 * @return void
 	 *
@@ -55,6 +56,7 @@ class RecipientSecretCopyFactory {
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private ?SecretTypeService $typeService = null,
+		private ?SecretUrlService $urls = null,
 	) {
 	}//end __construct()
 
@@ -109,6 +111,8 @@ class RecipientSecretCopyFactory {
 	 * @param string $encryptedKey Recipient-encrypted key blob
 	 * @param string|null $encryptedLogin Recipient-encrypted login blob
 	 * @param string|null $encryptedExtras Recipient-encrypted additionalFields blob
+	 * @param string|null $encryptedTotp Recipient-encrypted TOTP seed blob
+	 * @param string|null $encryptedPasskeys Recipient-encrypted passkeys blob
 	 *
 	 * @return Secret|null
 	 *
@@ -120,43 +124,105 @@ class RecipientSecretCopyFactory {
 		string $encryptedKey,
 		?string $encryptedLogin,
 		?string $encryptedExtras,
+		?string $encryptedTotp = null,
+		?string $encryptedPasskeys = null,
 	): ?Secret {
+		return $this->createCopy(
+			source: $source,
+			ciphertext: new RecipientCiphertext(
+				recipientId: $targetUserId,
+				key: $encryptedKey,
+				login: $encryptedLogin,
+				additionalFields: $encryptedExtras,
+				totp: $encryptedTotp,
+				passkeys: $encryptedPasskeys
+			)
+		);
+	}//end create()
+
+	/**
+	 * Create a recipient's Secret copy from the ciphertext encrypted for
+	 * them, or null when the recipient has no active suite (skip, not fail).
+	 * The copy carries the source's name, URL and extra addresses, the
+	 * source's type as the recipient sees it, and no folder.
+	 *
+	 * @param Secret              $source     The owner's source secret
+	 * @param RecipientCiphertext $ciphertext The recipient and their copy's blobs
+	 *
+	 * @return Secret|null
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	public function createCopy(Secret $source, RecipientCiphertext $ciphertext): ?Secret {
 		try {
-			$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
+			$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $ciphertext->recipientId);
 		} catch (DoesNotExistException) {
 			return null;
 		}
 
-		$typeId = null;
-		if ($this->typeService !== null) {
-			try {
-				$typeId = $this->typeService->resolveTypeForSecret($source->getTypeId(), $targetUserId);
-			} catch (InvalidArgumentException) {
-				$typeId = $this->typeService->resolveTypeForSecret(null, $targetUserId);
-			}
+		$typeId = $this->recipientTypeId(source: $source, recipientId: $ciphertext->recipientId);
+		$copy = $this->copyRow(source: $source, ciphertext: $ciphertext);
+		if ($typeId !== null) {
+			$copy->setTypeId($typeId);
 		}
 
+		$copy->setEncryptionSuiteId($suite->getId());
+		$this->secretMapper->insert($copy);
+		$this->urls?->copyOnto(source: $source, copy: $copy);
+
+		return $copy;
+	}//end createCopy()
+
+	/**
+	 * The source's type as the recipient sees it: the default type when the
+	 * owner's custom type is not visible to them, none without a type service.
+	 *
+	 * @param Secret $source      The owner's source secret
+	 * @param string $recipientId The recipient user ID
+	 *
+	 * @return string|null
+	 */
+	private function recipientTypeId(Secret $source, string $recipientId): ?string {
+		if ($this->typeService === null) {
+			return null;
+		}
+
+		try {
+			return $this->typeService->resolveTypeForSecret($source->getTypeId(), $recipientId);
+		} catch (InvalidArgumentException) {
+			return $this->typeService->resolveTypeForSecret(null, $recipientId);
+		}
+	}//end recipientTypeId()
+
+	/**
+	 * The recipient's new copy row, owned by the recipient at their vault
+	 * root and stamped now; its type and suite are set by the caller.
+	 *
+	 * @param Secret              $source     The owner's source secret
+	 * @param RecipientCiphertext $ciphertext The recipient and their copy's blobs
+	 *
+	 * @return Secret
+	 */
+	private function copyRow(Secret $source, RecipientCiphertext $ciphertext): Secret {
 		$now = new DateTime();
 		$copy = new Secret();
 		$copy->setId(Uuid::uuid4()->toString());
 		$copy->setName($source->getName());
 		$copy->setUrl($source->getUrl());
-		if ($typeId !== null) {
-			$copy->setTypeId($typeId);
-		}
-
 		$copy->setFolderId(null);
-		$copy->setKey($encryptedKey);
-		$copy->setLogin($encryptedLogin);
-		$copy->setAdditionalFields($encryptedExtras);
-		$copy->setEncryptionSuiteId($suite->getId());
+		$copy->setKey($ciphertext->key);
+		$copy->setLogin($ciphertext->login);
+		$copy->setAdditionalFields($ciphertext->additionalFields);
+		$copy->setTotp($ciphertext->totp);
+		$copy->setPasskeys($ciphertext->passkeys);
+		// A new copy starts with the owner's re-prompt setting; afterwards each holder sets their own (crypto-item-reprompt D1).
+		$copy->setReprompt($source->getReprompt() === true);
 		$copy->setOwnerType('user');
-		$copy->setOwnerId($targetUserId);
+		$copy->setOwnerId($ciphertext->recipientId);
 		$copy->setCreatedAt($now);
 		$copy->setUpdatedAt($now);
 		$copy->setKeyUpdatedAt($now);
-		$this->secretMapper->insert($copy);
-
 		return $copy;
-	}//end create()
+	}//end copyRow()
 }//end class

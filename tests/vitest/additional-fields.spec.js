@@ -19,6 +19,7 @@ import {
 	objectToMembers,
 	RESERVED_MEMBER_NAMES,
 } from '../../src/utils/additionalFields.js'
+import { fieldValueOf } from '../../src/utils/fieldSchema.js'
 
 describe('additional-field naming rules', () => {
 	it('refuses every reserved name, with a reason', () => {
@@ -104,8 +105,63 @@ describe('additional-field shape conversion', () => {
 
 	it('stringifies non-string member values', () => {
 		expect(objectToMembers({ port: 8080, on: true })).toEqual([
-			{ name: 'port', value: '8080' },
-			{ name: 'on', value: 'true' },
+			{ name: 'port', value: '8080', schema: { type: 'string' } },
+			{ name: 'on', value: 'true', schema: { type: 'string' } },
 		])
+	})
+})
+
+/**
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+describe('fields from a 0.3.14 test build', () => {
+	const legacy = {
+		'Recovery code': { value: 'abc-123', kind: 'hidden' },
+		Active: { value: 'true', kind: 'boolean' },
+		tenant: 'acme',
+	}
+
+	it('reads a `{ value, kind }` field as its value with the schema of its kind', () => {
+		expect(objectToMembers(legacy)).toEqual([
+			{
+				name: 'Recovery code',
+				value: 'abc-123',
+				schema: { type: 'string', hidden: true },
+			},
+			{ name: 'Active', value: 'true', schema: { type: 'boolean' } },
+			{ name: 'tenant', value: 'acme', schema: { type: 'string' } },
+		])
+	})
+
+	it('saves it back under `@schema`', () => {
+		expect(membersToObject(objectToMembers(legacy))).toEqual({
+			'Recovery code': 'abc-123',
+			Active: 'true',
+			tenant: 'acme',
+			'@schema': {
+				'Recovery code': { type: 'string', hidden: true },
+				Active: { type: 'boolean' },
+			},
+		})
+	})
+
+	it('lets a stored schema win over the kind', () => {
+		const blob = {
+			PIN: { value: '1234', kind: 'hidden' },
+			'@schema': {
+				PIN: { type: 'string', pattern: '^[0-9]{4}$', hidden: true },
+			},
+		}
+		expect(objectToMembers(blob)[0].schema).toEqual({
+			type: 'string',
+			pattern: '^[0-9]{4}$',
+			hidden: true,
+		})
+	})
+
+	it('reads the text of either shape', () => {
+		expect(fieldValueOf({ value: 'x', kind: 'linked' })).toBe('x')
+		expect(fieldValueOf('y')).toBe('y')
+		expect(fieldValueOf(undefined)).toBe('')
 	})
 })

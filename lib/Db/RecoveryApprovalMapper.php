@@ -31,6 +31,9 @@ use OCP\IDBConnection;
  */
 class RecoveryApprovalMapper extends QBMapper {
 
+	use FindsByStringId;
+
+
 	/**
 	 * Constructor for RecoveryApprovalMapper.
 	 *
@@ -53,12 +56,7 @@ class RecoveryApprovalMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): RecoveryApproval {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

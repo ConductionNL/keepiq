@@ -138,6 +138,35 @@ describe('SecretShareDialog', () => {
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 
+	it("never puts a login's seed or passkeys in the link snapshot, which anyone with the link can open (keepiq#1326)", async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			id: 'secret-42',
+			name: 'Bank',
+			login: 'alice',
+			key: 'pw',
+			totp: 'otpauth://totp/Bank:alice?secret=JBSWY3DPEHPK3PXP',
+			passkeys: '[{"credentialId":"c1","privateKey":"pk"}]',
+		})
+		const create = vi
+			.spyOn(useLinkShareStore(), 'createLinkShare')
+			.mockResolvedValue({ id: 'ls-9' })
+
+		const wrapper = mount(SecretShareDialog, {
+			propsData: { secretId: 'secret-42' },
+			global: { stubs: ncStubs },
+		})
+		await wrapper.vm.$nextTick()
+		await wrapper.vm.createLink()
+
+		const snapshot = create.mock.calls[0][1]
+		expect(snapshot).toMatchObject({ login: 'alice', key: 'pw' })
+		expect('totp' in snapshot).toBe(false)
+		expect('passkeys' in snapshot).toBe(false)
+		expect(JSON.stringify(snapshot)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(snapshot)).not.toContain('privateKey')
+	})
+
 	it('sends the picked expiry date as the end of that day (#754)', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		useSecretStore().fetchSecret = vi

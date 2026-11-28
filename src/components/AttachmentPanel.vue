@@ -38,6 +38,18 @@
 					humanSize(attachment.sizeBytes)
 				}}</span>
 				<NcButton
+					v-if="canPreview(attachment)"
+					variant="tertiary"
+					:aria-label="t('keepiq', 'Preview attachment')"
+					:title="t('keepiq', 'Preview attachment')"
+					:disabled="store.loading"
+					:data-testid="`attachment-preview-${attachment.id}`"
+					@click="openPreview(attachment)">
+					<template #icon>
+						<Eye :size="18" />
+					</template>
+				</NcButton>
+				<NcButton
 					variant="tertiary"
 					:aria-label="t('keepiq', 'Download attachment')"
 					:data-testid="`attachment-download-${attachment.id}`"
@@ -81,6 +93,11 @@
 				{{ t('keepiq', 'Add attachment') }}
 			</NcButton>
 		</div>
+		<AttachmentPreviewModal
+			v-if="previewing"
+			:preview="previewing.preview"
+			:filename="previewing.filename"
+			@close="previewing = null" />
 	</div>
 </template>
 
@@ -88,8 +105,14 @@
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Download from 'vue-material-design-icons/Download.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
-import { useAttachmentStore } from '../store/modules/attachment.js'
+import AttachmentPreviewModal from '../modals/AttachmentPreviewModal.vue'
+import {
+	humanSize,
+	previewKind,
+	useAttachmentStore,
+} from '../store/modules/attachment.js'
 
 export default {
 	name: 'AttachmentPanel',
@@ -99,6 +122,8 @@ export default {
 		Paperclip,
 		Download,
 		Delete,
+		Eye,
+		AttachmentPreviewModal,
 	},
 
 	props: {
@@ -112,6 +137,13 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+	},
+
+	data() {
+		return {
+			/** The open preview: `{preview, filename}`, or null. */
+			previewing: null,
+		}
 	},
 
 	computed: {
@@ -181,6 +213,33 @@ export default {
 		},
 
 		/**
+		 * Whether an attachment can be previewed: an image, a PDF or plain text.
+		 *
+		 * @param {object} attachment The listed attachment row.
+		 * @return {boolean}
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 */
+		canPreview(attachment) {
+			return previewKind(attachment?.contentType) !== null
+		},
+
+		/**
+		 * Decrypt the attachment in the browser and open the preview.
+		 *
+		 * @param {object} attachment The listed attachment row.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 */
+		async openPreview(attachment) {
+			try {
+				const preview = await this.store.preview(attachment)
+				this.previewing = { preview, filename: attachment.filename || '' }
+			} catch {
+				// Error surfaced via store state.
+			}
+		},
+
+		/**
 		 * Human-readable size.
 		 *
 		 * @param {number} bytes The ciphertext byte count.
@@ -189,16 +248,7 @@ export default {
 		 * @spec exclude Presentation-only formatter: renders a byte count as a human-readable size.
 		 */
 		humanSize(bytes) {
-			if (bytes == null) {
-				return ''
-			}
-			if (bytes < 1024) {
-				return `${bytes} B`
-			}
-			if (bytes < 1048576) {
-				return `${(bytes / 1024).toFixed(1)} KB`
-			}
-			return `${(bytes / 1048576).toFixed(1)} MB`
+			return humanSize(bytes)
 		},
 	},
 }

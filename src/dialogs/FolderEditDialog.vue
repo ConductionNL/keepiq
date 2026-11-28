@@ -19,18 +19,10 @@
 		size="normal"
 		@update:open="onUpdateOpen">
 		<div class="folder-form">
-			<NcNoteCard v-if="error" type="error">
-				{{ error }}
-			</NcNoteCard>
-
-			<NcTextField
+			<FolderNameField
 				v-model="name"
-				:label="
-					isVaultLevel
-						? t('keepiq', 'Vault name')
-						: t('keepiq', 'Folder name')
-				"
-				:required="true" />
+				:vaultLevel="isVaultLevel"
+				:error="error" />
 
 			<!-- Personalization applies to VAULTS (top-level folders) only —
 			     nested folders keep the plain glyph. -->
@@ -44,36 +36,23 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton
-				variant="primary"
-				:disabled="!canSubmit"
-				data-testid="folder-edit-save"
-				@click="submit">
-				<template #icon>
-					<NcLoadingIcon v-if="saving" :size="20" />
-					<ContentSaveOutline v-else :size="20" />
-				</template>
-				{{ t('keepiq', 'Save') }}
-			</NcButton>
+			<CnDialogActions
+				:saving="saving"
+				:canSubmit="canSubmit"
+				confirmIcon="ContentSaveOutline"
+				:confirmLabel="t('keepiq', 'Save')"
+				:cancelLabel="t('keepiq', 'Cancel')"
+				@cancel="onUpdateOpen(false)"
+				@submit="submit" />
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import { CnIconColorPicker } from '@conduction/nextcloud-vue'
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcTextField,
-} from '@nextcloud/vue'
-import { markRaw } from 'vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-import Safe from 'vue-material-design-icons/Safe.vue'
+import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
+import { NcDialog } from '@nextcloud/vue'
+import FolderNameField from '../components/FolderNameField.vue'
+import folderDialog from '../mixins/folderDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 
 /**
@@ -85,14 +64,13 @@ export default {
 	name: 'FolderEditDialog',
 
 	components: {
+		CnDialogActions,
 		CnIconColorPicker,
-		ContentSaveOutline,
-		NcButton,
+		FolderNameField,
 		NcDialog,
-		NcLoadingIcon,
-		NcNoteCard,
-		NcTextField,
 	},
+
+	mixins: [folderDialog],
 
 	props: {
 		/** The folder being edited ({id, name, parentId, customIcon, customColor}). */
@@ -106,14 +84,9 @@ export default {
 
 	data() {
 		return {
-			open: true,
 			name: this.folder.name || '',
 			customIcon: this.folder.customIcon ?? null,
 			customColor: this.folder.customColor ?? null,
-			saving: false,
-			error: '',
-			/** The vaults' default glyph, for the picker's Default cell. */
-			safeIcon: markRaw(Safe),
 		}
 	},
 
@@ -128,47 +101,9 @@ export default {
 		isVaultLevel() {
 			return !this.folder.parentId
 		},
-
-		/**
-		 * Whether Save may run: not already saving, and a name is present.
-		 *
-		 * @return {boolean}
-		 * @spec exclude Form-enablement guard; no domain behaviour.
-		 */
-		canSubmit() {
-			return !this.saving && this.name.trim() !== ''
-		},
 	},
 
 	methods: {
-		t,
-
-		/**
-		 * Translate a picker label through keepiq's catalog (the picker's
-		 * labels are library-side English source strings).
-		 *
-		 * @param {string} label The English source label.
-		 * @return {string} The translated label.
-		 * @spec exclude Pure i18n pass-through.
-		 */
-		translateLabel(label) {
-			return t('keepiq', label)
-		},
-
-		/**
-		 * Forward the open-state change; emit `close` when dismissed.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 * @spec exclude Dialog open-state plumbing; no domain behaviour.
-		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
-			}
-		},
-
 		/**
 		 * Save the changes via the store. The name rides along only when it
 		 * changed (the backend renames on any present name); for a vault the
@@ -179,11 +114,21 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
-			}
-			this.saving = true
-			this.error = ''
+			await this.saveFolder(
+				() => useFolderStore().updateFolder(this.folder.id, this.changes()),
+				t('keepiq', 'Failed to update folder'),
+			)
+		},
+
+		/**
+		 * The update to send: the trimmed name only when it changed, and for
+		 * a vault both customization keys, where an explicit null clears a
+		 * stored value.
+		 *
+		 * @return {object} The update.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		changes() {
 			const data = {}
 			const trimmed = this.name.trim()
 			if (trimmed !== this.folder.name) {
@@ -193,31 +138,10 @@ export default {
 				data.customIcon = this.customIcon
 				data.customColor = this.customColor
 			}
-			try {
-				const updated = await useFolderStore().updateFolder(
-					this.folder.id,
-					data,
-				)
-				this.$emit('saved', updated)
-				this.onUpdateOpen(false)
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message
-					|| e?.message
-					|| t('keepiq', 'Failed to update folder')
-			} finally {
-				this.saving = false
-			}
+			return data
 		},
 	},
 }
 </script>
 
-<style scoped>
-.folder-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-</style>
+<style scoped src="./folderForm.css"></style>

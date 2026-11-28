@@ -1,0 +1,968 @@
+{
+	"no argument": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"empty query": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"every field set": [
+		{
+			"filters": {
+				"folderId": "f1",
+				"search": "db",
+				"typeId": "t1",
+				"state": "archived",
+				"favourite": true,
+				"tag": "work"
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"set then clear": [
+		{
+			"filters": {
+				"folderId": "f1",
+				"search": "db",
+				"typeId": "t1",
+				"state": "trashed",
+				"favourite": true,
+				"tag": "work"
+			},
+			"sort": {
+				"field": "last_used_at",
+				"direction": "desc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "last_used_at",
+				"direction": "desc"
+			}
+		}
+	],
+	"sort last used then name": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "last_used_at",
+				"direction": "desc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"unrelated keys only": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"set then undefined": [
+		{
+			"filters": {
+				"folderId": "f1",
+				"search": "s",
+				"typeId": "t",
+				"state": "archived",
+				"favourite": true,
+				"tag": "x"
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"folderId through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": "",
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": 0,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": false,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": "x",
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": "last_used_at",
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": true,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"search through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": 0,
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": false,
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "x",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "last_used_at",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": true,
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"typeId through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": "",
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": 0,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": false,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": "x",
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": "last_used_at",
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": true,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"sort through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "x",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "last_used_at",
+				"direction": "desc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": true,
+				"direction": "asc"
+			}
+		}
+	],
+	"state through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "x",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "last_used_at",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": true,
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"favourite through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": true,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": true,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": true,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	],
+	"tag through every value": [
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": null
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": "x"
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": "last_used_at"
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		},
+		{
+			"filters": {
+				"folderId": null,
+				"search": "",
+				"typeId": null,
+				"state": "live",
+				"favourite": false,
+				"tag": true
+			},
+			"sort": {
+				"field": "name",
+				"direction": "asc"
+			}
+		}
+	]
+}

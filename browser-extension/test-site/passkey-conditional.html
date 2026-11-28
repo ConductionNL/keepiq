@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Passkey in the field's suggestions</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Passkey in the field's suggestions</h1>
+		<p class="tests">Tests signing in with a passkey straight from the username field, without a separate Keepiq window. It ends on the signed-in page, the same as signing in with the Sign in button.</p>
+		<ol class="tests">
+			<li>Register a passkey for this site on the <a href="/passkey.html">Passkey</a> page first.</li>
+			<li>Make sure Keepiq is unlocked and "Show autofill suggestions on form fields" is on in its settings.</li>
+			<li>Come back here, click the Username field and pick your passkey in the list.</li>
+		</ol>
+		<p class="tests">What to expect: Keepiq's suggestion list opens under the field with your passkey above any logins, named after the login and the user name, for example "<span class="host">localhost</span>, alice". Pick it and you land on the signed-in page at once, like the Sign in button takes you there, and it says you signed in with a passkey and as whom. If something goes wrong, you stay here and the reason shows under the form. If Keepiq is locked, the list shows no passkeys until you unlock it. If this browser cannot do this, the page says so.</p>
+		<form method="post" action="/login">
+			<label>Username <input name="username" type="text" autocomplete="username webauthn"></label>
+			<label>Password <input name="password" type="password" autocomplete="current-password"></label>
+			<button type="submit">Sign in</button>
+			<p class="status" id="result" role="status"></p>
+		</form>
+	</main>
+	<script type="module">
+		import { report, signIn } from '/passkey.js'
+
+		const status = document.getElementById('result')
+		for (const host of document.querySelectorAll('.host')) host.textContent = location.hostname
+		if (await PublicKeyCredential.isConditionalMediationAvailable?.()) {
+			status.textContent = 'Waiting for a passkey from the username field…'
+			status.dataset.result = 'waiting'
+			try {
+				const passkey = await signIn({ mediation: 'conditional', publicKey: { userVerification: 'preferred' } })
+				const query = new URLSearchParams({ from: '/passkey-conditional', passkey: passkey.userName })
+				location.assign(`/signed-in.html?${query}`)
+			} catch (error) {
+				report(status, { error })
+			}
+		} else {
+			status.textContent = 'This browser does not offer passkeys in a field\'s suggestions.'
+		}
+	</script>
+</body>
+</html>

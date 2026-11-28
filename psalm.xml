@@ -26,6 +26,11 @@
         <file name="tests/stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php" />
     </stubs>
     <issueHandlers>
+        <!-- Psalm 7 reports every interface or parent method without #[\Override].
+             Several parents here are OCP stubs that differ per Nextcloud version,
+             and PHP fatals on #[\Override] when the parent method is absent, so
+             the attribute is not added wholesale. -->
+        <MissingOverrideAttribute errorLevel="suppress"/>
         <UndefinedDocblockClass errorLevel="suppress"/>
         <UndefinedClass>
             <errorLevel type="suppress">
@@ -77,6 +82,10 @@
                      require doctrine/dbal — it comes through Nextcloud's runtime). -->
                 <referencedClass name="Doctrine\DBAL\Types\Type"/>
                 <referencedClass name="Doctrine\DBAL\Platforms\AbstractPlatform"/>
+                <!-- WebAuthn, COSE and Symfony UID: the Nextcloud server's 3rdparty, used by WebAuthnVerifier -->
+                <referencedClass name="Webauthn\*"/>
+                <referencedClass name="Cose\*"/>
+                <referencedClass name="Symfony\Component\Uid\*"/>
             </errorLevel>
         </UndefinedClass>
         <UndefinedMagicMethod errorLevel="suppress"/>

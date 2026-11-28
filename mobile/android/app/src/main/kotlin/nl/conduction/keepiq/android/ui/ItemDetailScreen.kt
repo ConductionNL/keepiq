@@ -29,9 +29,12 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -51,11 +54,16 @@ import nl.conduction.keepiq.shared.vault.Composite
 import nl.conduction.keepiq.shared.vault.DecryptedItem
 import nl.conduction.keepiq.shared.vault.FormKind
 import nl.conduction.keepiq.shared.vault.OpenResult
+import nl.conduction.keepiq.shared.vault.PasskeySummary
+import nl.conduction.keepiq.shared.vault.ShareSaveNote
 import nl.conduction.keepiq.shared.vault.VaultIndex
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteResult
 
 private const val MASK = "••••••••"
+
+/** How long "Passkey deleted." stays after it is announced. */
+internal const val PASSKEY_DELETED_SHOWN_MILLIS = 5_000L
 
 /**
  * One item (task 3.1): secret values hidden until revealed, copy through
@@ -75,8 +83,26 @@ fun ItemDetailScreen(
     var result by remember(id) { mutableStateOf<OpenResult?>(null) }
     var action by remember { mutableStateOf<DetailAction?>(null) }
     var problem by remember { mutableStateOf<WriteProblem?>(null) }
+    var deleting by remember { mutableStateOf<PasskeySummary?>(null) }
+    var focusPasskey by remember(id) { mutableStateOf<Int?>(null) }
+    var passkeyDeleted by remember(id) { mutableStateOf(false) }
+    // The announcement is made once: it goes after a while, or at the next action or problem.
+    LaunchedEffect(passkeyDeleted) {
+        if (passkeyDeleted) {
+            delay(PASSKEY_DELETED_SHOWN_MILLIS)
+            passkeyDeleted = false
+        }
+    }
     val scope = rememberCoroutineScope()
+    // What the last save could not deliver to everyone; kept across a rotation, since the repository says it once.
+    var note by rememberSaveable(id, stateSaver = NoteSaver) { mutableStateOf(session.repository.takeShareSaveNote(id)) }
+    // Null until write-context says, and when it can't: Edit is then not offered.
+    var viewOnly by remember(id) { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
+    LaunchedEffect(result) {
+        val opened = (result as? OpenResult.Opened)?.item
+        if (opened != null && !opened.fromCache && !opened.row.useOnly) viewOnly = io { session.repository.isViewOnly(id) }
+    }
 
     when (val r = result) {
         null -> Message(stringResource(R.string.vault_loading))
@@ -87,25 +113,64 @@ fun ItemDetailScreen(
             folderPath = VaultIndex.folderPath(session.repository.state.folders, r.item.row.folderId)
                 ?: stringResource(R.string.vault_no_folder),
             offline = session.repository.state.offline,
+            viewOnly = viewOnly,
+            note = note,
             problem = problem,
             modifier = modifier,
             onCopy = onCopy,
             onEdit = onEdit,
-            onMove = { action = DetailAction.Move },
-            onTrash = { action = DetailAction.Trash },
+            onMove = {
+                passkeyDeleted = false
+                action = DetailAction.Move
+            },
+            onTrash = {
+                passkeyDeleted = false
+                action = DetailAction.Trash
+            },
             onSendLogin = { onSendLogin(r.item.login, r.item.secret) },
+            onDeletePasskey = {
+                passkeyDeleted = false
+                deleting = it
+            },
+            focusPasskey = focusPasskey,
+            onPasskeyFocused = { focusPasskey = null },
+            passkeyDeleted = passkeyDeleted,
         )
     }
 
     val item = (result as? OpenResult.Opened)?.item ?: return
     fun write(block: suspend () -> WriteResult, after: () -> Unit) {
         action = null
+        passkeyDeleted = false
         scope.launch {
             when (val w = io { block() }) {
                 is WriteResult.Saved -> after()
                 is WriteResult.Refused -> problem = w.problem
             }
         }
+    }
+    deleting?.let { pk ->
+        PasskeyDeleteDialog(
+            account = pk.userName,
+            onConfirm = {
+                deleting = null
+                passkeyDeleted = false
+                val index = item.passkeys.indexOf(pk)
+                scope.launch {
+                    when (val w = io { session.repository.deletePasskey(item, pk.credentialId, pk.rpId) }) {
+                        is WriteResult.Saved -> {
+                            problem = null
+                            session.repository.takeShareSaveNote(id)?.let { note = it }
+                            result = io { session.repository.open(id) }
+                            focusPasskey = index
+                            passkeyDeleted = true
+                        }
+                        is WriteResult.Refused -> problem = w.problem
+                    }
+                }
+            },
+            onDismiss = { deleting = null },
+        )
     }
     when (action) {
         DetailAction.Trash -> AlertDialog(
@@ -164,76 +229,157 @@ internal fun ItemDetail(
     onMove: () -> Unit,
     onTrash: () -> Unit,
     onSendLogin: () -> Unit,
+    onDeletePasskey: (PasskeySummary) -> Unit = {},
+    /** After a passkey Delete: the row whose Delete takes focus, else the Edit button. */
+    focusPasskey: Int? = null,
+    /** Focus moved for [focusPasskey]: the caller clears it, so a later reopen does not move focus again. */
+    onPasskeyFocused: () -> Unit = {},
+    /** A passkey was just deleted: said in a polite live region, as focus alone tells a screen reader nothing. */
+    passkeyDeleted: Boolean = false,
+    /** A copy shared to view only: no Edit, no passkey Delete (keepiq#1300). */
+    /** Null when write-context could not tell: Edit and passkey Delete are then not enabled. */
+    viewOnly: Boolean? = false,
+    /** What the last save could not deliver to everyone. */
+    note: ShareSaveNote? = null,
 ) {
     val row = item.row
+    val editFocus = remember { FocusMove() }
+    val view = LocalView.current
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
-        if (item.fromCache) Note(stringResource(R.string.detail_from_cache))
-        if (row.useOnly) Note(stringResource(R.string.detail_use_only))
-        if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
+        DetailNotes(item, problem, passkeyDeleted)
+        if (viewOnly == true && !row.readOnly) Note(stringResource(R.string.detail_view_only))
+        note?.let { Note(shareSaveNoteText(it)) }
         if (row.blocked) {
             Note(row.blockedReason ?: stringResource(R.string.detail_blocked))
             return@Column
         }
 
-        val passwordLabel = stringResource(if (item.kind == FormKind.LOGIN) R.string.detail_password else R.string.detail_value)
-        when (item.kind) {
-            FormKind.LOGIN, FormKind.GENERIC -> {
-                if (item.login.isNotEmpty()) FieldRow(stringResource(R.string.detail_username), item.login, onCopy = onCopy)
-                if (!row.useOnly) FieldRow(passwordLabel, item.secret, masked = true, onCopy = onCopy)
-            }
-            FormKind.TOTP -> TotpRow(item, onCopy)
-            FormKind.NOTE -> if (!row.useOnly) FieldRow(stringResource(R.string.detail_notes), item.secret, onCopy = onCopy)
-            FormKind.CARD, FormKind.IDENTITY -> if (!row.useOnly) {
-                val data = item.composite
-                if (data == null) {
-                    Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
-                } else {
-                    if (item.kind == FormKind.CARD) {
-                        Composite.last4(data["number"] ?: "").takeIf { it.isNotEmpty() }?.let {
-                            Text(stringResource(R.string.detail_card_ending, it))
-                        }
-                    }
-                    for (field in Composite.fieldsOf(item.kind)) {
-                        val value = data[field] ?: ""
-                        if (value.isNotEmpty()) FieldRow(compositeLabel(field), value, masked = field in Composite.MASKED, onCopy = onCopy)
-                    }
-                }
-            }
-            FormKind.PASSKEY -> item.passkey?.let { pk ->
-                FieldRow(stringResource(R.string.detail_passkey_site), pk.rpName?.let { "$it (${pk.rpId})" } ?: pk.rpId, copy = false, onCopy = onCopy)
-                pk.userName?.let { FieldRow(stringResource(R.string.detail_passkey_account), it, copy = false, onCopy = onCopy) }
-                pk.createdAt?.let { FieldRow(stringResource(R.string.detail_passkey_created), it, copy = false, onCopy = onCopy) }
-                Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
+        KindFields(item, onCopy)
+        if (item.hasSavedKey) SavedKeyRow(item, onCopy)
+        val mayDelete = !row.useOnly && !row.readOnly && viewOnly == false && !offline
+        if (!row.useOnly) {
+            PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey, onPasskeyFocused)
+            if (item.passkeysError) Text(stringResource(R.string.detail_passkeys_error), color = MaterialTheme.colorScheme.error)
+        }
+        LaunchedEffect(focusPasskey, item) {
+            if (focusPasskey != null && (focusPasskey >= item.passkeys.size || !mayDelete) && !row.useOnly) {
+                editFocus.move(view)
+                onPasskeyFocused()
             }
         }
         row.url?.takeIf { it.isNotEmpty() }?.let { FieldRow(stringResource(R.string.detail_address), it, onCopy = onCopy) }
-        if (!row.useOnly) {
-            for ((field, value) in item.typedValues) {
-                if (value.isNotEmpty()) FieldRow(field.label, value, masked = field.hidden, onCopy = onCopy)
-            }
-            if (item.kind != FormKind.NOTE && item.notes.isNotEmpty()) FieldRow(stringResource(R.string.detail_notes), item.notes, onCopy = onCopy)
-            if (item.additionalFieldsError) Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
-            if (item.extraFields.isNotEmpty()) {
-                Text(stringResource(R.string.detail_extra_fields), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-                for ((name, value) in item.extraFields) FieldRow(name, value, onCopy = onCopy)
-            }
-        }
+        if (!row.useOnly) MoreFields(item, onCopy)
 
         HorizontalDivider()
-        if (!row.useOnly) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit, enabled = !offline) { Text(stringResource(R.string.action_edit)) }
-                OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
-            }
-            if (item.kind == FormKind.LOGIN) {
-                OutlinedButton(onClick = onSendLogin, enabled = !offline) { Text(stringResource(R.string.cd_new_send)) }
-            }
-        }
+        if (!row.useOnly) WriteActions(item, offline, viewOnly, editFocus, onEdit, onMove, onSendLogin)
         OutlinedButton(onClick = onTrash, enabled = !offline) { Text(stringResource(R.string.action_trash)) }
         if (offline) Text(stringResource(R.string.write_offline), style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+/** The notes under the title: where the item came from, what the caller may do with it, and live announcements. */
+@Composable
+private fun DetailNotes(item: DecryptedItem, problem: WriteProblem?, passkeyDeleted: Boolean) {
+    val row = item.row
+    if (item.fromCache) Note(stringResource(R.string.detail_from_cache))
+    if (row.useOnly) Note(stringResource(R.string.detail_use_only))
+    if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
+    // A refusal is announced: after a refused passkey Delete the dialog closes and focus goes nowhere.
+    // The detail has no Save without them: a passkey delete only says to try later.
+    problem?.let { Text(writeProblemText(it, saveWithout = false), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+    if (passkeyDeleted) {
+        Text(stringResource(R.string.detail_passkey_deleted), style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+    }
+}
+
+/** The fields that belong to the item's kind. */
+@Composable
+private fun KindFields(item: DecryptedItem, onCopy: (String) -> Unit) {
+    val row = item.row
+    val passwordLabel = stringResource(if (item.kind == FormKind.LOGIN) R.string.detail_password else R.string.detail_value)
+    when (item.kind) {
+        FormKind.LOGIN, FormKind.GENERIC -> {
+            if (item.login.isNotEmpty()) FieldRow(stringResource(R.string.detail_username), item.login, onCopy = onCopy)
+            if (!row.useOnly) FieldRow(passwordLabel, item.secret, masked = true, onCopy = onCopy)
+        }
+        FormKind.TOTP -> TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
+        FormKind.NOTE -> if (!row.useOnly) FieldRow(stringResource(R.string.detail_notes), item.secret, onCopy = onCopy)
+        FormKind.CARD, FormKind.IDENTITY -> if (!row.useOnly) CompositeFields(item, onCopy)
+        FormKind.PASSKEY -> item.passkey?.let { pk ->
+            FieldRow(stringResource(R.string.detail_passkey_site), pk.rpName?.let { "$it (${pk.rpId})" } ?: pk.rpId, copy = false, onCopy = onCopy)
+            pk.userName?.let { FieldRow(stringResource(R.string.detail_passkey_account), it, copy = false, onCopy = onCopy) }
+            pk.createdAt?.let { FieldRow(stringResource(R.string.detail_passkey_created), it, copy = false, onCopy = onCopy) }
+            Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+/** The fields of a card or identity, read from its composite value. */
+@Composable
+private fun CompositeFields(item: DecryptedItem, onCopy: (String) -> Unit) {
+    val data = item.composite
+    if (data == null) {
+        Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
+        return
+    }
+    if (item.kind == FormKind.CARD) {
+        Composite.last4(data["number"] ?: "").takeIf { it.isNotEmpty() }?.let {
+            Text(stringResource(R.string.detail_card_ending, it))
+        }
+    }
+    for (field in Composite.fieldsOf(item.kind)) {
+        val value = data[field] ?: ""
+        if (value.isNotEmpty()) FieldRow(compositeLabel(field), value, masked = field in Composite.MASKED, onCopy = onCopy)
+    }
+}
+
+/** The item's own `totp` field, for any type that holds one; on an Authenticator item it is a second code, named so. */
+@Composable
+private fun SavedKeyRow(item: DecryptedItem, onCopy: (String) -> Unit) {
+    if (item.kind == FormKind.TOTP) {
+        val own = item.totpSeed.takeIf { it.isNotBlank() }?.let { runCatching { Totp.parse(it) }.getOrNull() }
+        TotpRow(own, stringResource(R.string.detail_code_own_key), onCopy)
+    } else {
+        TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
+    }
+}
+
+/** The typed values, notes and extra fields shown after the address. */
+@Composable
+private fun MoreFields(item: DecryptedItem, onCopy: (String) -> Unit) {
+    for ((field, value) in item.typedValues) {
+        if (value.isNotEmpty()) FieldRow(field.label, value, masked = field.hidden, onCopy = onCopy)
+    }
+    if (item.kind != FormKind.NOTE && item.notes.isNotEmpty()) FieldRow(stringResource(R.string.detail_notes), item.notes, onCopy = onCopy)
+    if (item.additionalFieldsError) Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
+    if (item.extraFields.isNotEmpty()) {
+        Text(stringResource(R.string.detail_extra_fields), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+        for ((name, value) in item.extraFields) FieldRow(name, value, masked = item.masksExtra(name), onCopy = onCopy)
+    }
+}
+
+/** Edit, Move and, for a login, Send: the actions a caller who may write has. */
+@Composable
+private fun WriteActions(
+    item: DecryptedItem,
+    offline: Boolean,
+    viewOnly: Boolean?,
+    editFocus: FocusMove,
+    onEdit: () -> Unit,
+    onMove: () -> Unit,
+    onSendLogin: () -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // A view-only copy still moves: a move files the holder's own copy.
+        if (viewOnly != true) {
+            OutlinedButton(onClick = onEdit, enabled = !offline && viewOnly == false, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
+        }
+        OutlinedButton(onClick = onMove, enabled = !offline, modifier = if (viewOnly == true) Modifier.focusMove(editFocus) else Modifier) { Text(stringResource(R.string.action_move)) }
+    }
+    if (item.kind == FormKind.LOGIN) {
+        OutlinedButton(onClick = onSendLogin, enabled = !offline) { Text(stringResource(R.string.cd_new_send)) }
     }
 }
 
@@ -289,10 +435,13 @@ fun FieldRow(label: String, value: String, masked: Boolean = false, copy: Boolea
 
 /** The current code and its seconds left, refreshed every second. */
 @Composable
-private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
-    val params = item.totp
+private fun TotpRow(params: Totp.Params?, label: String, onCopy: (String) -> Unit) {
     if (params == null) {
-        Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
+        // Labelled too: an Authenticator item can show two codes, and the reader must know which one cannot be read.
+        Column {
+            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.detail_code_invalid), color = MaterialTheme.colorScheme.error)
+        }
         return
     }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -304,7 +453,6 @@ private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
     }
     val code = remember(params, now / 1_000L / params.period) { Totp.generate(params, now) }
     val left = Totp.secondsRemaining(params.period, now)
-    val label = stringResource(R.string.detail_code)
     val leftText = stringResource(R.string.detail_code_seconds, left)
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium)
@@ -327,3 +475,15 @@ private fun TotpRow(item: DecryptedItem, onCopy: (String) -> Unit) {
         }
     }
 }
+
+/** A [ShareSaveNote] in the saved state, so a rotation keeps it. */
+private val NoteSaver = listSaver<ShareSaveNote?, Any>(
+    save = { note -> if (note == null) emptyList() else listOf(note.ownerOnly, ArrayList(note.suspended), ArrayList(note.paused)) },
+    restore = { saved ->
+        if (saved.isEmpty()) {
+            null
+        } else {
+            ShareSaveNote(saved[0] as Boolean, (saved[1] as List<*>).map { it as String }, (saved[2] as List<*>).map { it as String })
+        }
+    },
+)

@@ -279,7 +279,7 @@ class FederationPartnerTest extends TestCase {
 		$row = $this->partner('cloud.partner.example', true, false);
 
 		$this->assertSame(
-			['id', 'baseUrl', 'host', 'rootFingerprint', 'allowOutbound', 'allowInbound', 'addedBy', 'addedAt'],
+			['id', 'baseUrl', 'host', 'rootFingerprint', 'allowOutbound', 'allowInbound', 'addedBy', 'addedAt', 'valueFields'],
 			array_keys($row->jsonSerialize())
 		);
 		$this->assertInstanceOf(FederationPartner::class, $row);

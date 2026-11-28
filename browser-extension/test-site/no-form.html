@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>No login form</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>No login form</h1>
+		<p class="tests">An article with only a search box. The popup should say autofill is not available. Right-click the page, the link or the image and pick a login under Keepiq › Autofill login: the page says Keepiq found no login form. A card or an identity says it found no fields. Submit the <a href="/login.html">basic login</a> with a new password first and come back to see the notice below the save bar.</p>
+		<form method="get" action="/no-form.html">
+			<label>Search <input name="q" type="search"></label>
+			<button type="submit">Search</button>
+		</form>
+		<article>
+			<h2>Why this page has no form</h2>
+			<p>Most pages a password manager sees have nothing to fill. A fill picked from the context menu here finds no field in any frame, so Keepiq says so instead of doing nothing.</p>
+			<p><img src="/qr-website.svg" alt="A QR code that holds a website" width="96" height="96"></p>
+		</article>
+	</main>
+</body>
+</html>

@@ -37,7 +37,7 @@ function buildFolderPaths(folders) {
 	}
 	const cache = new Map()
 	const resolve = (id, guard = 0) => {
-		if (id == null || id === ROOT_FOLDER_ID) {
+		if (isRootFolder(id)) {
 			return []
 		}
 		if (cache.has(id)) {
@@ -47,10 +47,7 @@ function buildFolderPaths(folders) {
 		if (!folder || guard > 1000) {
 			return []
 		}
-		const parentPath = resolve(folder.parent, guard + 1)
-		const path = folder.label
-			? [...parentPath, String(folder.label)]
-			: parentPath
+		const path = withLabel(resolve(folder.parent, guard + 1), folder)
 		cache.set(id, path)
 		return path
 	}
@@ -59,6 +56,27 @@ function buildFolderPaths(folders) {
 		map.set(id, resolve(id))
 	}
 	return map
+}
+
+/**
+ * Whether a folder id names the vault root: none, or Passwords' all-zero root id.
+ *
+ * @param {string|null|undefined} id The folder id.
+ * @return {boolean} True for the root.
+ */
+function isRootFolder(id) {
+	return id == null || id === ROOT_FOLDER_ID
+}
+
+/**
+ * A folder's path: its parent's, plus its label when it has one.
+ *
+ * @param {Array<string>} parentPath The parent's path segments.
+ * @param {object} folder The Passwords folder.
+ * @return {Array<string>} The folder's path segments.
+ */
+function withLabel(parentPath, folder) {
+	return folder.label ? [...parentPath, String(folder.label)] : parentPath
 }
 
 /**
@@ -75,22 +93,42 @@ function buildAdditional(password) {
 	if (password.notes) {
 		additional.notes = password.notes
 	}
-	let custom = password.customFields
+	addLabelledFields(additional, customFieldList(password.customFields))
+	return Object.keys(additional).length > 0 ? additional : null
+}
+
+/**
+ * Copy the custom fields that carry both a label and a value.
+ *
+ * @param {object} additional The additional fields to add to.
+ * @param {Array<object>} fields The custom fields.
+ * @return {void}
+ */
+function addLabelledFields(additional, fields) {
+	for (const field of fields) {
+		if (field && field.label != null && field.value != null) {
+			additional[String(field.label)] = field.value
+		}
+	}
+}
+
+/**
+ * The custom fields as a list, read from their JSON text when Passwords
+ * stored them as a string; none when they are neither.
+ *
+ * @param {string|Array<object>|undefined} custom The stored custom fields.
+ * @return {Array<object>} The fields.
+ */
+function customFieldList(custom) {
+	let list = custom
 	if (typeof custom === 'string') {
 		try {
-			custom = JSON.parse(custom)
+			list = JSON.parse(custom)
 		} catch {
-			custom = null
+			list = null
 		}
 	}
-	if (Array.isArray(custom)) {
-		for (const field of custom) {
-			if (field && field.label != null && field.value != null) {
-				additional[String(field.label)] = field.value
-			}
-		}
-	}
-	return Object.keys(additional).length > 0 ? additional : null
+	return Array.isArray(list) ? list : []
 }
 
 /**
@@ -110,22 +148,39 @@ export function parseNcPasswords(input) {
 
 	const folderPaths = buildFolderPaths(data.folders)
 
-	return data.passwords.map((password, index) => {
-		const sourceRow = index + 1
-		const segments = password.folder
-			? folderPaths.get(password.folder) || []
-			: []
-		const fields = {
-			name: password.label ?? '',
-			url: password.url ?? null,
-			login: password.username ?? null,
-			password: password.password ?? null,
-			folder: joinFolderPath(segments),
-			type: 'login',
-			additionalFields: buildAdditional(password),
-		}
-		return validateRow(makeRow(fields, sourceRow))
-	})
+	return data.passwords.map((password, index) =>
+		validateRow(makeRow(passwordFields(password, folderPaths), index + 1)),
+	)
+}
+
+/**
+ * The row fields of one Passwords password, filed under its folder's path.
+ *
+ * @param {object} password The Passwords password object.
+ * @param {Map<string, Array<string>>} folderPaths Each folder's path segments, by id.
+ * @return {object} The row fields.
+ */
+function passwordFields(password, folderPaths) {
+	return {
+		name: password.label ?? '',
+		url: password.url ?? null,
+		login: password.username ?? null,
+		password: password.password ?? null,
+		folder: joinFolderPath(folderSegments(password, folderPaths)),
+		type: 'login',
+		additionalFields: buildAdditional(password),
+	}
+}
+
+/**
+ * The path segments of the password's folder; none at the root or for an unknown folder.
+ *
+ * @param {object} password The Passwords password object.
+ * @param {Map<string, Array<string>>} folderPaths Each folder's path segments, by id.
+ * @return {Array<string>} The segments.
+ */
+function folderSegments(password, folderPaths) {
+	return password.folder ? folderPaths.get(password.folder) || [] : []
 }
 
 /** The Nextcloud Passwords parser descriptor. */

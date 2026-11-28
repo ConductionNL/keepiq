@@ -15,12 +15,18 @@
  *
  * Shared-secret semantics:
  *  - Delegated secrets transfer ownership to the delegate (delegation made
- *    permanent, owner reassigned).
+ *    permanent, owner reassigned). The user's link shares on them are deleted
+ *    with the rest of the user's link shares, not handed to the delegate.
+ *    Links the user made that an earlier transfer handed to someone else stay
+ *    with their holder; their maker is recorded as a deleted account.
+ *    The delegate's own copy stays linked when its share row is trusted and nothing limits the copy.
  *  - Recipient copies of secrets the user shared are detached: the link is
  *    severed and the copy is tombstoned with a non-personal reason. No personal
  *    data of the deleted user is ever written to a recipient's copy.
  *  - Received share copies in the deleted user's vault are hard-deleted; the
  *    original owners' secrets are untouched.
+ *  - Partner shares of the user's own secrets are revoked, and the retry job tells each partner to delete its copy.
+ *    Those of delegated secrets go with the secret to the delegate.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -44,6 +50,7 @@ use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Event\AccountDataDeletedEvent;
+use OCA\Keepiq\Kernel\Contracts\AccountDeletionServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**
@@ -51,14 +58,15 @@ use OCP\EventDispatcher\IEventDispatcher;
  *
  * The share-shaped steps live in AccountShareCleanupService, the key-material
  * step in AccountSuiteCleanupService and the per-secret child data (attachments,
- * grants, version history) in SecretChildDataCleaner; this class owns the ORDER
+ * grants, version history) in SecretChildDataCleaner, run with the partner shares
+ * of those secrets by OwnedSecretCleanup; this class owns the ORDER
  * of the cascade, the report and the completion event.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The cascade necessarily
  *   touches every entity that references a user; one orchestrator that sequences
  *   the steps is clearer than scattering the ordering itself.
  */
-class AccountDeletionService {
+class AccountDeletionService implements AccountDeletionServiceInterface {
 	/**
 	 * The non-personal tombstone reason written to detached recipient copies.
 	 *
@@ -77,7 +85,7 @@ class AccountDeletionService {
 	 * @param IEventDispatcher $dispatcher The event dispatcher
 	 * @param AccountShareCleanupService $shareCleanup The share-cascade steps
 	 * @param AccountSuiteCleanupService $suiteCleanup The suite-cascade step
-	 * @param SecretChildDataCleaner $childData The attachment/version cascade
+	 * @param OwnedSecretCleanup $ownSecretCleanup The partner-share and attachment/version cascade of the user's own secrets
 	 *
 	 * @return void
 	 */
@@ -90,7 +98,7 @@ class AccountDeletionService {
 		private IEventDispatcher $dispatcher,
 		private AccountShareCleanupService $shareCleanup,
 		private AccountSuiteCleanupService $suiteCleanup,
-		private SecretChildDataCleaner $childData,
+		private OwnedSecretCleanup $ownSecretCleanup,
 	) {
 	}//end __construct()
 
@@ -104,6 +112,7 @@ class AccountDeletionService {
 	 * @return DeletionReport The per-entity counts
 	 *
 	 * @spec openspec/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
 	 */
 	public function deleteAllFor(string $userId, string $trigger = 'user-deleted'): DeletionReport {
 		$report = new DeletionReport();
@@ -115,25 +124,37 @@ class AccountDeletionService {
 			limit: 100000,
 		);
 
-		$this->shareCleanup->transferDelegatedSecrets(
+		// Link shares go before the delegated transfer, which would otherwise
+		// hand the ones on a delegated secret to the delegate. deleteByUserId
+		// returns void, so count first for the report.
+		$report->linkSharesDeleted = count($this->linkShareMapper->findByCreatedBy(userId: $userId));
+		$this->linkShareMapper->deleteByUserId(userId: $userId);
+		// Links the user made that a transfer handed to someone else stay
+		// with that holder, with a deleted-account marker as their maker.
+		$report->linkMakersForgotten = $this->linkShareMapper->forgetOriginalCreator(userId: $userId);
+
+		$handedTo = $this->shareCleanup->transferDelegatedSecrets(
 			userId: $userId,
 			ownedSecrets: $ownedSecrets,
 			report: $report
 		);
-		$this->shareCleanup->detachGrantedShares(ownedSecrets: $ownedSecrets, report: $report);
+		$this->shareCleanup->detachGrantedShares(
+			userId: $userId,
+			ownedSecrets: $ownedSecrets,
+			report: $report,
+			handedTo: $handedTo
+		);
 		$this->shareCleanup->removeReceivedShares(userId: $userId, report: $report);
+		$this->shareCleanup->removeShareSaveStages(userId: $userId);
 
-		// Link shares + secret requests via the existing per-user cascade methods.
-		// deleteByUserId returns void, so count first for the report.
-		$report->linkSharesDeleted = count($this->linkShareMapper->findByCreatedBy(userId: $userId));
-		$this->linkShareMapper->deleteByUserId(userId: $userId);
 		$report->requestsDeleted = $this->requestMapper->deleteByCreatedBy(userId: $userId);
 
 		// Attachments cascade (encrypted-attachments §3.2): remove every
 		// attachment of the user's remaining own secrets and every grant
 		// any of their rows hold as a copy — idempotent, before the rows
-		// themselves go.
-		$this->childData->purgeForOwnerUser(userId: $userId);
+		// themselves go. Their partner shares end first: after the delegated
+		// secrets went to their delegates, as the shares are found through the secrets.
+		$this->ownSecretCleanup->purgeForOwnerUser(userId: $userId);
 
 		// Own secrets + folders.
 		$report->secretsDeleted = $this->secretMapper->deleteByOwnerUser(ownerId: $userId);

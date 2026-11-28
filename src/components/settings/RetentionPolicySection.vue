@@ -64,88 +64,51 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
+import { adminSettingsForm } from '../../mixins/adminSettingsForm.js'
 
 export default {
 	name: 'RetentionPolicySection',
 	components: { CnSettingsSection, NcNoteCard },
+	mixins: [adminSettingsForm('/apps/keepiq/api/settings/admin/policies')],
 
 	data() {
 		return {
 			retentionCount: 20,
 			retentionDays: 365,
 			trashDays: 30,
-			error: null,
-		}
-	},
-
-	/**
-	 * Load the current retention settings.
-	 *
-	 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
-	 */
-	async created() {
-		try {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/policies'),
-			)
-			this.retentionCount = response.data.version_retention_count ?? 20
-			this.retentionDays = response.data.version_retention_days ?? 365
-			this.trashDays = response.data.trash_retention_days ?? 30
-		} catch (e) {
-			this.error = e?.response?.data?.message || e?.message
 		}
 	},
 
 	methods: {
 		/**
-		 * Persist the retention settings (the server validates the bounds).
+		 * Take the stored settings into the form.
 		 *
-		 * @return {Promise<void>}
+		 * @param {object} data The stored settings.
+		 * @return {void}
 		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 		 */
-		async save() {
-			this.error = null
-			try {
-				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin/policies'),
-					{
-						version_retention_count: Math.max(1, this.retentionCount),
-						version_retention_days: Math.max(0, this.retentionDays),
-						trash_retention_days: Math.min(
-							365,
-							Math.max(1, this.trashDays),
-						),
-					},
-				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+		readSettings(data) {
+			this.retentionCount = data.version_retention_count ?? 20
+			this.retentionDays = data.version_retention_days ?? 365
+			this.trashDays = data.trash_retention_days ?? 30
+		},
+
+		/**
+		 * The retention settings to store (the server validates the bounds).
+		 *
+		 * @return {object} The settings to store.
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
+		 */
+		settingsPayload() {
+			return {
+				version_retention_count: Math.max(1, this.retentionCount),
+				version_retention_days: Math.max(0, this.retentionDays),
+				trash_retention_days: Math.min(365, Math.max(1, this.trashDays)),
 			}
 		},
 	},
 }
 </script>
 
-<style scoped>
-.attachment-limits {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	max-width: 420px;
-}
-
-.attachment-limits__field {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.attachment-limits__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
-	width: 160px;
-}
-</style>
+<style scoped src="./limitFields.css"></style>

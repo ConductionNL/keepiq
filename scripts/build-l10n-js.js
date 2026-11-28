@@ -36,6 +36,13 @@
 // (`"_<singular>_::_<plural>_": [forms]`) are emitted like any other value,
 // so the .js carries the same arrays as the .json.
 //
+// The SOURCE locale (en) is the one exception to "every key": its keys ARE
+// its strings, and `t()` already falls back to the key, so an entry equal to
+// its own key costs bytes on every English page and changes nothing. Its .js
+// carries only the entries that differ from their key (a plural pair, a
+// spelling fix). l10n/en.json keeps every key, because PHP `$l->t()` and the
+// completeness checks read it (PERF-HANDOFF, all apps).
+//
 // Usage:
 //   node scripts/build-l10n-js.js            (npm run l10n:build)
 //   node scripts/build-l10n-js.js --check    exit 1 if any .js is stale
@@ -55,6 +62,9 @@ const REPO_ROOT = process.env.L10N_REPO_ROOT
 	? path.resolve(process.env.L10N_REPO_ROOT)
 	: path.resolve(__dirname, '..')
 const L10N_DIR = path.join(REPO_ROOT, 'l10n')
+
+/** The locale whose keys are its source strings; see the header note. */
+const SOURCE_LOCALE = 'en'
 
 /**
  * The app id the browser catalogue must register under. Read from
@@ -76,40 +86,66 @@ function appId() {
 }
 
 /**
- * Render one catalogue as the `OC.L10N.register` call the browser expects.
- *
- * @param {string} id - the app id to register under
- * @param {object} translations - key -> translation
- * @param {string} pluralForm - the catalogue's gettext plural rule
- * @return {string} the .js file body
+ * @param {object} translations key -> translation
+ * @return {string} one line per key, comma-joined
  */
-function renderJs(id, translations, pluralForm) {
-	const body = Object.keys(translations)
+function renderEntries(translations) {
+	return Object.keys(translations)
 		.map(
 			(key) =>
 				`        ${JSON.stringify(key)}: ${JSON.stringify(translations[key])}`,
 		)
 		.join(',\n')
+}
+
+/**
+ * The entries the browser needs from one catalogue: all of them, except for
+ * the source locale, where an entry equal to its own key is dropped.
+ *
+ * @spec PERF-HANDOFF.md (all apps: drop identity entries from the English catalogue at build time)
+ * @param {string} locale - the catalogue's locale code
+ * @param {object} translations - key -> translation
+ * @return {object} key -> translation, as served to the browser
+ */
+function browserEntries(locale, translations) {
+	if (locale !== SOURCE_LOCALE) {
+		return translations
+	}
+	const kept = {}
+	for (const key of Object.keys(translations)) {
+		if (translations[key] !== key) {
+			kept[key] = translations[key]
+		}
+	}
+	return kept
+}
+
+/**
+ * Render one catalogue as the `OC.L10N.register` call the browser expects.
+ *
+ * @param {string} id - the app id to register under
+ * @param {{translations: object, pluralForm: string}} doc - key -> translation, and the catalogue's gettext plural rule
+ * @return {string} the .js file body
+ */
+function renderJs(id, doc) {
 	return [
 		'OC.L10N.register(',
 		`    ${JSON.stringify(id)},`,
 		'    {',
-		body,
+		renderEntries(doc.translations),
 		'    },',
-		`    ${JSON.stringify(pluralForm)}`,
+		`    ${JSON.stringify(doc.pluralForm)}`,
 		')',
 		'',
 	].join('\n')
 }
 
 /**
+ * The locale names of every l10n/<locale>.json; exits 1 when there is none.
  *
+ * @return {string[]} the locales, sorted
  */
-function main() {
-	const check = process.argv.includes('--check')
-	const id = appId()
-	const stale = []
-
+function localeNames() {
 	const locales = fs
 		.readdirSync(L10N_DIR)
 		// Dotfiles are never locale catalogues. `l10n/.schema-l10n-baseline.json`
@@ -123,54 +159,102 @@ function main() {
 		console.error('l10n/ holds no <locale>.json catalogue to generate from')
 		process.exit(1)
 	}
+	return locales
+}
 
-	for (const locale of locales) {
-		const jsonFile = path.join(L10N_DIR, `${locale}.json`)
-		const jsFile = path.join(L10N_DIR, `${locale}.js`)
-
-		let doc
-		try {
-			doc = JSON.parse(fs.readFileSync(jsonFile, 'utf8'))
-		} catch (error) {
-			console.error(`l10n/${locale}.json does not parse: ${error.message}`)
-			process.exit(1)
-		}
-		if (doc.translations === undefined) {
-			console.error(`l10n/${locale}.json is missing "translations"`)
-			process.exit(1)
-		}
-
-		const rendered = renderJs(
-			id,
-			doc.translations,
-			doc.pluralForm || pluralFormFor(locale),
+/**
+ * Parse l10n/<locale>.json; exits 1 when it does not parse.
+ *
+ * @param {string} locale - the locale name
+ * @return {object} the parsed JSON
+ */
+function parseCatalogue(locale) {
+	let doc
+	try {
+		doc = JSON.parse(
+			fs.readFileSync(path.join(L10N_DIR, `${locale}.json`), 'utf8'),
 		)
-		const current = fs.existsSync(jsFile)
-			? fs.readFileSync(jsFile, 'utf8')
-			: null
+	} catch (error) {
+		console.error(`l10n/${locale}.json does not parse: ${error.message}`)
+		process.exit(1)
+	}
+	return doc
+}
 
-		if (current === rendered) {
-			console.log(
-				`  ✓ l10n/${locale}.js up to date (${Object.keys(doc.translations).length} keys)`,
-			)
-			continue
-		}
-		if (check) {
-			stale.push(`l10n/${locale}.js`)
-			continue
-		}
+/**
+ * Parse l10n/<locale>.json; exits 1 when it does not parse or has no
+ * `translations`.
+ *
+ * @param {string} locale - the locale name
+ * @return {object} the parsed catalogue
+ */
+function readCatalogue(locale) {
+	const doc = parseCatalogue(locale)
+	if (doc.translations === undefined) {
+		console.error(`l10n/${locale}.json is missing "translations"`)
+		process.exit(1)
+	}
+	return doc
+}
+
+/**
+ * A file's text, or null when it does not exist.
+ *
+ * @param {string} file - absolute path
+ * @return {string|null} the contents
+ */
+function readIfPresent(file) {
+	return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null
+}
+
+/**
+ * Bring l10n/<locale>.js in line with its catalogue, or under --check only
+ * record it as stale.
+ *
+ * @param {string} locale - the locale name
+ * @param {{id: string, check: boolean, stale: string[]}} run - the app id, the mode and the stale list
+ */
+function syncLocale(locale, run) {
+	const doc = readCatalogue(locale)
+	const jsFile = path.join(L10N_DIR, `${locale}.js`)
+	const translations = browserEntries(locale, doc.translations)
+	const rendered = renderJs(run.id, {
+		translations,
+		pluralForm: doc.pluralForm || pluralFormFor(locale),
+	})
+	const keys = Object.keys(translations).length
+
+	if (readIfPresent(jsFile) === rendered) {
+		console.log(`  ✓ l10n/${locale}.js up to date (${keys} keys)`)
+	} else if (run.check) {
+		run.stale.push(`l10n/${locale}.js`)
+	} else {
 		fs.writeFileSync(jsFile, rendered)
-		console.log(
-			`  ✎ l10n/${locale}.js written (${Object.keys(doc.translations).length} keys)`,
-		)
+		console.log(`  ✎ l10n/${locale}.js written (${keys} keys)`)
+	}
+}
+
+/**
+ * Generate or, under --check, verify every l10n/<locale>.js; exits 1 when
+ * --check finds a stale one.
+ */
+function main() {
+	const run = { check: process.argv.includes('--check'), id: appId(), stale: [] }
+
+	for (const locale of localeNames()) {
+		syncLocale(locale, run)
 	}
 
-	if (stale.length > 0) {
+	if (run.stale.length > 0) {
 		console.error('')
-		console.error(`Stale browser catalogue: ${stale.join(', ')}`)
+		console.error(`Stale browser catalogue: ${run.stale.join(', ')}`)
 		console.error('Run `npm run l10n:build` and commit the result.')
 		process.exit(1)
 	}
 }
 
-main()
+if (require.main === module) {
+	main()
+}
+
+module.exports = { browserEntries, renderJs, SOURCE_LOCALE }

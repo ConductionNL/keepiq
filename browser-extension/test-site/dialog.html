@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login in a modal dialog</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Login in a modal dialog</h1>
+		<p class="tests">Three modals that make the rest of the page inert or trap focus. In each, the inline list shows inside the modal, Down moves into it and a pick fills.</p>
+		<ul class="pages">
+			<li><button type="button" data-open="plain">Open the dialog</button><span>A <code>&lt;dialog&gt;</code> opened with <code>showModal()</code>.</span></li>
+			<li><button type="button" data-open="centred">Open the transformed dialog</button><span>The same, centred with <code>transform: translate(-50%, -50%)</code>.</span></li>
+			<li><button type="button" data-open="aria">Open the ARIA modal</button><span>A <code>div</code> with <code>role="dialog" aria-modal="true"</code>, centred with a transform, whose script moves focus back into it, as Radix and MUI do.</span></li>
+		</ul>
+	</main>
+	<dialog id="plain" aria-labelledby="plain-title">
+		<form method="post" action="/dialog">
+			<h2 id="plain-title">Welcome back</h2>
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+			<button type="button" data-close>Cancel</button>
+		</form>
+	</dialog>
+	<dialog id="centred" class="centred" aria-labelledby="centred-title">
+		<form method="post" action="/dialog">
+			<h2 id="centred-title">Welcome back</h2>
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+			<button type="button" data-close>Cancel</button>
+		</form>
+	</dialog>
+	<div class="backdrop" id="aria-backdrop" hidden></div>
+	<div class="aria-modal" id="aria" role="dialog" aria-modal="true" aria-labelledby="aria-title" hidden>
+		<form method="post" action="/dialog">
+			<h2 id="aria-title">Welcome back</h2>
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+			<button type="button" data-close>Cancel</button>
+		</form>
+	</div>
+	<script>
+		const aria = document.getElementById('aria')
+		let opener = null
+		const closeAria = () => {
+			aria.hidden = true
+			document.getElementById('aria-backdrop').hidden = true
+			opener?.focus()
+		}
+		for (const button of document.querySelectorAll('[data-open]')) {
+			button.addEventListener('click', () => {
+				const modal = document.getElementById(button.dataset.open)
+				if (modal.localName === 'dialog') return modal.showModal()
+				opener = button
+				aria.hidden = false
+				document.getElementById('aria-backdrop').hidden = false
+				aria.querySelector('input').focus()
+			})
+		}
+		for (const button of document.querySelectorAll('[data-close]')) {
+			button.addEventListener('click', () => {
+				const modal = button.closest('dialog, [role="dialog"]')
+				if (modal.localName === 'dialog') modal.close()
+				else closeAria()
+			})
+		}
+		document.addEventListener('focusin', (event) => {
+			if (!aria.hidden && !aria.contains(event.target)) aria.querySelector('input').focus()
+		})
+		aria.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') closeAria()
+		})
+	</script>
+</body>
+</html>

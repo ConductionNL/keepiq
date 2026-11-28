@@ -85,7 +85,8 @@ export class Client {
 	private keys?: Promise<KeySet>
 	private fingerprint?: Promise<string | undefined>
 	private discovery?: Promise<Discovery>
-	private token?: string
+	#token?: string
+	#privateKeyPem: string
 	private tokenExpiry = 0
 	private readonly etags = new Map<string, string>()
 
@@ -94,9 +95,10 @@ export class Client {
 	 * @param applicationId The approved application's id
 	 * @param privateKeyPem The application's RSA private key (PKCS#8 or PKCS#1)
 	 */
-	constructor(url: string, private readonly applicationId: string, private readonly privateKeyPem: string, private readonly options: ClientOptions = {}) {
+	constructor(url: string, private readonly applicationId: string, privateKeyPem: string, private readonly options: ClientOptions = {}) {
 		const parsed = new URL(url)
 		if (!applicationId) throw new Error('application id is required')
+		this.#privateKeyPem = privateKeyPem
 		this.base = stripTrailingSlashes(url)
 		this.origin = parsed.origin
 		this.fetchFn = options.fetch ?? globalThis.fetch.bind(globalThis)
@@ -140,7 +142,7 @@ export class Client {
 	// --- internals ---
 
 	private keySet(): Promise<KeySet> {
-		if (!this.keys) this.keys = importKeySet(this.privateKeyPem)
+		if (!this.keys) this.keys = importKeySet(this.#privateKeyPem)
 		return this.keys
 	}
 
@@ -199,14 +201,15 @@ export class Client {
 		}
 		const mine = await this.certFingerprint()
 		const theirs = env.encryption.certificateFingerprint
-		if (mine && theirs && mine.toLowerCase() !== theirs.toLowerCase()) {
-			throw new KeyMismatchError('the envelope is encrypted to a different certificate')
+		if (mine) {
+			if (typeof theirs !== 'string' || theirs === '') throw new KeyMismatchError('the envelope names no certificate fingerprint')
+			if (mine.toLowerCase() !== theirs.toLowerCase()) throw new KeyMismatchError('the envelope is encrypted to a different certificate')
 		}
 		const keys = await this.keySet()
 		const ct = env.ciphertext ?? {}
 		const value = async (name: string) => (ct[name] ? decryptField(ct[name] as string, keys.decrypt) : '')
 		const meta = env.secret ?? {}
-		return {
+		return withRedactedInspect({
 			id: meta.id ?? '',
 			name: meta.name ?? '',
 			url: meta.url,
@@ -218,7 +221,7 @@ export class Client {
 			key: await value('key'),
 			login: await value('login'),
 			additionalFields: await value('additionalFields'),
-		}
+		})
 	}
 
 	private async statusError(res: Response, label: string): Promise<Error> {
@@ -266,7 +269,7 @@ export class Client {
 	private async bearer(): Promise<string> {
 		const doc = await this.discover()
 		const now = this.now()
-		if (this.token && now < this.tokenExpiry) return this.token
+		if (this.#token && now < this.tokenExpiry) return this.#token
 		const body = new URLSearchParams({
 			grant_type: doc.grantType || 'urn:ietf:params:oauth:grant-type:jwt-bearer',
 			assertion: await this.assertion(doc, Math.floor(now / 1000)),
@@ -283,9 +286,9 @@ export class Client {
 		if (!tok.access_token) throw new ApiError(res.status, 'token exchange returned no access_token')
 		const life = (tok.expires_in || 60) * 1000
 		const margin = life > 60000 ? 30000 : life / 2
-		this.token = tok.access_token
+		this.#token = tok.access_token
 		this.tokenExpiry = now + life - margin
-		return this.token
+		return this.#token
 	}
 
 	private async assertion(doc: Discovery, now: number): Promise<string> {
@@ -306,7 +309,7 @@ export class Client {
 			if (etag) headers['If-None-Match'] = etag
 			const res = await this.fetchFn(addr, { method, headers, body: payload ? JSON.stringify(payload) : undefined })
 			if (res.status === 401 && attempt === 0) {
-				this.token = undefined
+				this.#token = undefined
 				continue
 			}
 			return res
@@ -326,4 +329,30 @@ function stripTrailingSlashes(url: string): string {
 	let end = url.length
 	while (end > 0 && url[end - 1] === '/') end--
 	return url.slice(0, end)
+}
+
+/** Node's `util.inspect.custom`, by its registered name, so browsers need no import. */
+const INSPECT = Symbol.for('nodejs.util.inspect.custom')
+
+type Inspect = (value: unknown, options: unknown) => string
+
+/**
+ * The secret with a hidden inspect hook: `console.log` and `util.inspect` show
+ * `key`, `login` and `additionalFields` as `[redacted]`. The properties,
+ * spreading and `JSON.stringify` keep the values.
+ *
+ * @param secret The decrypted secret
+ */
+function withRedactedInspect(secret: Secret): Secret {
+	Object.defineProperty(secret, INSPECT, {
+		enumerable: false,
+		value(this: Secret, _depth: number, options: unknown, inspect: Inspect) {
+			const shown: Record<string, unknown> = { ...this }
+			for (const name of SECRET_FIELDS) {
+				if (shown[name]) shown[name] = '[redacted]'
+			}
+			return inspect(shown, options)
+		},
+	})
+	return secret
 }

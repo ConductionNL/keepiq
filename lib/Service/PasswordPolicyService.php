@@ -28,9 +28,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -149,7 +149,7 @@ class PasswordPolicyService {
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
 	 */
 	public function getPolicy(?string $userId = null): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		$policy = array_merge(
 			[
@@ -187,7 +187,7 @@ class PasswordPolicyService {
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 	 */
 	public function readPolicyKeys(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		return [
 			'policy_enabled' => $this->appConfig->getValueBool($appId, 'policy_enabled', false),
@@ -264,7 +264,7 @@ class PasswordPolicyService {
 	 * @throws InvalidArgumentException On invalid policy values
 	 */
 	private function writeGeneratorFloors(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['generator_min_length']) === true) {
 			$minLength = (int)$data['generator_min_length'];
@@ -298,7 +298,7 @@ class PasswordPolicyService {
 	 * @throws InvalidArgumentException On invalid policy values
 	 */
 	private function writeBreachPolicyKeys(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['block_on_hibp_hit']) === true) {
 			$block = (bool)$data['block_on_hibp_hit'];
@@ -326,7 +326,7 @@ class PasswordPolicyService {
 	 * @return void
 	 */
 	private function writeBooleanPolicyKeys(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		foreach (self::POLICY_BOOL_KEYS as $boolKey) {
 			if (isset($data[$boolKey]) === true) {

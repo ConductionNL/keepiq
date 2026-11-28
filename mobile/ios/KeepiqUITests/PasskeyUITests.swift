@@ -9,9 +9,10 @@ import XCTest
 /// against the replay, with the clientDataHash Safari would hand over:
 ///
 /// - creating a passkey for keepiq-passkey.test after the unlock in the sheet,
-///   saved as a passkey item, with the attestation checked as a relying party
+///   saved onto a new login for that site (mobile-login-totp-passkeys D12),
+///   with the attestation checked as a relying party
 ///   would (rpId hash, flags UP, UV and AT, zero AAGUID, 16-byte id);
-/// - the index rebuilt: the passkey in the site file and one passkey identity
+/// - the index rebuilt: the login with the passkey in the site file and one passkey identity
 ///   for ASCredentialIdentityStore;
 /// - signing in with it without a new unlock, the signature verified with the
 ///   key from the attestation, counter 0 and the user handle.
@@ -134,8 +135,8 @@ final class PasskeyUITests: XCTestCase {
         waitForLabel(app.staticTexts["passkeyResult"], containing: "registered: rp true, flags 0x45, id 16 bytes, checks true")
         shot("passkey-ios-02-created")
 
-        // The refresh after the save put it in the site file and the identity store.
-        waitForLabel(app.staticTexts["passkeyIndex"], containing: "keepiq-passkey.test: 1 passkeys on disk, passkey identities 1")
+        // The refresh after the save put the login with it (no Passkey item) in the site file and the identity store.
+        waitForLabel(app.staticTexts["passkeyIndex"], containing: "keepiq-passkey.test: logins with passkeys 1, passkey items 0, passkey identities 1")
         shot("passkey-ios-03-index")
 
         // Sign in: no new unlock within the idle time, one passkey fits, it signs at once.

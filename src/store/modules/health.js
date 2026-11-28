@@ -21,8 +21,11 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
 import { isPasswordBearing } from '../../health/classify.js'
+import { duplicateGroups } from '../../health/duplicates.js'
 import { analyse, sha256Hex } from '../../health/engine.js'
 import { checkValue } from '../../health/hibp.js'
+import { siteDomain, vaultSiteFacts } from '../../health/siteDirectory.js'
+import { rowHasCode, rowHasPasskeys } from '../../utils/valueFieldMarkers.js'
 import { useSecretTypeStore } from './secretType.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
@@ -58,6 +61,274 @@ async function fetchEverySecret() {
 	return all
 }
 
+/**
+ * The secret types, fetched when none are loaded yet. A failed fetch is
+ * non-fatal: without types no row can be excluded by type.
+ *
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+ */
+async function loadedTypes() {
+	const typeStore = useSecretTypeStore()
+	if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+		try {
+			await typeStore.fetchTypes()
+		} catch {
+			// Non-fatal: without types we simply cannot exclude totp rows.
+		}
+	}
+	return Array.isArray(typeStore.types) ? typeStore.types : []
+}
+
+/**
+ * The ids of the types whose secrets hold machine material: `totp` seeds and
+ * `passkey` private keys are high-entropy, so scoring, reuse-matching or
+ * breach-checking them is meaningless noise (add-totp-secrets D7,
+ * passkey-item-type D6).
+ *
+ * @param {Array<object>} types The secret types.
+ * @return {Set<string|number>}
+ * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+ */
+function machineMaterialTypeIds(types) {
+	return new Set(types.filter(isMachineMaterialType).map((type) => type.id))
+}
+
+/**
+ * @param {object|null} type A secret type.
+ * @return {boolean} Whether it is the totp or the passkey type.
+ */
+function isMachineMaterialType(type) {
+	return Boolean(type && (type.name === 'totp' || type.name === 'passkey'))
+}
+
+/**
+ * Whether a secret is analysed: not blocked, with a key, and of no type
+ * holding machine material.
+ *
+ * @param {object} secret A listed secret.
+ * @param {Set<string|number>} excludedTypeIds The machine-material type ids.
+ * @return {boolean}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+function isAnalysable(secret, excludedTypeIds) {
+	if (secret.blocked || !secret.key) {
+		return false
+	}
+	return !excludedTypeIds.has(secret.typeId)
+}
+
+/**
+ * A secret's health row with its value decrypted in the browser, or null
+ * when the value does not decrypt.
+ *
+ * @param {object} secret A listed secret.
+ * @param {object} session The session store (holds the CryptoKey).
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
+ * @return {Promise<object|null>}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function decryptedRow(secret, session, facts) {
+	let value
+	try {
+		value = await rsaDecrypt(secret.key, session.cryptoKey)
+	} catch {
+		return null
+	}
+	return healthRow(secret, value, facts, await decryptedLogin(secret, session))
+}
+
+/**
+ * The decrypted username, or null when there is none or it does not decrypt.
+ *
+ * @param {object} secret A listed secret.
+ * @param {object} session The session store (holds the CryptoKey).
+ * @return {Promise<string|null>}
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ */
+async function decryptedLogin(secret, session) {
+	if (!secret.login) {
+		return null
+	}
+	try {
+		return await rsaDecrypt(secret.login, session.cryptoKey)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * The ids of the user's recipient copies of other people's secrets: rows in
+ * the user's vault whose source lives elsewhere. Read from the vault snapshot
+ * the offline cache already fetches, so no request names a single secret.
+ * Null when it cannot be read: duplicate detection then stays off.
+ *
+ * @return {Promise<Set<string>|null>}
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ */
+async function recipientCopyIds() {
+	try {
+		const response = await axios.get(
+			generateUrl('/apps/keepiq/api/v1/offline/manifest'),
+		)
+		const secrets = response?.data?.secrets
+		if (!Array.isArray(secrets)) {
+			return null
+		}
+		return new Set(
+			secrets
+				.filter(
+					(secret) =>
+						secret?.sourceUpdatedAt !== null
+						&& secret?.sourceUpdatedAt !== undefined,
+				)
+				.map((secret) => String(secret.id)),
+		)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * @param {object} secret A listed secret.
+ * @param {string} value Its decrypted value.
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
+ * @param {string|null} [login] Its decrypted username.
+ * @return {object} The row the engine analyses.
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
+ */
+function healthRow(secret, value, facts, login = null) {
+	return {
+		...secondFactorsHeld(secret, facts),
+		id: secret.id,
+		name: secret.name,
+		url: secret.url ?? null,
+		folderPath: secret.folderId ?? null,
+		login,
+		copy: false,
+		value,
+		keyUpdatedAt: keyChangedAt(secret),
+		possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
+	}
+}
+
+/**
+ * Whether the vault already holds a second factor or a passkey for this
+ * login: on the login itself, or as an item for its site (design D4).
+ *
+ * @param {object} secret A listed secret.
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
+ * @return {{hasSeed: boolean, hasPasskey: boolean}}
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
+ */
+function secondFactorsHeld(secret, facts) {
+	const domain = siteDomain(secret.url)
+	return {
+		hasSeed: rowHasCode(secret) || listsDomain(facts.seedDomains, domain),
+		hasPasskey:
+			rowHasPasskeys(secret) || listsDomain(facts.passkeyDomains, domain),
+	}
+}
+
+/**
+ * @param {Set<string>} domains Registrable domains the vault holds an item for.
+ * @param {string|null} domain A row's registrable domain.
+ * @return {boolean} Whether the domain is known and in the set.
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
+ */
+function listsDomain(domains, domain) {
+	return domain !== null && domains.has(domain)
+}
+
+/**
+ * @param {object} secret A listed secret.
+ * @return {string|null} When its value last changed: its key update, else
+ *   its creation.
+ */
+function keyChangedAt(secret) {
+	return secret.keyUpdatedAt ?? secret.createdAt ?? null
+}
+
+/**
+ * Load the decrypted rows, or record why they could not be loaded.
+ *
+ * @param {object} store The health store.
+ * @param {object} session The session store (holds the CryptoKey).
+ * @return {Promise<Array<object>|null>} The rows, or null after a failure.
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function loadRowsOrFail(store, session) {
+	try {
+		return await store.loadDecryptedRows(session)
+	} catch (e) {
+		store.status = 'error'
+		store.error = e?.message || 'Failed to load vault'
+		return null
+	}
+}
+
+/**
+ * Run the engine over the rows and keep its findings, summary and score, or
+ * record why it failed; the plaintext rows are dropped either way.
+ *
+ * @param {object} store The health store.
+ * @param {{rows: Array<object>, stalenessThreshold: string|number, breachResults: ?Map, siteDirectory: ?object, copiesKnown: boolean}} analysis The rows, the engine's options, and whether recipient copies could be told apart.
+ * @return {Promise<void>}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function scoreRows(store, analysis) {
+	try {
+		const result = await store.runEngine(analysis.rows, {
+			stalenessThreshold: analysis.stalenessThreshold,
+			breachResults: analysis.breachResults,
+			siteDirectory: analysis.siteDirectory ?? null,
+		})
+		store.findings = result.findings
+		store.summary = result.summary
+		store.score = result.score
+		store.duplicates = analysis.copiesKnown
+			? (result.duplicates ?? { exact: [], likely: [] })
+			: { exact: [], likely: [] }
+		store.duplicatesAvailable = analysis.copiesKnown === true
+		store.status = 'ready'
+	} catch (e) {
+		store.status = 'error'
+		store.error = e?.message || 'Analysis failed'
+	} finally {
+		// Drop plaintext references held in this scope after the pass.
+		analysis.rows.length = 0
+	}
+}
+
+/**
+ * The site directory copy the server sent, with both lists present, or null
+ * when the response is not a directory copy.
+ *
+ * @param {object|null|undefined} copy The response body.
+ * @return {{totp: object, passkeys: object}|null}
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
+ */
+function usableDirectory(copy) {
+	if (!isDirectoryCopy(copy)) {
+		return null
+	}
+	return { totp: copy.totp ?? {}, passkeys: copy.passkeys ?? {} }
+}
+
+/**
+ * @param {object|null|undefined} copy The response body.
+ * @return {boolean} Whether it holds an object-typed totp and passkeys list.
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
+ */
+function isDirectoryCopy(copy) {
+	return (
+		Boolean(copy)
+		&& typeof copy.totp === 'object'
+		&& typeof copy.passkeys === 'object'
+	)
+}
+
 export const useHealthStore = defineStore('health', {
 	state: () => ({
 		/** @type {Array<object>} Per-secret findings (memory only). */
@@ -70,8 +341,14 @@ export const useHealthStore = defineStore('health', {
 		status: 'idle',
 		/** @type {string} Breach-check status: off | ready | unavailable. */
 		breachStatus: 'off',
+		/** @type {string} Site directory status: off | ready | unavailable (health-site-security-checks D3). */
+		siteDirectoryStatus: 'off',
 		/** @type {string|null} Last error message. */
 		error: null,
+		/** @type {{exact: Array<object>, likely: Array<object>}} Duplicate groups (memory only, vault-duplicate-finder). */
+		duplicates: { exact: [], likely: [] },
+		/** @type {boolean} Whether duplicate detection ran: recipient copies could be told apart. */
+		duplicatesAvailable: false,
 		/** @type {Worker|null} The analysis worker (never persisted). */
 		worker: null,
 	}),
@@ -107,6 +384,27 @@ export const useHealthStore = defineStore('health', {
 		 */
 		compromisedFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('compromised')),
+		/**
+		 * @param {object} state The store state.
+		 * @return {Array<object>} Findings whose address is plain http.
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
+		 */
+		insecureAddressFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('insecure-address')),
+		/**
+		 * @param {object} state The store state.
+		 * @return {Array<object>} Logins for sites offering one-time codes the vault holds no seed for.
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		twoFactorAvailableFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('two-factor-available')),
+		/**
+		 * @param {object} state The store state.
+		 * @return {Array<object>} Logins for sites offering passkeys the vault holds none for.
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		passkeyAvailableFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('passkey-available')),
 		/**
 		 * Map of secretId -> zxcvbn score for the StrengthBadge component.
 		 *
@@ -146,37 +444,20 @@ export const useHealthStore = defineStore('health', {
 			}
 			this.status = 'analysing'
 			this.error = null
-
-			let rows = []
-			try {
-				rows = await this.loadDecryptedRows(session)
-			} catch (e) {
-				this.status = 'error'
-				this.error = e?.message || 'Failed to load vault'
+			const rows = await loadRowsOrFail(this, session)
+			if (rows === null) {
 				return
 			}
-
-			let breachResults = null
-			if (opts.breachEnabled) {
-				breachResults = await this.runBreachChecks(rows)
-			}
-
-			try {
-				const result = await this.runEngine(rows, {
-					stalenessThreshold: opts.stalenessThreshold ?? '365',
-					breachResults,
-				})
-				this.findings = result.findings
-				this.summary = result.summary
-				this.score = result.score
-				this.status = 'ready'
-			} catch (e) {
-				this.status = 'error'
-				this.error = e?.message || 'Analysis failed'
-			} finally {
-				// Drop plaintext references held in this scope after the pass.
-				rows.length = 0
-			}
+			const breachResults = opts.breachEnabled
+				? await this.runBreachChecks(rows)
+				: null
+			await scoreRows(this, {
+				rows,
+				stalenessThreshold: opts.stalenessThreshold ?? '365',
+				breachResults,
+				siteDirectory: await this.loadSiteDirectory(),
+				copiesKnown: rows.copiesKnown === true,
+			})
 		},
 
 		/**
@@ -186,62 +467,56 @@ export const useHealthStore = defineStore('health', {
 		 * @return {Promise<Array<object>>} Decrypted rows.
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
 		 */
 		async loadDecryptedRows(session) {
-			// Resolve the set of `totp` type ids so authenticator seeds — which
-			// are high-entropy machine material, not passwords — are excluded
-			// from strength / reuse / breach analysis (add-totp-secrets D7).
-			const typeStore = useSecretTypeStore()
-			if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
-				try {
-					await typeStore.fetchTypes()
-				} catch {
-					// Non-fatal: without types we simply cannot exclude totp rows.
-				}
-			}
-			const types = Array.isArray(typeStore.types) ? typeStore.types : []
-			// `totp` seeds and `passkey` private keys are high-entropy machine
-			// material — scoring, reuse-matching, or breach-checking them is
-			// meaningless noise (add-totp-secrets D7, passkey-item-type D6).
-			const excludedTypeIds = new Set(
-				types
-					.filter(
-						(type) =>
-							type
-							&& (type.name === 'totp' || type.name === 'passkey'),
-					)
-					.map((type) => type.id),
-			)
-
+			const types = await loadedTypes()
+			const excludedTypeIds = machineMaterialTypeIds(types)
 			const items = await fetchEverySecret()
+			const facts = vaultSiteFacts(
+				items,
+				new Map(types.filter(Boolean).map((type) => [type.id, type.name])),
+			)
+			const copies = await recipientCopyIds()
 			const rows = []
 			for (const secret of items) {
-				if (secret.blocked || !secret.key) {
+				if (!isAnalysable(secret, excludedTypeIds)) {
 					continue
 				}
-				// Skip TOTP and passkey secrets: their material must never be
-				// scored, reuse-matched, or breach-checked (add-totp-secrets
-				// D7, passkey-item-type D6).
-				if (excludedTypeIds.has(secret.typeId)) {
-					continue
+				const row = await decryptedRow(secret, session, facts)
+				if (row !== null) {
+					row.copy = copies === null || copies.has(String(secret.id))
+					rows.push(row)
 				}
-				let value = ''
-				try {
-					value = await rsaDecrypt(secret.key, session.cryptoKey)
-				} catch {
-					continue
-				}
-				rows.push({
-					id: secret.id,
-					name: secret.name,
-					url: secret.url ?? null,
-					folderPath: secret.folderId ?? null,
-					value,
-					keyUpdatedAt: secret.keyUpdatedAt ?? secret.updatedAt ?? null,
-					possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
-				})
 			}
+			// Not a row: whether copies could be told apart (duplicate detection needs it).
+			Object.defineProperty(rows, 'copiesKnown', { value: copies !== null })
 			return rows
+		},
+
+		/**
+		 * Fetch the site directory copy: the whole public list, the same for
+		 * every user, so the request says nothing about the vault. 404 means
+		 * the administrator left it off; any other failure leaves the two
+		 * directory categories unavailable and the rest of the report as is.
+		 *
+		 * @return {Promise<{totp: Object<string,string>, passkeys: Object<string,string>}|null>}
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-the-site-directory-is-fetched-whole-and-taught-nothing
+		 */
+		async loadSiteDirectory() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/site-directory'),
+				)
+				const directory = usableDirectory(response?.data)
+				this.siteDirectoryStatus =
+					directory === null ? 'unavailable' : 'ready'
+				return directory
+			} catch (e) {
+				this.siteDirectoryStatus =
+					e?.response?.status === 404 ? 'off' : 'unavailable'
+				return null
+			}
 		},
 
 		/**
@@ -288,7 +563,10 @@ export const useHealthStore = defineStore('health', {
 		 */
 		async runEngine(rows, options) {
 			if (typeof Worker === 'undefined') {
-				return analyse(rows, options)
+				return {
+					...(await analyse(rows, options)),
+					duplicates: duplicateGroups(rows),
+				}
 			}
 			if (!this.worker) {
 				this.worker = new Worker(
@@ -305,6 +583,7 @@ export const useHealthStore = defineStore('health', {
 					breachResults: options.breachResults
 						? Array.from(options.breachResults.entries())
 						: null,
+					siteDirectory: options.siteDirectory ?? null,
 				},
 			}
 			return new Promise((resolve, reject) => {
@@ -337,8 +616,11 @@ export const useHealthStore = defineStore('health', {
 			this.findings = []
 			this.summary = null
 			this.score = null
+			this.duplicates = { exact: [], likely: [] }
+			this.duplicatesAvailable = false
 			this.status = 'idle'
 			this.breachStatus = 'off'
+			this.siteDirectoryStatus = 'off'
 			this.error = null
 			if (this.worker) {
 				this.worker.terminate()

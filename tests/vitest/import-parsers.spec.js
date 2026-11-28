@@ -17,6 +17,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
+import { generateCsv } from '../../src/export/csv.js'
 import { dedupeKey, isKdbx, normalizeUrl } from '../../src/import/model.js'
 import {
 	parseBitwardenCsv,
@@ -90,7 +91,7 @@ describe('Bitwarden JSON parser', () => {
 					username: 'octocat',
 					password: 'hunter2',
 					uri: 'https://github.com',
-					totp: 'otpauth://x',
+					totp: 'otpauth://totp/GitHub:octocat?secret=JBSWY3DPEHPK3PXP',
 				},
 			},
 			{
@@ -112,8 +113,13 @@ describe('Bitwarden JSON parser', () => {
 		expect(gh.password).toBe('hunter2')
 		expect(gh.url).toBe('https://github.com')
 		expect(gh.folder).toBe('Work/CI')
-		expect(gh.additionalFields.totp).toBe('otpauth://x')
-		expect(gh.additionalFields.notes).toBe('a note')
+		// The seed goes on the login's own field, not into additional fields.
+		expect(gh.totp).toBe('otpauth://totp/GitHub:octocat?secret=JBSWY3DPEHPK3PXP')
+		expect(gh.additionalFields).toEqual({ notes: 'a note' })
+		expect(rows.some((row) => row.type === 'totp')).toBe(false)
+		// A login without a seed or passkeys carries neither field.
+		expect('totp' in rows[1]).toBe(false)
+		expect('passkeys' in rows[1]).toBe(false)
 		// Collection name resolves to folder.
 		expect(rows[1].folder).toBe('Shared')
 		// Non-login item rejected.
@@ -123,12 +129,89 @@ describe('Bitwarden JSON parser', () => {
 	it('parses Bitwarden CSV via the fixed header mapping', () => {
 		const csv =
 			'name,login_uri,login_username,login_password,notes,login_totp,folder,type\r\n'
-			+ 'Item,https://x.test,user,pass,note1,seed1,Work,login\r\n'
+			+ 'Item,https://x.test,user,pass,note1,jbsw y3dp ehpk 3pxp,Work,login\r\n'
+			+ 'NoCode,https://y.test,user,pass,,,Work,login\r\n'
 		const rows = parseBitwardenCsv(csv)
+		expect(rows).toHaveLength(2)
 		expect(rows[0].name).toBe('Item')
 		expect(rows[0].login).toBe('user')
 		expect(rows[0].password).toBe('pass')
-		expect(rows[0].additionalFields.totp).toBe('seed1')
+		// Stored as the create dialog stores an entered key.
+		expect(rows[0].totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(rows[0].additionalFields).toEqual({ notes: 'note1' })
+		expect('totp' in rows[1]).toBe(false)
+	})
+
+	it('keeps a seed that is no authenticator key as an additional field', () => {
+		const item = (name, totp) => ({
+			type: 1,
+			name,
+			login: { username: 'u', password: 'p', totp },
+		})
+		const rows = parseBitwardenJson({
+			items: [
+				item('Steam', 'steam://ABCDEFGHIJ'),
+				item(
+					'Counter',
+					'otpauth://hotp/x?secret=JBSWY3DPEHPK3PXP&counter=1',
+				),
+				item('Junk', 'not a seed!'),
+			],
+		})
+		for (const row of rows) {
+			expect(row.errors).toEqual([])
+			expect('totp' in row).toBe(false)
+		}
+		expect(rows[0].additionalFields).toEqual({ totp: 'steam://ABCDEFGHIJ' })
+		expect(rows[1].additionalFields.totp).toMatch(/^otpauth:\/\/hotp/)
+		expect(rows[2].additionalFields).toEqual({ totp: 'not a seed!' })
+	})
+
+	it('gives a passkey-only login without a URI the passkey site as its URL', () => {
+		const rows = parseBitwardenJson({
+			items: [
+				{
+					type: 1,
+					name: 'Passwordless',
+					login: {
+						fido2Credentials: [
+							{
+								credentialId: 'C',
+								rpId: 'example.com',
+								keyValue: 'K',
+							},
+						],
+					},
+				},
+			],
+		})
+		expect(rows[0].url).toBe('example.com')
+	})
+})
+
+describe('CSV export and import of a one-time code', () => {
+	it('round-trips the totp column through the generic CSV import', () => {
+		const csv = generateCsv([
+			{
+				name: 'Bank',
+				url: 'https://bank.example',
+				login: 'alice',
+				password: 'pw',
+				additionalFields: null,
+				folder: '',
+				type: 'login',
+				totp: 'otpauth://totp/Bank:alice?secret=JBSWY3DPEHPK3PXP&period=60',
+				passkeys: '[{"credentialId":"C"}]',
+			},
+		])
+		expect(csv).not.toContain('credentialId')
+		const { rows, mapping } = parseCsvImport(csv)
+		expect(mapping.find((entry) => entry.column === 'totp').target).toBe('totp')
+		expect(rows[0].totp).toBe(
+			'otpauth://totp/Bank:alice?secret=JBSWY3DPEHPK3PXP&period=60',
+		)
+		expect(rows[0].password).toBe('pw')
+		expect('passkeys' in rows[0]).toBe(false)
 	})
 })
 
@@ -173,7 +256,7 @@ describe('KeePass XML parser', () => {
 		expect(jenkins.additionalFields.CustomToken).toBe('tok123')
 	})
 
-	it('stashes a KeePass one-time-code seed as the TOTP seed (keepiq#749)', () => {
+	it("puts a KeePass one-time-code seed on the login's totp field (keepiq#1327)", () => {
 		const rows = parseKeepassXml(`<?xml version="1.0"?>
 <KeePassFile><Root><Group><Name>Database</Name>
   <Entry>
@@ -186,13 +269,101 @@ describe('KeePass XML parser', () => {
     <String><Key>Password</Key><Value>p</Value></String>
     <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
   </Entry>
+  <Entry>
+    <String><Key>Title</Key><Value>Plain</Value></String>
+    <String><Key>Password</Key><Value>p</Value></String>
+  </Entry>
 </Group></Root></KeePassFile>`)
+		expect(rows).toHaveLength(3)
 		const xc = rows.find((r) => r.name === 'XC')
 		const kp = rows.find((r) => r.name === 'KP')
-		expect(xc.additionalFields).toEqual({
-			totp: 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP',
+		const plain = rows.find((r) => r.name === 'Plain')
+		expect(xc.type).toBe('login')
+		expect(xc.totp).toBe('otpauth://totp/x?secret=JBSWY3DPEHPK3PXP')
+		expect(xc.additionalFields).toBeNull()
+		expect(kp.totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(kp.additionalFields).toBeNull()
+		expect('totp' in plain).toBe(false)
+	})
+
+	it('keeps the first KeePass seed and a different second one as an additional field', () => {
+		const rows = parseKeepassXml(`<?xml version="1.0"?>
+<KeePassFile><Root><Group><Name>Database</Name>
+  <Entry>
+    <String><Key>Title</Key><Value>Both</Value></String>
+    <String><Key>otp</Key><Value>otpauth://totp/x?secret=JBSWY3DPEHPK3PXP</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>GEZDGNBVGY3TQOJQ</Value></String>
+  </Entry>
+  <Entry>
+    <String><Key>Title</Key><Value>Same</Value></String>
+    <String><Key>otp</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+  </Entry>
+</Group></Root></KeePassFile>`)
+		const both = rows.find((r) => r.name === 'Both')
+		expect(both.totp).toBe('otpauth://totp/x?secret=JBSWY3DPEHPK3PXP')
+		expect(both.additionalFields).toEqual({
+			'TimeOtp-Secret-Base32': 'GEZDGNBVGY3TQOJQ',
 		})
-		expect(kp.additionalFields).toEqual({ totp: 'JBSWY3DPEHPK3PXP' })
+		const same = rows.find((r) => r.name === 'Same')
+		expect(same.totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(same.additionalFields).toBeNull()
+	})
+
+	it('folds KeePass TimeOtp parameters into the seed and consumes them', () => {
+		const rows = parseKeepassXml(`<?xml version="1.0"?>
+<KeePassFile><Root><Group><Name>Database</Name>
+  <Entry>
+    <String><Key>Title</Key><Value>Custom</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+    <String><Key>TimeOtp-Period</Key><Value>60</Value></String>
+    <String><Key>TimeOtp-Length</Key><Value>8</Value></String>
+    <String><Key>TimeOtp-Algorithm</Key><Value>HMAC-SHA-256</Value></String>
+  </Entry>
+  <Entry>
+    <String><Key>Title</Key><Value>Defaults</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+    <String><Key>TimeOtp-Period</Key><Value>30</Value></String>
+    <String><Key>TimeOtp-Algorithm</Key><Value>HMAC-SHA-1</Value></String>
+  </Entry>
+  <Entry>
+    <String><Key>Title</Key><Value>Unusable</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+    <String><Key>TimeOtp-Length</Key><Value>7</Value></String>
+  </Entry>
+</Group></Root></KeePassFile>`)
+		const custom = rows.find((r) => r.name === 'Custom')
+		const params = new URL(custom.totp).searchParams
+		expect(custom.totp).toMatch(/^otpauth:\/\/totp\//)
+		expect(params.get('secret')).toBe('JBSWY3DPEHPK3PXP')
+		expect(params.get('period')).toBe('60')
+		expect(params.get('digits')).toBe('8')
+		expect(params.get('algorithm')).toBe('SHA256')
+		expect(custom.additionalFields).toBeNull()
+
+		const defaults = rows.find((r) => r.name === 'Defaults')
+		expect(defaults.totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(defaults.additionalFields).toBeNull()
+
+		// A 7-digit code cannot be generated: the strings stay as they were.
+		const unusable = rows.find((r) => r.name === 'Unusable')
+		expect('totp' in unusable).toBe(false)
+		expect(unusable.additionalFields).toEqual({
+			'TimeOtp-Secret-Base32': 'JBSWY3DPEHPK3PXP',
+			'TimeOtp-Length': '7',
+		})
+	})
+
+	it('reads a protected (ProtectInMemory) otp value', () => {
+		const rows = parseKeepassXml(`<?xml version="1.0"?>
+<KeePassFile><Root><Group><Name>Database</Name>
+  <Entry>
+    <String><Key>Title</Key><Value>XC</Value></String>
+    <String><Key>otp</Key><Value ProtectInMemory="True">otpauth://totp/XC?secret=JBSWY3DPEHPK3PXP</Value></String>
+  </Entry>
+</Group></Root></KeePassFile>`)
+		expect(rows[0].totp).toBe('otpauth://totp/XC?secret=JBSWY3DPEHPK3PXP')
+		expect(rows[0].additionalFields).toBeNull()
 	})
 
 	it('throws when the KeePass root element is missing', () => {

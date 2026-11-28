@@ -54,6 +54,20 @@ describe('typedFields', () => {
 		})
 	})
 
+	// openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+	it('removes a typed member that is cleared, and keeps one that was already empty', () => {
+		const original = { Host: 'h', 'Root password': '' }
+
+		expect(
+			mergeTypedValues(
+				{},
+				FIELDS,
+				{ host: '', 'root-password': '' },
+				original,
+			),
+		).toEqual({ 'Root password': '' })
+	})
+
 	it('names the required fields still empty', () => {
 		expect(missingRequired(FIELDS, { host: '  ' })).toEqual(['host'])
 		expect(missingRequired(FIELDS, { host: 'h' })).toEqual([])

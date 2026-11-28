@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations;
+use OCA\Keepiq\Repair\SeedVersionGate;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -97,8 +98,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase {
 			secretMapper: $this->createMock(SecretMapper::class),
 			delegationMapper: $delegationMapper,
 			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -123,8 +123,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase {
 			secretMapper: $this->createMock(SecretMapper::class),
 			delegationMapper: $delegationMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -166,8 +165,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase {
 			secretMapper: $this->createMock(SecretMapper::class),
 			delegationMapper: $delegationMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $appConfig,
+			seedGate: new SeedVersionGate(config: $config, appConfig: $appConfig),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -198,8 +196,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase {
 			secretMapper: $secretMapper,
 			delegationMapper: $delegationMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));
@@ -240,8 +237,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase {
 			secretMapper: $secretMapper,
 			delegationMapper: $delegationMapper,
 			suiteMapper: $suiteMapper,
-			config: $config,
-			appConfig: $this->unseededAppConfig(),
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 		$step->run($this->createMock(IOutput::class));

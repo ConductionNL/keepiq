@@ -36,6 +36,8 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\DelegationServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
 
@@ -46,7 +48,7 @@ use Ramsey\Uuid\Uuid;
  * and the pre-existing-share precondition — live in DelegationAuthorizer;
  * this class owns the delegation ROWS and their audit trail.
  */
-class DelegationService {
+class DelegationService implements DelegationServiceInterface {
 	/**
 	 * Constructor for DelegationService.
 	 *
@@ -100,9 +102,11 @@ class DelegationService {
 	 *
 	 * @throws InvalidArgumentException When the Secret does not exist,
 	 *                                  the caller is not the owner, the
+	 *                                  Secret is a received copy, the
 	 *                                  delegate is the owner themselves,
 	 *                                  or the delegate holds no
 	 *                                  pre-existing share of the Secret.
+	 * @throws ShareScanPendingException When the share row the delegation sits on, or the one naming the Secret, waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-6.2
 	 */
@@ -117,6 +121,8 @@ class DelegationService {
 		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $initiatedBy) {
 			throw new InvalidArgumentException(message: 'Not authorized to delegate this secret');
 		}
+
+		$this->authorizer->requireOriginal(secret: $secret);
 
 		if ($delegatedTo === $initiatedBy) {
 			throw new InvalidArgumentException(message: 'Cannot delegate to self');
@@ -156,8 +162,10 @@ class DelegationService {
 	 *                                  caller is not a vault admin,
 	 *                                  $delegatedTo is not the initiator,
 	 *                                  the initiator is already the owner,
+	 *                                  the Secret is a received copy,
 	 *                                  or the initiator holds no
 	 *                                  pre-existing share of the Secret.
+	 * @throws ShareScanPendingException When the share row the handover sits on, or the one naming the Secret, waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
 	 */
@@ -181,6 +189,8 @@ class DelegationService {
 				message: 'Admin handover does not apply to the secret owner themselves'
 			);
 		}
+
+		$this->authorizer->requireOriginal(secret: $secret);
 
 		$this->authorizer->requirePreExistingShare(secretId: $secretId, userId: $initiatedBy);
 

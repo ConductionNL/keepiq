@@ -1,0 +1,897 @@
+// @vitest-environment happy-dom
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { generate } from '@/src/generator/generate'
+import App from '../App'
+import { accountSettingsSnapshot, editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply, types } from '../testing'
+
+vi.mock('@/src/generator/generate', async (original) => ({ ...await original<typeof import('@/src/generator/generate')>(), generate: vi.fn() }))
+
+afterEach(cleanup)
+beforeEach(everythingVisible)
+beforeEach(() => {
+	let counter = 0
+	vi.mocked(generate).mockImplementation(async (kind) => ({ ok: true, value: `${kind}-${++counter}` }))
+})
+
+const title = () => screen.findByRole('heading', { level: 1 })
+
+describe('Shell', () => {
+	it('opens unlocked on the Vault tab with pop out and avatar, and no tab host', async () => {
+		fakeBackground()
+		render(<App />)
+		expect((await title()).textContent).toBe('Vault')
+		await screen.findByRole('searchbox')
+		expect(screen.queryByText('github.com')).toBeNull()
+		expect(screen.getByRole('button', { name: 'Pop out' })).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' })).toBeTruthy()
+		const tabs = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('button')
+		expect(tabs.map((tab) => tab.textContent)).toEqual(['Vault', 'Generator', 'Send', 'Settings'])
+		expect(tabs[0]!.getAttribute('aria-current')).toBe('page')
+	})
+
+	it('switches tabs, shows the sends and remembers the tab', async () => {
+		const sent = fakeBackground()
+		render(<App />)
+		await title()
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Send' }))
+		expect((await title()).textContent).toBe('Send')
+		expect(await screen.findByText('No sends yet')).toBeTruthy()
+		expect(screen.queryByRole('searchbox')).toBeNull()
+		expect(sent).toHaveBeenCalledWith({ kind: 'popup.lastTab.set', tab: 'send' })
+	})
+
+	it('reopens on the last tab from its first frame', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		expect((await title()).textContent).toBe('Send')
+	})
+
+	it('says autofill is not available on a browser page, offering no item', async () => {
+		fakeBackground({ tabUrl: 'chrome://newtab/', snapshot: snapshotReply({ suggestionIds: ['i1'] }) })
+		render(<App />)
+		const section = await screen.findByRole('region', { name: 'Autofill suggestions' })
+		expect(within(section).getByText('Autofill is not available on this page')).toBeTruthy()
+		expect(within(section).queryAllByRole('listitem')).toHaveLength(0)
+	})
+
+	it('has no tab bar while locked or logged out', async () => {
+		fakeBackground({ state: popupState({ screen: 'unlock' }) })
+		render(<App />)
+		expect((await title()).textContent).toBe('Unlock')
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+	})
+
+	it('offers no fill surface while locked', async () => {
+		const sent = fakeBackground({ state: popupState({ screen: 'unlock' }), snapshot: snapshotReply({ suggestionIds: ['i1'] }) })
+		render(<App />)
+		expect((await title()).textContent).toBe('Unlock')
+		expect(screen.queryByRole('region', { name: 'Autofill suggestions' })).toBeNull()
+		expect(screen.queryByRole('button', { name: /^Fill/ })).toBeNull()
+		expect(sentKinds(sent)).not.toContain('fill.request')
+	})
+
+	it('offers Fill on the detail of a suggested item only, for the tab the popup belongs to', async () => {
+		const sent = fakeBackground({
+			snapshot: snapshotReply({ items: [itemMeta({ id: 'i1', name: 'GitHub' }), itemMeta({ id: 'i2', name: 'Bank', url: 'bank.test' })], suggestionIds: ['i1'] }),
+			replies: { 'fill.request': { filled: 'both', code: false } },
+		})
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		render(<App />)
+		const user = userEvent.setup()
+		const items = async () => screen.findByRole('region', { name: 'Items' })
+		await user.click(within(await items()).getByRole('button', { name: /^Bank/ }))
+		expect((await title()).textContent).toBe('View item')
+		expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(within(await items()).getByRole('button', { name: /^GitHub/ }))
+		await user.click(await screen.findByRole('button', { name: 'Fill' }))
+		expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'i1', tabId: 7 }])
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+	})
+
+	describe('Fill on a card\'s or identity\'s detail', () => {
+		const card = (overrides = {}) => itemMeta({ id: 'c1', name: 'Visa', typeId: 't-card', hasLogin: false, url: null, ...overrides })
+		async function openDetail(name: string) {
+			await userEvent.setup().click(within(await screen.findByRole('region', { name: 'Items' })).getByRole('button', { name: new RegExp(`^${name}`) }))
+			expect((await title()).textContent).toBe('View item')
+		}
+
+		it('fills a card the Vault view setting leaves out of the suggestions, and closes the popup', async () => {
+			const sent = fakeBackground({
+				snapshot: snapshotReply({ items: [card()], suggestionIds: [], formIds: ['c1'] }),
+				decrypted: { c1: { key: '{"number":"4111111111111111"}' } },
+				replies: { 'fill.request': { filled: 'form', code: false } },
+			})
+			const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+			render(<App />)
+			await openDetail('Visa')
+			await userEvent.setup().click(await screen.findByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'c1', tabId: 7 }])
+			await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		})
+
+		it('fills a use-only identity without showing any of its members', async () => {
+			const sent = fakeBackground({
+				snapshot: snapshotReply({ items: [card({ id: 'p1', name: 'Me', typeId: 't-identity', useOnly: true })], formIds: ['p1'] }),
+				replies: { 'fill.request': { filled: 'form', code: false } },
+			})
+			vi.spyOn(window, 'close').mockImplementation(() => {})
+			render(<App />)
+			await openDetail('Me')
+			await userEvent.setup().click(await screen.findByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'p1', tabId: 7 }])
+			expect(sentOf(sent, 'item.decrypt').every((message) => !(message.fields as string[]).includes('key'))).toBe(true)
+		})
+
+		it('offers no Fill for a blocked card', async () => {
+			fakeBackground({ snapshot: snapshotReply({ items: [card({ blocked: true, blockedReason: 'suite_revoked' })], formIds: ['c1'] }) })
+			render(<App />)
+			await openDetail('Visa')
+			expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		})
+
+		it('drops the cards from the suggestions once the Vault view setting is turned off, in the same popup', async () => {
+			const cardsOff = () => sentOf(sent, 'account.settings.set').some((message) => (message.patch as { vaultCards?: boolean }).vaultCards === false)
+			const sent = fakeBackground({ snapshot: () => snapshotReply({ items: [card()], suggestionIds: cardsOff() ? [] : ['c1'], formIds: ['c1'] }) })
+			render(<App />)
+			const user = userEvent.setup()
+			const suggested = async () => within(await screen.findByRole('region', { name: 'Autofill suggestions' })).queryAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)
+			expect(await suggested()).toEqual(['Visa'])
+			await user.click(screen.getByRole('button', { name: 'Settings' }))
+			await user.click(await screen.findByRole('button', { name: /^Autofill/ }))
+			const reads = sentOf(sent, 'vault.snapshot').length
+			await user.click(await screen.findByRole('checkbox', { name: 'Always show cards as Autofill suggestions on Vault view' }))
+			await waitFor(() => expect(sentOf(sent, 'vault.snapshot').length).toBeGreaterThan(reads))
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			await user.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Vault' }))
+			expect(await suggested()).toEqual([])
+		})
+
+		it('still drops the cards from the suggestions when Back is pressed before the setting is stored', async () => {
+			let store = () => {}
+			const held = new Promise<void>((resolve) => (store = resolve))
+			const cardsOff = () => sentOf(sent, 'account.settings.set').some((message) => (message.patch as { vaultCards?: boolean }).vaultCards === false)
+			const sent = fakeBackground({
+				snapshot: () => snapshotReply({ items: [card()], suggestionIds: cardsOff() ? [] : ['c1'], formIds: ['c1'] }),
+				replies: { 'account.settings.set': () => held.then(() => accountSettingsSnapshot({ values: { vaultCards: false } })) },
+			})
+			render(<App />)
+			const user = userEvent.setup()
+			const suggested = async () => within(await screen.findByRole('region', { name: 'Autofill suggestions' })).queryAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)
+			expect(await suggested()).toEqual(['Visa'])
+			await user.click(screen.getByRole('button', { name: 'Settings' }))
+			await user.click(await screen.findByRole('button', { name: /^Autofill/ }))
+			await user.click(await screen.findByRole('checkbox', { name: 'Always show cards as Autofill suggestions on Vault view' }))
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			const reads = sentOf(sent, 'vault.snapshot').length
+			await act(async () => store())
+			await waitFor(() => expect(sentOf(sent, 'vault.snapshot').length).toBeGreaterThan(reads))
+			await user.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Vault' }))
+			expect(await suggested()).toEqual([])
+		})
+
+		it.each(['about:blank', 'chrome://newtab/'])('offers no Fill on %s, where the background lists none', async (tabUrl) => {
+			fakeBackground({ tabUrl, snapshot: snapshotReply({ items: [card()], formIds: [] }), decrypted: { c1: { key: '{}' } } })
+			render(<App />)
+			await openDetail('Visa')
+			expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		})
+	})
+
+	it('shows the toast in its live region when a fill finds no login form', async () => {
+		fakeBackground({ snapshot: snapshotReply({ suggestionIds: ['i1'] }), replies: { 'fill.request': { filled: 'none' } } })
+		render(<App />)
+		const section = await screen.findByRole('region', { name: 'Autofill suggestions' })
+		await userEvent.setup().click(within(section).getByRole('button', { name: 'Fill GitHub' }))
+		const status = await screen.findByText('Unable to autofill on this page. Copy and paste instead.')
+		expect(status.closest('[role="status"]')).toBeTruthy()
+	})
+
+	it('pops out with the tab it came from and closes itself', async () => {
+		const sent = fakeBackground()
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		render(<App />)
+		await title()
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Pop out' }))
+		expect(sent).toHaveBeenCalledWith({ kind: 'popup.popout', tabId: 7 })
+		expect(close).toHaveBeenCalled()
+	})
+
+	it('stays open and says so when the window could not be opened', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		fakeBackground({ unanswered: ['popup.popout'] })
+		const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+		render(<App />)
+		await title()
+		await userEvent.setup().click(screen.getByRole('button', { name: 'Pop out' }))
+		expect(await screen.findByText('Could not open a new window')).toBeTruthy()
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('goes back to the background state when the snapshot says locked', async () => {
+		const sent = fakeBackground({ snapshot: { state: 'locked' } })
+		render(<App />)
+		await title()
+		// One read per mount, then one more after the locked snapshot.
+		await vi.waitFor(() => expect(sentKinds(sent).filter((kind) => kind === 'vault.status')).toHaveLength(mounts() + 1))
+	})
+
+	it('re-reads the state when the background broadcasts a lock', async () => {
+		const sent = fakeBackground()
+		const listeners = new Set<(message: unknown) => void>()
+		vi.spyOn(browser.runtime.onMessage, 'addListener').mockImplementation((listener) => void listeners.add(listener as never))
+		vi.spyOn(browser.runtime.onMessage, 'removeListener').mockImplementation((listener) => void listeners.delete(listener as never))
+		render(<App />)
+		await title()
+		const before = sentKinds(sent).filter((kind) => kind === 'vault.status').length
+		act(() => listeners.forEach((listener) => listener({ kind: 'vault.locked' })))
+		await vi.waitFor(() => expect(sentKinds(sent).filter((kind) => kind === 'vault.status').length).toBe(before + 1))
+	})
+
+	it('opens an item and comes back to the same filters', async () => {
+		fakeBackground({
+			snapshot: snapshotReply({ items: [itemMeta({ id: 'a', name: 'Authy', typeId: 't-totp', hasLogin: false }), itemMeta({ id: 'b', name: 'Bank' })] }),
+			decrypted: { a: { key: 'GEZDGNBVGY3TQOJQ' } },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'TOTP' }))
+		await user.click(screen.getByRole('button', { name: /^Authy/ }))
+		expect((await title()).textContent).toBe('View item')
+		// The detail covers the tab bar and puts its own actions there.
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+		expect(screen.getByRole('button', { name: 'Edit' }).closest('.popup__footer')).toBeTruthy()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'TOTP' }).getAttribute('aria-pressed')).toBe('true')
+		expect(screen.queryByRole('button', { name: /^Bank/ })).toBeNull()
+	})
+
+	it('comes back from the account switcher as it was left', async () => {
+		const sent = fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'Send' }))
+		await user.click(screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' }))
+		expect((await title()).textContent).toBe('Accounts')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Send')
+		const opens = sent.mock.calls.filter(([m]) => m.kind === 'vault.snapshot' && (m as { opened?: boolean }).opened)
+		expect(opens).toHaveLength(1)
+	})
+
+	it('keeps no decrypted item in the DOM while the account switcher is open', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await screen.findByText('Login credentials')
+		await user.click(screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' }))
+		expect((await title()).textContent).toBe('Accounts')
+		expect(screen.queryByText('Login credentials')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await screen.findByText('Login credentials')
+		expect(sent.mock.calls.filter(([m]) => m.kind === 'item.decrypt' && m.fields?.includes('key'))).toHaveLength(2 * mounts())
+	})
+
+	it('decrypts again when an item is reopened', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		const open = async () => user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		const detailDecrypts = () => sent.mock.calls.filter(([m]) => m.kind === 'item.decrypt' && m.fields?.includes('key')).length
+		await open()
+		await screen.findByText('Login credentials')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await open()
+		await screen.findByText('Login credentials')
+		expect(detailDecrypts()).toBe(2 * mounts())
+	})
+
+	it('launches a website in the window of the tab the popup belongs to', async () => {
+		fakeBackground()
+		const create = vi.spyOn(browser.tabs, 'create').mockResolvedValue({} as never)
+		render(<App />)
+		await userEvent.setup().click(await screen.findByRole('button', { name: 'Launch GitHub' }))
+		expect(create).toHaveBeenCalledWith({ url: 'https://github.com/', windowId: 3 })
+	})
+})
+
+describe('item writes', () => {
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+
+	it('adds an item over the tab bar and opens it once saved', async () => {
+		let items = [itemMeta()]
+		const sent = fakeBackground({
+			snapshot: () => snapshotReply({ items }),
+			replies: {
+				'item.create': () => {
+					items = [...items, itemMeta({ id: 'new', name: 'Bank', url: null })]
+					return { ok: true, value: { id: 'new' } }
+				},
+			},
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		expect((await title()).textContent).toBe('New item')
+		expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+		// Opened on github.com/login, so the form starts with that page.
+		expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://github.com/login')
+		await user.type(screen.getByLabelText('Name'), 'Bank')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		expect((await screen.findByRole('heading', { name: 'Bank' })).textContent).toBe('Bank')
+		expect((await title()).textContent).toBe('View item')
+		expect(screen.getByRole('status').textContent).toBe('Item saved')
+		expect(sentKinds(sent)).toContain('item.create')
+	})
+
+	describe('the context menu\'s Add', () => {
+		const intent = (add: string | null, extra: Parameters<typeof fakeBackground>[0] = {}) =>
+			fakeBackground({ ...extra, replies: { 'popup.intent': () => (add ? { add } : null), ...extra.replies } })
+
+		it.each([['identity', 'New identity', 'Email'], ['card', 'New card', 'Number'], ['login', 'New login', 'Username']])(
+			'opens on the %s form without the Type select, asking once', async (add, heading, label) => {
+				const sent = intent(add)
+				render(<App />)
+				await waitFor(async () => expect((await title()).textContent).toBe(heading))
+				expect(within(document.querySelector('form')!).queryByLabelText('Type')).toBeNull()
+				expect(screen.getByLabelText(label)).toBeTruthy()
+				expect(sentOf(sent, 'popup.intent')).toHaveLength(1)
+			})
+
+		it('opens on the form in the pop-out window too, with the page of the tab it came from', async () => {
+			window.history.replaceState({}, '', '/popup.html?popout=1&tabId=9')
+			vi.resetModules()
+			try {
+				const { default: FreshApp } = await import('../App')
+				const sent = intent('login')
+				vi.spyOn(browser.tabs, 'get').mockResolvedValue({ id: 9, windowId: 5, url: 'https://example.test/signin' } as never)
+				render(<FreshApp />)
+				await waitFor(async () => expect((await title()).textContent).toBe('New login'))
+				await waitFor(() => expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://example.test/signin'))
+				expect(sentOf(sent, 'popup.intent')).toHaveLength(1)
+			} finally {
+				window.history.replaceState({}, '', '/')
+				vi.resetModules()
+			}
+		})
+
+		it('takes the page for a new login', async () => {
+			intent('login', { tabUrl: 'https://example.test/login' })
+			render(<App />)
+			await waitFor(() => expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://example.test/login'))
+		})
+
+		it('opens over the Vault tab whatever tab was left open, and Cancel goes to the vault list', async () => {
+			const sent = intent('card', { lastTab: 'generator' })
+			render(<App />)
+			await waitFor(async () => expect((await title()).textContent).toBe('New card'))
+			await userEvent.setup().click(within(footer()).getByRole('button', { name: 'Cancel' }))
+			expect((await title()).textContent).toBe('Vault')
+			expect(sentOf(sent, 'popup.lastTab.set')).toEqual([])
+		})
+
+		it('saves as from New, and opens the new item', async () => {
+			let items = [itemMeta()]
+			const sent = intent('identity', {
+				snapshot: () => snapshotReply({ items }),
+				replies: {
+					'item.create': () => {
+						items = [...items, itemMeta({ id: 'new', name: 'Me', url: null, typeId: 't-identity' })]
+						return { ok: true, value: { id: 'new' } }
+					},
+				},
+			})
+			render(<App />)
+			const user = userEvent.setup()
+			await waitFor(async () => expect((await title()).textContent).toBe('New identity'))
+			await user.type(screen.getByLabelText('Name'), 'Me')
+			await user.type(screen.getByLabelText('Email'), 'me@example.test')
+			await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+			expect((await screen.findByRole('heading', { name: 'Me' })).textContent).toBe('Me')
+			expect(sentOf(sent, 'item.create')[0]!.draft).toMatchObject({ typeId: 't-identity', name: 'Me' })
+		})
+
+		it('opens the vault list when the cached types lack the type, and without an intent', async () => {
+			intent('card', { snapshot: snapshotReply({ types: types.filter((type) => type.name !== 'card') }) })
+			render(<App />)
+			await waitFor(async () => expect((await title()).textContent).toBe('Vault'))
+			cleanup()
+			intent(null)
+			render(<App />)
+			expect((await title()).textContent).toBe('Vault')
+			expect(await screen.findByRole('button', { name: 'New' })).toBeTruthy()
+		})
+	})
+
+	it('prefills only the origin and path of the tab, never its query or fragment', async () => {
+		fakeBackground({ tabUrl: 'https://user:pw@app.example.com/callback?token=abc#access_token=xyz' })
+		render(<App />)
+		await userEvent.setup().click(await screen.findByRole('button', { name: 'New' }))
+		expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://app.example.com/callback')
+	})
+
+	it('offers New item in the header on the Vault list only', async () => {
+		fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await screen.findByRole('button', { name: 'New' })
+		await user.click(screen.getByRole('button', { name: /^GitHub/ }))
+		await screen.findByText('Login credentials')
+		expect(screen.queryByRole('button', { name: 'New' })).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(screen.getByRole('button', { name: 'Settings' }))
+		expect(screen.queryByRole('button', { name: 'New' })).toBeNull()
+	})
+
+	it('asks before Back drops typed changes, and not when nothing changed', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByRole('dialog')).toBeNull()
+
+		await user.click(screen.getByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Name'), 'Draft')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		const dialog = screen.getByRole('dialog', { name: 'Unsaved changes' })
+		expect(dialog.textContent).toContain('You have unsaved changes. Discard them?')
+		await user.click(within(dialog).getByRole('button', { name: 'Keep editing' }))
+		expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('Draft')
+		await user.click(within(footer()).getByRole('button', { name: 'Cancel' }))
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Discard' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByLabelText('Name')).toBeNull()
+	})
+
+	it('edits from detail and returns to it', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } }, items: { i1: editableItem() } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		expect((await title()).textContent).toBe('Edit item')
+		await user.type(await screen.findByLabelText('Name'), ' work')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
+		expect(sentKinds(sent)).toContain('item.update')
+	})
+
+	it('clones from the More menu into a new item, leaving the original as it was', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } }, items: { i1: editableItem() } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(await within(footer()).findByRole('button', { name: 'More, GitHub' }))
+		await user.click(await screen.findByRole('menuitem', { name: 'Clone' }))
+		expect((await title()).textContent).toBe('New item')
+		await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('GitHub - Clone'))
+		expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('alice')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(sentOf(sent, 'item.create')).toHaveLength(1))
+		expect(sentOf(sent, 'item.create')[0]).toMatchObject({ draft: { name: 'GitHub - Clone' } })
+		expect(sentOf(sent, 'item.update')).toEqual([])
+	})
+
+	it('deletes after the confirm dialog and returns to the list', async () => {
+		let items = [itemMeta()]
+		const sent = fakeBackground({
+			snapshot: () => snapshotReply({ items }),
+			replies: { 'item.delete': () => ((items = []), { ok: true, value: null }) },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Delete' }))
+		const dialog = screen.getByRole('dialog', { name: 'Delete item' })
+		expect(dialog.textContent).toContain('Move GitHub to the trash?')
+		await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+		expect(sentKinds(sent)).not.toContain('item.delete')
+		expect((await title()).textContent).toBe('View item')
+
+		await user.click(within(footer()).getByRole('button', { name: 'Delete' }))
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('Vault'))
+		expect(screen.getByRole('status').textContent).toBe('Item moved to the trash')
+		expect(sentOf(sent, 'item.delete')).toEqual([{ kind: 'item.delete', accountId: 'a1', id: 'i1' }])
+	})
+
+	it('keeps the item when the delete does not reach the server', async () => {
+		fakeBackground({ replies: { 'item.delete': { ok: false, error: { code: 'offline' } } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Delete' }))
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }))
+		expect((await within(screen.getByRole('dialog')).findByRole('alert')).textContent).toContain('Could not reach the server')
+		expect((await title()).textContent).toBe('View item')
+	})
+
+	it('moves into a folder with a folderId-only patch', async () => {
+		const sent = fakeBackground({ snapshot: snapshotReply({ folders: [{ id: 'w', name: 'Work', parentId: null }] }) })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
+		await user.click(within(screen.getByRole('dialog', { name: 'Move to folder' })).getByRole('button', { name: 'Work' }))
+		await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+		expect(sentOf(sent, 'item.update')).toEqual([{ kind: 'item.update', accountId: 'a1', id: 'i1', patch: { folderId: 'w' } }])
+		expect(screen.getByRole('status').textContent).toBe('Moved to Work')
+	})
+
+	it('names a folder made in the move picker in its toast', async () => {
+		let folders: { id: string; name: string; parentId: string | null }[] = []
+		fakeBackground({
+			snapshot: () => snapshotReply({ folders }),
+			replies: { 'folder.create': () => ((folders = [{ id: 'f-new', name: 'Banking', parentId: null }]), { ok: true, value: { id: 'f-new' } }) },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
+		await user.click(screen.getByRole('button', { name: 'New folder' }))
+		await user.type(screen.getByLabelText('Folder name'), 'Banking')
+		await user.click(within(screen.getByRole('dialog', { name: 'New folder' })).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(screen.getByRole('status').textContent).toBe('Moved to Banking'))
+	})
+
+	it('shows a failed move after New folder in the picker, so the folder is not created twice', async () => {
+		const sent = fakeBackground({ replies: { 'item.update': { ok: false, error: { code: 'server_error' } } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		await user.click(screen.getByRole('menuitem', { name: 'Move to folder' }))
+		await user.click(screen.getByRole('button', { name: 'New folder' }))
+		await user.type(screen.getByLabelText('Folder name'), 'Banking')
+		await user.click(within(screen.getByRole('dialog', { name: 'New folder' })).getByRole('button', { name: 'Save' }))
+		const picker = await screen.findByRole('dialog', { name: 'Move to folder' })
+		expect(await within(picker).findByRole('alert')).toBeTruthy()
+		expect(screen.queryByRole('dialog', { name: 'New folder' })).toBeNull()
+		expect(sentOf(sent, 'folder.create')).toHaveLength(1)
+	})
+
+	it('asks before the account switcher drops typed changes, and closes the form for it', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		const avatar = () => screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' })
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Name'), 'Draft')
+		await user.click(avatar())
+		await user.click(within(screen.getByRole('dialog', { name: 'Unsaved changes' })).getByRole('button', { name: 'Keep editing' }))
+		expect((await title()).textContent).toBe('New item')
+		await user.click(avatar())
+		await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Discard' }))
+		expect((await title()).textContent).toBe('Accounts')
+		expect(screen.queryByLabelText('Name')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
+	})
+})
+
+describe('the share-save note after a save', () => {
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+	const toast = () => document.querySelector('.toast')?.textContent
+	const notes = () => [...document.querySelectorAll('.banner--warning')].map((banner) => banner.textContent)
+	const OWNER_ONLY_NOTE = { ownerOnly: true }
+	const OWNER_ONLY = 'Saved. Recipients at partner organisations get this change when the owner next saves it.'
+
+	/** Answers each save of i1 with the next of `shareSaves`; `undefined` is a save that reached everyone. */
+	function background(...shareSaves: unknown[]) {
+		const options = {
+			snapshot: snapshotReply({ items: [itemMeta(), itemMeta({ id: 'i2', name: 'GitLab', url: 'https://gitlab.com' })] }),
+			decrypted: { i1: { login: 'alice', key: 'pw' }, i2: { login: 'alice', key: 'pw' } },
+			items: { i1: editableItem() },
+			replies: {
+				'item.update': () => {
+					const shareSave = shareSaves.shift()
+					return { ok: true, value: shareSave === undefined ? { id: 'i1' } : { id: 'i1', shareSave } }
+				},
+			},
+		}
+		const sent = fakeBackground(options)
+		return { sent, reopen: () => fakeBackground(options) }
+	}
+
+	async function editUsername(user: ReturnType<typeof userEvent.setup>) {
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await user.type(await screen.findByLabelText('Username'), '2')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
+	}
+
+	it('shows only "Item saved" when everyone got the change', async () => {
+		background(undefined)
+		render(<App />)
+		await editUsername(userEvent.setup())
+		expect(toast()).toBe('Item saved')
+		expect(notes()).toEqual([])
+	})
+
+	it.each([
+		['partners stay with the owner', OWNER_ONLY_NOTE, OWNER_ONLY],
+		['partners were suspended', {suspended: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.Open the Keepiq web app'],
+		['partners were saved without', {paused: ['bob@cloud.partner.example'] }, 'Sharing with bob@cloud.partner.example is paused until you share this item with them again.'],
+	])('notes on the item\'s detail that %s, beside "Item saved"', async (_, shareSave, text) => {
+		background(shareSave)
+		render(<App />)
+		await editUsername(userEvent.setup())
+		expect(toast()).toBe('Item saved')
+		expect(notes()).toEqual([text])
+	})
+
+	it('keeps the note for that item, and drops it once another item\'s detail opens', async () => {
+		background(OWNER_ONLY_NOTE)
+		render(<App />)
+		const user = userEvent.setup()
+		await editUsername(user)
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		expect(notes()).toEqual([OWNER_ONLY])
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(await screen.findByRole('button', { name: /^GitLab/ }))
+		expect(notes()).toEqual([])
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		expect(notes()).toEqual([])
+	})
+
+	it('shows no note in a reopened popup, and asks the background for none', async () => {
+		const { reopen } = background(OWNER_ONLY_NOTE)
+		render(<App />)
+		const user = userEvent.setup()
+		await editUsername(user)
+		expect(notes()).toHaveLength(1)
+		cleanup()
+		const sent = reopen()
+		render(<App />)
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		expect((await title()).textContent).toBe('View item')
+		expect(notes()).toEqual([])
+		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.passkeys', 'item.editable', 'popup.lastTab.set', 'popup.intent'].includes(kind))).toEqual([])
+	})
+
+	it('drops the note once a later save of the item reaches everyone', async () => {
+		const { sent } = background(OWNER_ONLY_NOTE, undefined)
+		render(<App />)
+		const user = userEvent.setup()
+		await editUsername(user)
+		expect(notes()).toHaveLength(1)
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await user.type(await screen.findByLabelText('Username'), '3')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(sentOf(sent, 'item.update')).toHaveLength(2))
+		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
+		expect(notes()).toEqual([])
+	})
+})
+
+describe('the generator', () => {
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')
+	const tabBar = () => screen.queryByRole('navigation', { name: 'Main' })
+	const input = (label: string) => screen.getByLabelText(label) as HTMLInputElement
+	const enabled = (name: string) => waitFor(() => {
+		const button = screen.getByRole('button', { name }) as HTMLButtonElement
+		expect(button.disabled).toBe(false)
+		return button
+	})
+
+	it('shows on its tab, with its history as a page over the tab bar', async () => {
+		fakeBackground({ lastTab: 'generator' })
+		render(<App />)
+		expect((await title()).textContent).toBe('Generator')
+		await enabled('Copy password')
+		const user = userEvent.setup()
+		await user.click(screen.getByRole('button', { name: 'Generator history' }))
+		expect((await title()).textContent).toBe('Generator history')
+		expect(screen.getByText('No generated values yet')).toBeTruthy()
+		expect(tabBar()).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Generator')
+		expect(tabBar()).toBeTruthy()
+	})
+
+	it('leaves the history page when another tab is picked', async () => {
+		fakeBackground({ lastTab: 'generator' })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'Generator history' }))
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await user.click(screen.getByRole('button', { name: 'Vault' }))
+		await user.click(screen.getByRole('button', { name: 'Generator' }))
+		expect((await title()).textContent).toBe('Generator')
+	})
+
+	it('fills the password from pick mode and keeps the rest of the draft', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Name'), 'Bank')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		expect((await title()).textContent).toBe('Generator')
+		expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy()
+		expect(within(screen.getByRole('tablist')).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Password', 'Passphrase'])
+		// The form waits hidden, and its Save and Cancel leave the bar.
+		expect(input('Name').closest('[hidden]')).not.toBeNull()
+		expect(within(footer()!).queryByRole('button', { name: 'Save' })).toBeNull()
+		expect(tabBar()).toBeNull()
+
+		await user.click(await enabled('Use this password'))
+		expect((await title()).textContent).toBe('New item')
+		expect(input('Name').value).toBe('Bank')
+		expect(input('Password').value).toBe('password-1')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+		expect(within(footer()!).getByRole('button', { name: 'Save' })).toBeTruthy()
+	})
+
+	it('offers only usernames for the username, and Back leaves the field as it was', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Username'), 'alice')
+		await user.click(screen.getByRole('button', { name: 'Generate username' }))
+		expect((await title()).textContent).toBe('Generator')
+		expect(screen.queryByRole('tablist')).toBeNull()
+		await enabled('Use this username')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('New item')
+		expect(input('Username').value).toBe('alice')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate username' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+	})
+
+	it('still asks before the account switcher drops a form left in pick mode, and Discard ends pick mode with it', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Name'), 'Draft')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await user.click(screen.getByRole('button', { name: 'Accounts, signed in as Alice Doe' }))
+		await user.click(within(screen.getByRole('dialog', { name: 'Unsaved changes' })).getByRole('button', { name: 'Discard' }))
+		expect((await title()).textContent).toBe('Accounts')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByRole('button', { name: 'Use this password' })).toBeNull()
+		expect(screen.queryByLabelText('Name')).toBeNull()
+	})
+
+	it('still asks before Pop out drops a form left in pick mode', async () => {
+		const sent = fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Name'), 'Draft')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await user.click(screen.getByRole('button', { name: 'Pop out' }))
+		expect(screen.getByRole('dialog', { name: 'Unsaved changes' })).toBeTruthy()
+		expect(sentOf(sent, 'popup.popout')).toEqual([])
+	})
+
+	it('leaves the password as it was on Back', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(input('Password'), 'mine')
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await enabled('Use this password')
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		expect((await title()).textContent).toBe('New item')
+		expect(input('Password').value).toBe('mine')
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+	})
+
+	it('fills the username of a database item being edited', async () => {
+		fakeBackground({
+			snapshot: snapshotReply({ items: [itemMeta({ typeId: 't-database' })], types: [...snapshotReply().types, { id: 't-database', name: 'database', label: 'Database' }] }),
+			decrypted: { i1: { login: 'alice', key: 'pw' } },
+			items: { i1: editableItem({ typeId: 't-database', typeName: 'database' }) },
+		})
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()!).getByRole('button', { name: 'Edit' }))
+		expect(input('Username').value).toBe('alice')
+		await user.click(screen.getByRole('button', { name: 'Generate username' }))
+		await user.click(await enabled('Use this username'))
+		expect((await title()).textContent).toBe('Edit item')
+		expect(input('Username').value).toBe('username-1')
+	})
+})
+
+describe('pages over the tabs', () => {
+	const body = () => document.querySelector<HTMLElement>('.popup__body')!
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+	const titled = (text: string) => waitFor(() => expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(text))
+
+	it('opens a page at the top and comes back to the list, and to the form after pick mode, where they were left', async () => {
+		fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await screen.findByRole('searchbox')
+		body().scrollTop = 120
+		await user.click(screen.getByRole('button', { name: /^GitHub/ }))
+		await titled('View item')
+		expect(body().scrollTop).toBe(0)
+		body().scrollTop = 15
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await titled('Vault')
+		expect(body().scrollTop).toBe(120)
+
+		await user.click(screen.getByRole('button', { name: 'New' }))
+		await titled('New item')
+		body().scrollTop = 40
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await titled('Generator')
+		expect(body().scrollTop).toBe(0)
+		body().scrollTop = 7
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await titled('New item')
+		expect(body().scrollTop).toBe(40)
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+	})
+
+	it('opens a send page at the top', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		const user = userEvent.setup()
+		const add = await screen.findByRole('button', { name: 'New' })
+		body().scrollTop = 50
+		await user.click(add)
+		await titled('New send')
+		expect(body().scrollTop).toBe(0)
+	})
+
+	it('re-reads the popup state, and opens no send, when Send from an item finds the vault locked', async () => {
+		let locked = false
+		const sent = fakeBackground({ replies: { 'item.decrypt': () => (locked ? { ok: false, error: 'locked' } : { ok: true, items: {} }) } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		const statusReads = sentOf(sent, 'vault.status').length
+		locked = true
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		await waitFor(() => expect(sentOf(sent, 'vault.status').length).toBeGreaterThan(statusReads))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByText('Could not read this login')).toBeNull()
+	})
+
+	it('closes both the form and the detail when Edit finds the item deleted elsewhere', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await titled('Vault')
+		expect(screen.getByRole('status').textContent).toBe('This item no longer exists')
+	})
+
+	it('gives a created send\'s row focus once, not again when the Send tab is picked later', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		const user = userEvent.setup()
+		const row = () => screen.findByRole('button', { name: /^Copy link, Text send/ })
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Text to share'), 'the secret')
+		await user.click(within(footer()).getByRole('button', { name: 'Create' }))
+		await user.click(await within(footer()).findByRole('button', { name: 'Done' }))
+		const first = await row()
+		await waitFor(() => expect(document.activeElement).toBe(first))
+		await user.click(screen.getByRole('button', { name: 'Vault' }))
+		await screen.findByRole('searchbox')
+		const sendTab = screen.getByRole('button', { name: 'Send' })
+		await user.click(sendTab)
+		await row()
+		expect(document.activeElement).toBe(sendTab)
+	})
+})

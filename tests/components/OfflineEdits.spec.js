@@ -179,6 +179,94 @@ describe('the sync panel', () => {
 			.trigger('click')
 		expect(offline.discardEntry).toHaveBeenCalledWith('e2')
 	})
+
+	it('shows the stored reason, and offers "Try again" only for a failure that can pass', async () => {
+		const offline = useOfflineStore()
+		offline.entries = [
+			{
+				entryId: 'e1',
+				op: 'update',
+				secretId: 's1',
+				status: 'failed',
+				body: { name: 'Router' },
+				failure: { code: 'partner_unreachable', partners: ['bob@partner'] },
+			},
+			{
+				entryId: 'e2',
+				op: 'update',
+				secretId: 's2',
+				status: 'failed',
+				body: { name: 'Switch' },
+				failure: { code: 'refused', reason: 'invalid_key' },
+			},
+			{
+				entryId: 'e3',
+				op: 'update',
+				secretId: 's3',
+				status: 'failed',
+				body: { name: 'Gateway' },
+				failure: { code: 'partner_lookup_limit' },
+			},
+			{
+				entryId: 'e4',
+				op: 'update',
+				secretId: 's4',
+				status: 'failed',
+				body: { name: 'Firewall' },
+				failure: {
+					code: 'share_scan_pending',
+					message: 'This share waits for the share quarantine scan',
+				},
+			},
+			{
+				entryId: 'e5',
+				op: 'update',
+				secretId: 's5',
+				status: 'failed',
+				body: { name: 'Proxy' },
+				failure: { code: 'partner_share_owner_mismatch' },
+			},
+		]
+		offline.retryEntry = vi.fn()
+
+		const wrapper = mount(OfflineSyncPanel, {
+			global: {
+				stubs: {
+					NcButton: button,
+					NcPasswordField: true,
+					OfflineConflictDialog: true,
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="offline-sync-reason-e1"]').text(),
+		).toContain('bob@partner')
+		const refused = wrapper.find('[data-testid="offline-sync-reason-e2"]').text()
+		expect(refused).toBe('Failed to save secret')
+		expect(refused).not.toContain('invalid_key')
+		expect(wrapper.find('[data-testid="offline-sync-retry-e2"]').exists()).toBe(
+			false,
+		)
+		expect(
+			wrapper.find('[data-testid="offline-sync-reason-e3"]').text(),
+		).toContain('Too many partner lookups')
+		await wrapper.find('[data-testid="offline-sync-retry-e1"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e1')
+		await wrapper.find('[data-testid="offline-sync-retry-e3"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e3')
+		expect(wrapper.find('[data-testid="offline-sync-reason-e4"]').text()).toBe(
+			'This share waits for the share quarantine scan',
+		)
+		await wrapper.find('[data-testid="offline-sync-retry-e4"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e4')
+		// Translated words, never the code; tried again once an administrator repaired the partner shares.
+		const mismatch = wrapper.find('[data-testid="offline-sync-reason-e5"]').text()
+		expect(mismatch).toContain('An administrator must repair the partner shares')
+		expect(mismatch).not.toContain('partner_share_owner_mismatch')
+		await wrapper.find('[data-testid="offline-sync-retry-e5"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e5')
+	})
 })
 
 describe('the conflict dialog', () => {

@@ -8,7 +8,9 @@
 
 ## Purpose
 TBD - created by archiving change implement-secrets-write-ui. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Create a Secret from the UI
 The system MUST provide a dialog reachable from the vault view that lets the user
 create a new secret. The dialog MUST collect a name (required), a secret type
@@ -58,7 +60,6 @@ The dialog MUST be blocked (disabled) while the vault is locked.
 - **WHEN** the user submits with an empty name or empty value
 - **THEN** the submit control MUST be disabled and no request MUST be sent
 
-
 ### Requirement: Edit a Secret from the UI
 The system MUST provide an "Edit" affordance on the secret detail view that opens a
 dialog pre-filled with the secret's current (decrypted) fields. The user MUST be
@@ -80,11 +81,17 @@ Until this requirement, the only writers were the write-for-application dialog,
 import, and an external recipient filling a secret request — so obtaining one on
 your own secret meant asking a stranger to submit it.
 
+On a copy shared with the user to view only (user-sharing, "View-Only Copies"), the detail view MUST NOT offer Edit and MUST say "Shared with you to view only. Ask its owner for edit rights to change it."; when the edit dialog learns from the write-context that the copy is view-only, it MUST show the same note and keep Save disabled. Offline the copy's grade is not known, so Edit stays available there and the replay refuses the change (offline-edit-queue).
+
+#### Scenario: A view-only copy offers no Edit
+- **GIVEN** a secret shared directly with the user
+- **WHEN** the user opens their copy online
+- **THEN** the detail view MUST NOT show Edit and MUST say that it is shared with them to view only
+
 #### Scenario: Edit a secret's value
 - **WHEN** the user edits a secret, changes the value, and saves
 - **THEN** the browser MUST RSA-encrypt the new value and PUT it
 - **THEN** re-opening the secret and decrypting MUST return the updated value
-
 
 #### Scenario: Edit metadata only
 @e2e exclude Previously uncovered. Driven by SecretEditDialog.metadataOnly — only the name is sent when only the name changed, nothing is sent when nothing changed, and the counterpart that the value IS re-encrypted when it really changes, since the rule is "only CHANGED sensitive fields" rather than "never" — and by SecretEditDialog.additionalFields "alters no ciphertext when only the name changes". Same diff logic: a rename that re-encrypted the blob would also be a rename that loses a concurrent session's members.
@@ -102,7 +109,6 @@ your own secret meant asking a stranger to submit it.
 - **WHEN** the user removes the only remaining member and saves
 - **THEN** the stored blob MUST be empty rather than null
 - **AND** re-opening the secret MUST show no additional fields and no error
-
 
 ### Requirement: Create a Folder and Move a Secret
 The system MUST provide a "New folder" affordance in the vault view that creates a
@@ -193,3 +199,25 @@ The inner copy-password control MUST remain independently focusable, and activat
 - **WHEN** the user activates it via `Enter` or `Space`
 - **THEN** the system MUST copy the password and MUST NOT also emit the row's `open` event
 
+### Requirement: A failed share-save is shown and nothing is saved
+The edit dialog MUST send the `updatedAt` of the version it opened on as `baseUpdatedAt` and, on a copy, the source version it opened on as `sourceBaseUpdatedAt`; offline that is the source version the cached row carries. When a merge write-back of the secret saved, the dialog MUST send the versions that write-back wrote instead; one that failed MUST leave them as opened, and one still running when the dialog saves MUST be waited for. Opening the secret while its write-back runs MUST wait for that one instead of starting a second. When no source version is known, the share-save MUST take the source version of its own moment. When the share-save fails, the dialog MUST stay open and show a translated reason: the secret changed meanwhile (`stale`, `stale_source`), a recipient changed during the save (`incomplete` after three attempts), a partner can't be reached, or not being allowed to save for everyone it is shared with. A refusal that is not the share-save's own, such as a vault policy, MUST show the server's own message. After a copy editor's successful save, the dialog MUST say when partner shares receive the change only with the owner's next save.
+
+#### Scenario: The secret changed while the dialog was open
+- GIVEN a shared secret open in the edit dialog, and another browser saved it in the meantime
+- WHEN the user saves a new password
+- THEN the dialog MUST stay open with a message that the secret changed meanwhile, and nothing MUST be saved
+
+#### Scenario: The owner's change makes a write-back fail
+- GIVEN a copy open in the edit dialog whose merge write-back is still running, and the owner changes the source through a route that leaves the copy as it is (a plain update or the old restore) before it lands
+- WHEN the write-back is refused and the user saves a new password
+- THEN the dialog MUST send the source version it opened on, stay open with a message that the original changed, and nothing MUST be saved
+
+#### Scenario: Opened while the sidebar's write-back runs
+- GIVEN a copy whose merge write-back the sidebar started, and the user opens it in the edit dialog before that write-back lands
+- WHEN the write-back saves and the user saves a new password
+- THEN no second write-back MUST be sent, and the dialog MUST save on the versions the sidebar's write-back wrote
+
+#### Scenario: A vault policy keeps its own message
+- GIVEN a work login in a team folder that a vault policy keeps there
+- WHEN the user moves it out and saves
+- THEN the dialog MUST show the policy's own refusal, not the sharing refusal

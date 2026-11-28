@@ -19,16 +19,23 @@ The popup MUST offer a Generator tab that makes passwords (length 8 to 128, spec
 When a field for a new password gets focus on a page, the extension MUST offer to use a strong password. On the user's own click it MUST fill a password generated under the org policy into that field and its confirmation field. A script-dispatched click MUST be ignored, and a field for the current password MUST NOT get the offer.
 
 #### Scenario: Sign up on a site
-@e2e exclude In-page content script of the browser extension. Covered by tests/extension/passwordSuggest.spec.js and checked live in Chromium on a sign-up form.
+@e2e exclude In-page content script of the browser extension. Covered by browser-extension/e2e/password-suggest.spec.ts in Chromium, and walked live in Firefox on a sign-up form.
 - **GIVEN** a page with a new-password field and a confirmation field
 - **WHEN** the user focuses the first field and clicks "Use a strong password"
 - **THEN** both fields hold the same generated password
 
 #### Scenario: A page script clicks the offer
-@e2e exclude In-page content script of the browser extension. Covered by tests/extension/passwordSuggest.spec.js ("ignores a click the page script made").
+@e2e exclude In-page content script of the browser extension. Covered by browser-extension/e2e/password-suggest.spec.ts ("a click the page script dispatches on the offer fills nothing").
 - **GIVEN** the offer is shown
 - **WHEN** page script dispatches a click on it
 - **THEN** nothing is generated or filled
+
+#### Scenario: Change a password on a site
+@e2e exclude In-page content script of the browser extension. Covered by the vitest field-role tests in browser-extension/src/autofill/ and browser-extension/e2e/password-suggest.spec.ts.
+- **GIVEN** a change-password form with a current-password field, a new-password field and a confirmation field
+- **WHEN** the user focuses the current-password field
+- **THEN** no offer is shown
+- **AND** focusing the new-password field shows "Use a strong password"
 
 ### Requirement: Generator sub-tabs
 The Generator tab MUST offer the sub-tabs Password, Passphrase and Username, open on the sub-tab last used for the account, generate a value when it opens and again when an option changes, and show the value in a monospace font with digits and special characters in their own colours, with Regenerate and Copy. Copy MUST copy the whole value.
@@ -40,7 +47,7 @@ The Generator tab MUST offer the sub-tabs Password, Passphrase and Username, ope
 - **THEN** a capitalised list word with four digits is shown
 
 ### Requirement: Password options
-The Password sub-tab MUST offer a length from 8 to 128 (default 14), toggles for uppercase, lowercase, numbers and special characters (on, on, on, off), minimum numbers and minimum special characters (0 to 9, default 1), and avoiding ambiguous characters (on; leaves out I, O, l, 0 and 1). At least one class MUST stay on, the length MUST grow to fit the minimums, and the org policy MUST be applied.
+The Password sub-tab MUST offer a length from 8 to 128 (default 14), toggles for uppercase, lowercase, numbers and special characters (on, on, on, off), minimum numbers and minimum special characters (0 to 9, default 1), and avoiding ambiguous characters (on; leaves out I, O, l, 0 and 1). At least one class MUST stay on, the length MUST grow to the sum of the minimums, counting one for every other chosen class (see extension-generator-policy), and the org policy MUST be applied.
 
 #### Scenario: Avoid ambiguous characters
 @e2e exclude Browser-extension popup. Covered by tests/vitest/generator-options.spec.js and live in Chromium.

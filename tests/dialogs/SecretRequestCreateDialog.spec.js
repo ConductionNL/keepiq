@@ -9,8 +9,8 @@
  *    (the key/login defaults are always present);
  *  - submitting the form delegates to `useSecretRequestStore().createRequest`
  *    with the selected `requested_fields` + ISO `expires_at`;
- *  - the re-request mode dispatches the `createReRequest` action instead and
- *    forwards the secret's encryption_suite_id;
+ *  - the re-request mode sends `isReRequest: true` with the requested fields'
+ *    schemas and forwards the secret's encryption_suite_id;
  *  - on success the dialog populates a `fillUrl` from the returned token and
  *    emits a `created` event with the store's response;
  *  - copyUrl() writes the fill URL to the clipboard and flips `copied`;
@@ -23,12 +23,14 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#13.3
  */
 
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretRequestCreateDialog from '../../src/dialogs/SecretRequestCreateDialog.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useSecretRequestStore } from '../../src/store/modules/secretRequest.js'
+import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
+import { useUserPreferencesStore } from '../../src/store/modules/userPreferences.js'
 
 const ncStubs = {
 	NcDialog: {
@@ -125,9 +127,9 @@ describe('SecretRequestCreateDialog', () => {
 		expect(wrapper.vm.error).toBe('')
 	})
 
-	it('submit() in re-request mode calls createReRequest with the suite ID', async () => {
+	it('submit() in re-request mode asks for a re-request with the suite ID', async () => {
 		const store = useSecretRequestStore()
-		store.createReRequest = vi.fn().mockResolvedValue({
+		store.createRequest = vi.fn().mockResolvedValue({
 			id: 'req-2',
 			token: 'tok-rerequest',
 		})
@@ -149,12 +151,14 @@ describe('SecretRequestCreateDialog', () => {
 
 		await wrapper.vm.submit()
 
-		expect(store.createReRequest).toHaveBeenCalledWith(
-			'secret-1',
-			'suite-9',
-			['key'],
-			null, // no expiry → null (not empty string)
-		)
+		expect(store.createRequest).toHaveBeenCalledWith({
+			secretId: 'secret-1',
+			encryptionSuiteId: 'suite-9',
+			requestedFields: ['key'],
+			fieldSchemas: {}, // no custom field with a schema
+			isReRequest: true,
+			expiresAt: null, // no expiry → null (not empty string)
+		})
 		expect(wrapper.vm.fillUrl).toContain(
 			'/apps/keepiq/public/share/request/tok-rerequest',
 		)
@@ -388,12 +392,196 @@ describe('SecretRequestCreateDialog', () => {
 
 		expect(wrapper.vm.canSubmit).toBe(false)
 
+		// A name alone is not enough: a fresh request ticks nothing by default.
 		wrapper.vm.newName = 'Supplier API key'
+		expect(wrapper.vm.canSubmit).toBe(false)
+
+		wrapper.vm.requestedFields = ['key']
 		expect(wrapper.vm.canSubmit).toBe(true)
 
-		// The default tick can be removed, and that alone blocks submission.
+		// Unticking the last field alone blocks submission again.
 		wrapper.vm.requestedFields = []
 		expect(wrapper.vm.canSubmit).toBe(false)
+	})
+
+	describe('asking by type', () => {
+		const TYPES = [
+			{ id: 't-login', name: 'login', label: 'Login' },
+			{ id: 't-note', name: 'note', label: 'Secure Note' },
+			{ id: 't-card', name: 'card', label: 'Payment Card' },
+			{ id: 't-identity', name: 'identity', label: 'Identity' },
+			{ id: 't-totp', name: 'totp', label: 'Authenticator (TOTP)' },
+			{ id: 't-passkey', name: 'passkey', label: 'Passkey' },
+			{ id: 't-certificate', name: 'certificate', label: 'Certificate' },
+			{ id: 't-database', name: 'database', label: 'Database' },
+			{
+				id: 't-server',
+				name: 'server',
+				label: 'Server',
+				fields: [
+					{ key: 'host', label: 'Host', kind: 'text', required: true },
+					{ key: 'port', label: 'Port', kind: 'text', required: false },
+				],
+			},
+		]
+
+		const mountFresh = async () => {
+			useSecretTypeStore().types = TYPES
+			const prefs = useUserPreferencesStore()
+			prefs.loaded = true
+			prefs.defaultSecretType = 'login'
+			const wrapper = mount(SecretRequestCreateDialog, {
+				propsData: { open: true },
+				global: { stubs: ncStubs },
+			})
+			await flushPromises()
+			return wrapper
+		}
+
+		it('offers the creatable types, except the ones a request cannot carry yet', async () => {
+			const wrapper = await mountFresh()
+
+			expect(wrapper.vm.typeOptions.map((o) => o.value)).toEqual([
+				't-login',
+				't-note',
+				't-certificate',
+				't-database',
+				't-server',
+			])
+			expect(wrapper.vm.typeId).toBe('t-login')
+		})
+
+		it('lists the type fields with nothing ticked', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-server'
+			await wrapper.vm.$nextTick()
+
+			// Typed fields are requested by label: that is the member name the
+			// new-secret dialog stores them under.
+			expect(wrapper.vm.availableFields.map((f) => f.key)).toEqual([
+				'key',
+				'login',
+				'url',
+				'Host',
+				'Port',
+			])
+			expect(wrapper.vm.requestedFields).toEqual([])
+			expect(wrapper.vm.canSubmit).toBe(false)
+		})
+
+		it('labels a Secure Note value as the note', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-note'
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.availableFields[0]).toMatchObject({
+				key: 'key',
+				label: 'Note',
+			})
+		})
+
+		// @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		it('asks for a certificate with the certificate ticked and locked', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-certificate'
+			await wrapper.vm.$nextTick()
+
+			expect(
+				wrapper.vm.availableFields.map((f) => [f.key, f.label, f.locked]),
+			).toEqual([
+				['key', 'Certificate', true],
+				['url', 'URL (stored unencrypted)', false],
+				['Private key', 'Private key', false],
+				['Passphrase', 'Passphrase', false],
+			])
+			expect(wrapper.vm.requestedFields).toEqual(['key'])
+			expect(wrapper.vm.canSubmit).toBe(false)
+
+			wrapper.vm.newName = 'example.org TLS'
+			expect(wrapper.vm.canSubmit).toBe(true)
+		})
+
+		// @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		it('asks for a database by username, without a URL', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-database'
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.availableFields.map((f) => [f.key, f.label])).toEqual([
+				['key', 'Password'],
+				['login', 'Username'],
+				['Host', 'Host'],
+				['Port', 'Port'],
+				['Database', 'Database'],
+			])
+			expect(wrapper.vm.requestedFields).toEqual(['key'])
+		})
+
+		// @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		it('asks for a login with the password ticked and locked', async () => {
+			const wrapper = await mountFresh()
+
+			expect(wrapper.vm.typeId).toBe('t-login')
+			expect(
+				wrapper.vm.availableFields.map((f) => [f.key, f.label, f.locked]),
+			).toEqual([
+				['key', 'Password', true],
+				['login', 'Login', false],
+				['url', 'URL (stored unencrypted)', false],
+			])
+			expect(wrapper.vm.requestedFields).toEqual(['key'])
+		})
+
+		it('frees the locked field again on a type that does not require it', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-certificate'
+			await wrapper.vm.$nextTick()
+			wrapper.vm.typeId = 't-server'
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.requestedFields).toEqual([])
+			expect(wrapper.vm.availableFields[0].locked).toBe(false)
+		})
+
+		it('drops the previous type ticks on a type change but keeps typed names', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-server'
+			await wrapper.vm.$nextTick()
+			wrapper.vm.customFieldInput = 'client-id'
+			wrapper.vm.addCustomField()
+			wrapper.vm.requestedFields = ['Host', 'key', 'client-id']
+
+			wrapper.vm.typeId = 't-login'
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.requestedFields).toEqual(['key', 'client-id'])
+		})
+
+		it('sends the picked type with the request', async () => {
+			const store = useSecretRequestStore()
+			store.createRequest = vi
+				.fn()
+				.mockResolvedValue({ id: 'req-t', token: 'tok-t' })
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-server'
+			await wrapper.vm.$nextTick()
+			wrapper.vm.newName = 'Build server'
+			wrapper.vm.requestedFields = ['Host']
+			await wrapper.vm.submit()
+
+			expect(store.createRequest.mock.calls[0][0]).toMatchObject({
+				name: 'Build server',
+				typeId: 't-server',
+				requestedFields: ['Host'],
+			})
+		})
 	})
 
 	it('a re-request needs no name, only a field', () => {
@@ -442,6 +630,7 @@ describe('SecretRequestCreateDialog', () => {
 		expect(wrapper.vm.newFolderId).toBe('vault-1')
 
 		wrapper.vm.newName = 'Supplier API key'
+		wrapper.vm.requestedFields = ['key']
 		await wrapper.vm.submit()
 		expect(store.createRequest.mock.calls[0][0].folderId).toBe('vault-1')
 
@@ -571,5 +760,73 @@ describe('SecretRequestCreateDialog', () => {
 		await wrapper.vm.submit()
 
 		expect(store.createRequest.mock.calls[0][0].expiresAt).toBeNull()
+	})
+})
+
+describe('SecretRequestCreateDialog: submit step by step', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	/**
+	 * Mount the dialog.
+	 *
+	 * @param {object} props Its props.
+	 * @return {object} The wrapper.
+	 */
+	function dialog(props) {
+		return mount(SecretRequestCreateDialog, {
+			propsData: { open: true, ...props },
+			global: { stubs: ncStubs },
+		})
+	}
+
+	it('sends a plain request for an existing secret with its suite and no expiry', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn().mockResolvedValue({ id: 'r' })
+		const wrapper = dialog({
+			secret: { id: 'secret-1', encryption_suite_id: 'suite-1' },
+		})
+		wrapper.vm.requestedFields = ['key']
+		wrapper.vm.expiresAt = ''
+		await wrapper.vm.submit()
+		expect(store.createRequest.mock.calls[0][0]).toEqual({
+			requestedFields: ['key'],
+			fieldSchemas: {},
+			expiresAt: null,
+			isReRequest: false,
+			secretId: 'secret-1',
+			encryptionSuiteId: 'suite-1',
+		})
+		expect(wrapper.vm.fillUrl).toBe('')
+		expect(wrapper.emitted('created')).toEqual([[{ id: 'r' }]])
+	})
+
+	it('files a fresh request in no folder when none is picked, trimming its name', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn().mockResolvedValue(null)
+		const wrapper = dialog({})
+		wrapper.vm.newName = '  Key  '
+		wrapper.vm.newFolderId = ''
+		wrapper.vm.requestedFields = ['key']
+		await wrapper.vm.submit()
+		expect(store.createRequest.mock.calls[0][0]).toMatchObject({
+			name: 'Key',
+			folderId: null,
+		})
+		expect(wrapper.emitted('created')).toEqual([[null]])
+	})
+
+	it("falls back to the error's own message, then to the dialog's text", async () => {
+		const store = useSecretRequestStore()
+		const wrapper = dialog({ secret: { id: 'secret-1' } })
+		wrapper.vm.requestedFields = ['key']
+		store.createRequest = vi.fn().mockRejectedValue(new Error('down'))
+		await wrapper.vm.submit()
+		expect(wrapper.vm.error).toBe('down')
+		store.createRequest = vi.fn().mockRejectedValue({})
+		await wrapper.vm.submit()
+		expect(wrapper.vm.error).toBe('Failed to create request')
+		expect(wrapper.vm.submitting).toBe(false)
 	})
 })

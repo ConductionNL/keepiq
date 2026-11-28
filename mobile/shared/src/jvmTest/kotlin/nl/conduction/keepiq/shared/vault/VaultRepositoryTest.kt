@@ -14,12 +14,15 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.MissingCapabilityException
+import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.crypto.RsaFields
 import nl.conduction.keepiq.shared.crypto.RsaPrivateKey
@@ -55,42 +58,146 @@ class VaultRepositoryTest {
     private val publicKey = RsaPublicKey.fromPem(Vectors.envelope.str("publicKeyPem"))
     private val privateKey = RsaPrivateKey.fromPem(privatePem)
 
-    private fun enc(text: String) = RsaFields.encrypt(text, publicKey)
+    private val sealed = HashMap<String, String>()
+
+    /** One ciphertext per value, so the store and the server hold the same one, as after a sync. */
+    private fun enc(text: String) = sealed.getOrPut(text) { RsaFields.encrypt(text, publicKey) }
     private fun dec(text: String) = RsaFields.decrypt(text, privateKey)
 
     private val requests = mutableListOf<Pair<String, String>>()
+
+    /** Each write's body; for a share-save, its `patch`, which is the body a plain PUT sent. */
     private val bodies = mutableListOf<JsonObject>()
+
+    /** Each share-save's whole body. */
+    private val shareSaves = mutableListOf<JsonObject>()
+
+    /** Rows write-context grades as a copy shared with the user to view only. */
+    private var viewOnly = setOf<String>()
+
+    /** Rows whose write-context fails with a 500. */
+    private var contextFails = setOf<String>()
+
+    /** Rows shared with one partner: their share-save answers `incomplete` with that share. */
+    private var partnerShared = setOf<String>()
+
+    /** Rows write-context grades as a copy the user may write: its share-save reached only the owner's partner shares. */
+    private var writerCopies = setOf<String>()
+
+    /** Rows the manifest lists beside the login, use-only and blocked ones. */
+    private var moreRows = listOf<() -> String>()
+
+    /** The manifest answers 500, or with [manifestUnreachable] no connection at all. */
+    private var manifestFails = false
+    private var manifestUnreachable = false
+
+    /** The manifest's suite and `unlockBlocked`, which lock the vault when they differ from the one it was unlocked with. */
+    private var manifestSuite = """{"id":"suite-9","status":"active","unlockKeyEpoch":2}"""
+    private var manifestUnlockBlocked = "null"
+
+    /** How the manifest lists s1, or null to leave it out. */
+    private var listedS1: () -> String? = { loginRow }
+
+    /** What GET /secrets/s1 answers instead of [loginRow], when set. */
+    private var freshS1: String? = null
     private var offline = false
     private var refuseWrites = false
     private var cachingOff = false
+    private var capabilities = """["match","totp-field","passkeys-field"]"""
+
+    /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
+    private var staleWrites = 0
+    private var afterStale: () -> Unit = {}
 
     private val loginRow = """{"id":"s1","name":"Huisbank","url":"https://mijn.huisbank.example","typeId":"1","folderId":"f2",
-        "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42}""")}",
+        "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42,"@schema":{"extra":{"type":"integer"}}}""")}",
         "useOnly":false,"readOnly":false,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
     private val useOnlyRow = """{"id":"s2","name":"Leveranciersportaal","url":"https://portal.supplier.example","typeId":"1","folderId":null,
         "key":"${enc("niet-tonen")}","login":"${enc("bob")}","additionalFields":"${enc("""{"geheim":"x"}""")}",
         "useOnly":true,"readOnly":true,"blocked":false,"updatedAt":"2026-10-01T09:00:00+00:00"}"""
+    private fun credential(id: String, userName: String) = PasskeyCredential(
+        credentialId = id, rpId = "mail.example", rpName = "Mail", userName = userName, userDisplayName = "",
+        userHandle = "dTE", privateKey = "pk-$id", algorithm = -7L, counter = 0L, transports = emptyList(),
+        createdAt = "2026-03-12T10:00:00.000Z",
+    )
+    private fun passkeysOf(vararg ids: String) = "[" + ids.joinToString(",") { credential(it, "alice-$it").toJson() } + "]"
+    private val seed = "JBSWY3DPEHPK3PXP"
+
+    /** A login with its own seed and two passkeys; what GET /secrets/s4 answers. */
+    private var mailRow = mailRowWith(passkeysOf("a", "b"))
+    private fun mailRowWith(passkeys: String) = """{"id":"s4","name":"Mail","url":"https://mail.example","typeId":"1","folderId":null,
+        "key":"${enc("geheim-4")}","login":"${enc("alice")}","totp":"${enc(seed)}","passkeys":"${enc(passkeys)}",
+        "useOnly":false,"readOnly":false,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
+    private val useOnlyMailRow = """{"id":"s5","name":"Gedeelde mail","url":"https://mail.example","typeId":"1","folderId":null,
+        "login":"${enc("bob")}","totp":"${enc(seed)}","passkeys":"${enc(passkeysOf("c"))}",
+        "useOnly":true,"readOnly":true,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
     private val blockedRow = """{"id":"s3","name":"Ánders","url":null,"typeId":"2","folderId":null,"blocked":true,"blockedReason":"Old suite","updatedAt":"2026-10-01T08:00:00+00:00"}"""
-    private val types = """[{"id":"1","name":"login","fields":[{"key":"klantnummer","label":"Klantnummer","kind":"text","required":true}]},{"id":"2","name":"note","fields":[]}]"""
+    private val types = """[{"id":"1","name":"login","fields":[{"key":"klantnummer","label":"Klantnummer","kind":"text","required":true}]},{"id":"2","name":"note","fields":[]},{"id":"3","name":"card","fields":[]}]"""
+
+    /** A card whose key holds a member the form has no field for. */
+    private val cardRow = """{"id":"s6","name":"Visa","url":null,"typeId":"3","folderId":null,
+        "key":"${enc("""{"number":"4111111111111111","expiry":"12/30","cvv":"123","pin":"","cardholder":"A","issuerNote":"x"}""")}",
+        "additionalFields":"${enc("""{"notes":"oud"}""")}","useOnly":false,"readOnly":false,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
     private val folders = """[{"id":"f1","name":"Werk","parentId":null},{"id":"f2","name":"Bank","parentId":"f1"},{"id":"f3","name":"Algemeen","parentId":null}]"""
 
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
+        // The capability check before a write of `totp` or `passkeys` (KeepiqApi.requireLoginFields).
+        if (path == "/api/v1/extension/pair") {
+            return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         requests += request.method.value to path
-        (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
+        (request.body as? TextContent)?.let {
+            val sent = Json.parseToJsonElement(it.text).jsonObject
+            if (path.endsWith("/share-save")) {
+                shareSaves += sent
+                sent["patch"]?.let { patch -> bodies += patch.jsonObject }
+            } else {
+                bodies += sent
+            }
+        }
         if (offline) throw IOException("no network")
+        if (path == "/api/v1/offline/manifest") {
+            if (manifestUnreachable) throw IOException("no network")
+            if (manifestFails) return@MockEngine respond("""{"message":"boom"}""", HttpStatusCode.InternalServerError, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        if (request.method == HttpMethod.Put && staleWrites > 0) {
+            staleWrites--
+            afterStale()
+            return@MockEngine respond("""{"error":"stale","message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         val write = request.method != HttpMethod.Get
         val body = when {
             write && refuseWrites -> """{"ocs":{"meta":{"status":"failure","statuscode":403,"message":""},"data":{"error":"read_only","message":"You can only read this item."}}}"""
+            // The user's own row, with no copies; or a copy of someone else's source, shared to view only.
+            path.endsWith("/write-context") -> {
+                val id = path.removePrefix("/api/v1/secrets/").removeSuffix("/write-context")
+                if (id in contextFails) return@MockEngine respond("""{"message":"x"}""", HttpStatusCode.InternalServerError, headersOf(HttpHeaders.ContentType, "application/json"))
+                val grade = if (id in viewOnly) {
+                    """"source-x","effectiveGrade":"read""""
+                } else if (id in writerCopies) {
+                    """"source-x","effectiveGrade":"write""""
+                } else """"$id","effectiveGrade":"owner""""
+                """{"sourceSecretId":$grade,"ownerCertificate":null,"sourceUpdatedAt":"2026-10-03T09:00:00+00:00"}"""
+            }
             path == "/api/v1/offline/manifest" && cachingOff ->
                 return@MockEngine respond("""{"message":"Offline caching is off"}""", HttpStatusCode(428, "Precondition Required"))
             path == "/api/v1/suites" -> """[{"id":"suite-9","status":"active","unlockKeyEpoch":2}]"""
             path == "/api/v1/secrets" && request.method == HttpMethod.Get -> """{"items":[$loginRow],"total":1}"""
             path == "/api/v1/folders" && request.method == HttpMethod.Get -> folders
             path == "/api/v1/secret-types" -> types
-            path == "/api/v1/offline/manifest" -> """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},"secrets":[$loginRow,$useOnlyRow,$blockedRow],"folders":$folders,"types":$types,"unlockBlocked":null}"""
-            path == "/api/v1/secrets/s1" && request.method == HttpMethod.Get -> loginRow
+            path.endsWith("/share-save") && path.removePrefix("/api/v1/secrets/").removeSuffix("/share-save") in partnerShared ->
+                return@MockEngine respond(
+                    """{"error":"incomplete","message":"m","copies":{"required":[],"skipRefused":[]},"federated":{"required":[{"shareId":"fs1","recipientCloudId":"bob@partner.example"}]}}""",
+                    HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            path.endsWith("/share-save") && path.removePrefix("/api/v1/secrets/").removeSuffix("/share-save") in writerCopies -> """{"federated":{"ownerOnly":true}}"""
+            path == "/api/v1/offline/manifest" -> """{"suite":$manifestSuite,"secrets":[${(listOfNotNull(listedS1(), useOnlyRow, blockedRow) + moreRows.map { it() }).joinToString(",")}],"folders":$folders,"types":$types,"unlockBlocked":$manifestUnlockBlocked}"""
+            path == "/api/v1/secrets/s1" && request.method == HttpMethod.Get -> freshS1 ?: loginRow
             path == "/api/v1/secrets/s2" && request.method == HttpMethod.Get -> useOnlyRow
+            path == "/api/v1/secrets/s4" && request.method == HttpMethod.Get -> mailRow
+            path == "/api/v1/secrets/s5" && request.method == HttpMethod.Get -> useOnlyMailRow
+            path == "/api/v1/secrets/s6" && request.method == HttpMethod.Get -> cardRow
             path == "/api/v1/secrets" && request.method == HttpMethod.Post -> """{"id":"new-1"}"""
             path.startsWith("/api/v1/folders/") && path.endsWith("/children") -> """{"directSecretCount":2,"subfolders":[]}"""
             else -> "{}"
@@ -202,7 +309,7 @@ class VaultRepositoryTest {
         val item = assertIs<OpenResult.Opened>(repo.open("s1")).item
         val draft = ItemCodec.draft(item, item.type)
         assertEquals("123", draft.typed["klantnummer"])
-        assertEquals(mapOf("extra" to JsonPrimitive(42)), draft.preserved)
+        assertEquals(setOf("extra", ItemCodec.SCHEMA_FIELD), draft.preserved.keys)
         assertIs<WriteResult.Saved>(repo.update(item, draft.copy(secret = "nieuw-wachtwoord", login = "")))
         val body = bodies.single()
         assertEquals(setOf("key", "login"), body.keys)
@@ -219,6 +326,8 @@ class VaultRepositoryTest {
         assertEquals(setOf("additionalFields"), body.keys)
         val fields = Json.parseToJsonElement(dec(body["additionalFields"]!!.jsonPrimitive.content)).jsonObject
         assertEquals(JsonPrimitive(42), fields["extra"])
+        // The schemas stay the object the web app reads.
+        assertEquals("integer", fields[ItemCodec.SCHEMA_FIELD]!!.jsonObject["extra"]!!.jsonObject["type"]!!.jsonPrimitive.content)
         assertEquals("123", fields["Klantnummer"]!!.jsonPrimitive.content)
         assertEquals("nieuw", fields["notes"]!!.jsonPrimitive.content)
     }
@@ -232,8 +341,148 @@ class VaultRepositoryTest {
         assertEquals(WriteProblemKind.SERVER_MESSAGE, result.problem.kind)
         assertEquals("You can only read this item.", result.problem.serverMessage)
         // No sync after a refused write: the stored value stays.
-        assertEquals("PUT" to "/api/v1/secrets/s1", requests.last())
+        assertEquals("PUT" to "/api/v1/secrets/s1/share-save", requests.last())
         assertEquals("geheim-1", dec(store.secret("s1")!!.key!!))
+    }
+
+    @Test
+    fun aValueChangeGoesThroughShareSaveOnTheVersionTheFormOpened() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.openForEdit("s1")).item
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(secret = "nieuw")))
+        assertTrue(("GET" to "/api/v1/secrets/s1/write-context") in requests)
+        assertTrue(requests.none { it == "PUT" to "/api/v1/secrets/s1" }, "no plain PUT of a value: $requests")
+        val sent = shareSaves.single()
+        assertEquals("2026-10-03T09:00:00+00:00", sent["baseUpdatedAt"]!!.jsonPrimitive.content)
+        // Its own source: no source version, and the copy and partner lists the server fills in when there are any.
+        assertFalse("sourceBaseUpdatedAt" in sent)
+        assertEquals(setOf("baseUpdatedAt", "patch", "copies", "skipped", "federated", "suspend"), sent.keys)
+        assertEquals("nieuw", dec(bodies.single()["key"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun aChangeOfNameOrFolderOnlyStaysAPlainPut() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.openForEdit("s1")).item
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(name = "Huisbank 2")))
+        assertTrue(("PUT" to "/api/v1/secrets/s1") in requests)
+        assertTrue(shareSaves.isEmpty())
+    }
+
+    @Test
+    fun aCopySharedToViewOnlyOffersNoEditAndSavesNoValue() = runTest {
+        repo.refresh(SyncTrigger.START)
+        viewOnly = setOf("s1")
+        assertEquals(true, repo.isViewOnly("s1"))
+        assertEquals(false, repo.isViewOnly("s4"))
+        assertEquals(WriteProblemKind.VIEW_ONLY, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+        // A form opened before the grade was lowered is refused at save, before anything is written.
+        val item = assertIs<OpenResult.Opened>(repo.open("s1")).item
+        val refused = assertIs<WriteResult.Refused>(repo.update(item, ItemCodec.draft(item, item.type).copy(secret = "x")))
+        assertEquals(WriteProblemKind.VIEW_ONLY, refused.problem.kind)
+        // A name too: only a move goes without write-context.
+        val renamed = assertIs<WriteResult.Refused>(repo.update(item, ItemCodec.draft(item, item.type).copy(name = "x")))
+        assertEquals(WriteProblemKind.VIEW_ONLY, renamed.problem.kind)
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
+    }
+
+    @Test
+    fun aGradeWriteContextCannotTellIsNoAnswer() = runTest {
+        repo.refresh(SyncTrigger.START)
+        contextFails = setOf("s1")
+        assertNull(repo.isViewOnly("s1"))
+    }
+
+    @Test
+    fun aRowWhoseValueTheDeviceDoesNotHoldIsNotOpenedForEdit() = runTest {
+        repo.refresh(SyncTrigger.START)
+        // Another item's ciphertext in the row's totp, which a sync doesn't bring either.
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc("otpauth://totp/other?secret=" + seed)}\",\"useOnly\"")
+        val manifests = requests.count { it.second == "/api/v1/offline/manifest" }
+        assertEquals(WriteProblemKind.CONFLICT, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+        assertEquals(manifests + 1, requests.count { it.second == "/api/v1/offline/manifest" }, "synced once before refusing")
+        assertTrue(shareSaves.isEmpty())
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aSyncThatFailsInsideTheCacheMatchIsNotCalledAConflict() = runTest {
+        repo.refresh(SyncTrigger.START)
+        // Written elsewhere since the last sync, which now fails.
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        manifestFails = true
+        val failed = assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind
+        assertTrue(failed != WriteProblemKind.CONFLICT, "$failed")
+        manifestFails = false
+        manifestUnreachable = true
+        assertEquals(WriteProblemKind.OFFLINE, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+    }
+
+    @Test
+    fun aSyncThatLocksInsideTheCacheMatchNamesTheLock() = runTest {
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        val locking = listOf(
+            LockReason.MASTER_PASSWORD_CHANGED to { manifestSuite = """{"id":"suite-9","status":"active","unlockKeyEpoch":3}""" },
+            LockReason.SUITE_CHANGED to { manifestSuite = """{"id":"suite-10","status":"active","unlockKeyEpoch":2}""" },
+            LockReason.UNLOCK_BLOCKED to { manifestUnlockBlocked = "\"two_factor\"" },
+        )
+        for ((reason, lock) in locking) {
+            manifestSuite = """{"id":"suite-9","status":"active","unlockKeyEpoch":2}"""
+            manifestUnlockBlocked = "null"
+            repo.refresh(SyncTrigger.START)
+            lock()
+            val problem = assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem
+            assertEquals(WriteProblem(WriteProblemKind.LOCKED, lockReason = reason), problem)
+        }
+    }
+
+    @Test
+    fun aRowBlockedInTheSyncInsideTheCacheMatchIsRefusedWithItsReason() = runTest {
+        repo.refresh(SyncTrigger.START)
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        listedS1 = { """{"id":"s1","name":"Huisbank","url":null,"typeId":"1","folderId":"f2","blocked":true,"blockedReason":"Old suite","updatedAt":"2026-10-03T09:00:00+00:00"}""" }
+        assertEquals(WriteProblem(WriteProblemKind.SERVER_MESSAGE, "Old suite"), assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem)
+        listedS1 = { """{"id":"s1","name":"Huisbank","url":null,"typeId":"1","folderId":"f2","blocked":true,"updatedAt":"2026-10-03T09:00:00+00:00"}""" }
+        assertEquals(WriteProblemKind.REFUSED, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+    }
+
+    @Test
+    fun aRowMissingFromTheSyncInsideTheCacheMatchIsNotFoundNotAConflict() = runTest {
+        repo.refresh(SyncTrigger.START)
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        listedS1 = { null }
+        assertEquals(WriteProblemKind.NOT_FOUND, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aRowWrittenElsewhereSinceTheLastSyncOpensAfterASync() = runTest {
+        repo.refresh(SyncTrigger.START)
+        moreRows = listOf({ mailRow })
+        mailRow = mailRowWith(passkeysOf("a", "c"))
+        assertIs<OpenResult.Opened>(repo.openForEdit("s4"))
+    }
+
+    @Test
+    fun aCardKeyTheFormDoesNotShowInFullIsNotPassedOnToAPartner() = runTest {
+        moreRows = listOf({ cardRow })
+        repo.refresh(SyncTrigger.START)
+        partnerShared = setOf("s6")
+        val item = assertIs<OpenResult.Opened>(repo.openForEdit("s6")).item
+        val refused = assertIs<WriteResult.Refused>(repo.update(item, ItemCodec.draft(item, item.type).copy(notes = "nieuw")))
+        assertEquals(WriteProblemKind.UNVERIFIED, refused.problem.kind)
+        assertTrue(shareSaves.all { (it["federated"] as? JsonArray).isNullOrEmpty() }, "nothing sealed to the partner: $shareSaves")
+    }
+
+    @Test
+    fun theFormVouchesOnlyForWhatItShowsInFull() = runTest {
+        moreRows = listOf({ cardRow })
+        repo.refresh(SyncTrigger.START)
+        val card = assertIs<OpenResult.Opened>(repo.open("s6")).item
+        assertEquals(setOf("login", "additionalFields"), ItemCodec.shownInFull(card))
+        val login = assertIs<OpenResult.Opened>(repo.open("s1")).item
+        // Its additional fields hold a number, which the form keeps without showing.
+        assertEquals(setOf("key", "login"), ItemCodec.shownInFull(login))
     }
 
     @Test
@@ -342,5 +591,218 @@ class VaultRepositoryTest {
             """{"number":"4111111111111111","expiry":"","cvv":"123","pin":"","cardholder":""}""",
             ItemCodec.parts(draft, type).key,
         )
+    }
+
+    @Test
+    fun opensALoginsCodeAndPasskeys() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertNotNull(item.totp)
+        assertTrue(item.hasSavedKey)
+        assertEquals("geheim-4", item.secret)
+        assertEquals(listOf("a", "b"), item.passkeys.map { it.credentialId })
+        assertEquals(listOf("alice-a", "alice-b"), item.passkeys.map { it.userName })
+        assertEquals("2026-03-12T10:00:00.000Z", item.passkeys.first().createdAt)
+        assertFalse(item.passkeysError)
+    }
+
+    @Test
+    fun aUseOnlyCopyOpensItsCodeButNoPasskeys() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s5")).item
+        assertNotNull(item.totp)
+        assertTrue(item.passkeys.isEmpty())
+        assertEquals("", item.secret)
+    }
+
+    @Test
+    fun anEditThatKeepsTheKeySendsNeitherField() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        val draft = ItemCodec.draft(item, item.type)
+        assertTrue(draft.hasSavedKey)
+        assertEquals(KeyEdit.KEEP, draft.keyEdit)
+        assertIs<WriteResult.Saved>(repo.update(item, draft.copy(name = "Mail thuis")))
+        assertEquals(setOf("name"), bodies.single().keys)
+    }
+
+    @Test
+    fun replacingTheKeySendsItEncrypted() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s1")).item
+        val draft = ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REPLACE, newKey = " $seed ")
+        assertIs<WriteResult.Saved>(repo.update(item, draft))
+        val body = bodies.single()
+        assertEquals(setOf("totp"), body.keys)
+        assertEquals(seed, dec(body["totp"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun removingTheKeySendsAnEmptyString() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REMOVE)))
+        assertEquals(JsonObject(mapOf("totp" to JsonPrimitive(""))), bodies.single())
+    }
+
+    @Test
+    fun aNewLoginSendsItsKeyOnlyWhenSet() = runTest {
+        val type = repo.refresh(SyncTrigger.START).typeNamed("login")
+        val draft = ItemCodec.draft(null, type).copy(name = "Nieuw", typed = mapOf("klantnummer" to "1"))
+        assertIs<WriteResult.Saved>(repo.create(draft, type))
+        assertFalse("totp" in bodies.last())
+        assertFalse("passkeys" in bodies.last())
+        assertIs<WriteResult.Saved>(repo.create(draft.copy(keyEdit = KeyEdit.REPLACE, newKey = seed), type))
+        assertEquals(seed, dec(bodies.last()["totp"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun aKeyTheGeneratorCannotReadIsRefused() {
+        val draft = ItemCodec.draft(null, null).copy(name = "x")
+        assertEquals(DraftProblem.NOT_AN_AUTHENTICATOR_SECRET, ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REPLACE, newKey = "not a key!"), null)["totp"])
+        assertNull(ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REPLACE, newKey = seed), null)["totp"])
+        assertNull(ItemCodec.validate(draft.copy(keyEdit = KeyEdit.REMOVE), null)["totp"])
+        assertNull(ItemCodec.validate(draft, null)["totp"])
+    }
+
+    @Test
+    fun deletingAPasskeyKeepsTheOthersFromTheFreshRow() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        mailRow = mailRowWith(passkeysOf("a"))
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        // Another client added "b" since the phone opened the login.
+        mailRow = mailRowWith(passkeysOf("a", "b"))
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals("PUT" to "/api/v1/secrets/s4/share-save", requests.first { it.first == "PUT" })
+        val body = bodies.single()
+        assertEquals(setOf("passkeys"), body.keys)
+        assertEquals("2026-10-03T09:00:00+00:00", shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf("b"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+    }
+
+    @Test
+    fun aDeleteRefusedAsStaleIsMadeOnceMoreOnTheNewRow() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        staleWrites = 1
+        // Another client added "c" between the phone's read and its write.
+        afterStale = { mailRow = mailRowWith(passkeysOf("a", "b", "c")).replace("2026-10-03T09:00:00+00:00", "2026-10-03T10:00:00+00:00") }
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals(listOf("PUT", "PUT"), requests.filter { it.first == "PUT" }.map { it.first })
+        val body = bodies.last()
+        assertEquals("2026-10-03T10:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf("b", "c"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
+
+        staleWrites = 2
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "b", "mail.example"))
+        assertEquals(409, refused.problem.status)
+    }
+
+    @Test
+    fun aPasskeyDeleteOnARowTheDeviceDoesNotHoldIsRefusedAndOneThatReachedOnlyTheOwnerSaysSo() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        // The server swaps in a passkeys ciphertext the store doesn't hold, also after a sync.
+        val held = mailRow
+        moreRows = listOf({ held })
+        mailRow = mailRowWith(passkeysOf("a", "z"))
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals(WriteProblemKind.CONFLICT, refused.problem.kind)
+        assertTrue(requests.none { it.first == "PUT" })
+
+        moreRows = listOf({ mailRow })
+        writerCopies = setOf("s4")
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals(true, repo.takeShareSaveNote("s4")?.ownerOnly)
+    }
+
+    @Test
+    fun deletingTheLastPasskeySendsAnEmptyString() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        mailRow = mailRowWith(passkeysOf("a"))
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
+        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""))), bodies.single())
+        assertEquals("2026-10-03T09:00:00+00:00", shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun aServerPairedBeforeTheFieldsTakesNoCodeOrPasskeyWrite() = runTest {
+        moreRows = listOf({ mailRow })
+        capabilities = """["match"]"""
+        val type = repo.refresh(SyncTrigger.START).typeNamed("login")
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        val results = listOf(
+            repo.deletePasskey(item, "a", "mail.example"),
+            repo.update(item, ItemCodec.draft(item, item.type).copy(keyEdit = KeyEdit.REMOVE)),
+            repo.create(ItemCodec.draft(null, type).copy(name = "Nieuw", typed = mapOf("klantnummer" to "1"), keyEdit = KeyEdit.REPLACE, newKey = seed), type),
+        )
+        for (r in results) {
+            val problem = assertIs<WriteResult.Refused>(r).problem
+            assertEquals(WriteProblemKind.SERVER_MESSAGE, problem.kind)
+            assertEquals(MissingCapabilityException.MESSAGE, problem.serverMessage)
+        }
+        assertTrue(requests.none { it.first == "PUT" || it.first == "POST" }, "$requests")
+        // A change that writes neither field still goes through.
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(name = "Mail 2")))
+    }
+
+    @Test
+    fun theEditFormNeverHoldsTheSavedKey() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        val shown = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertEquals(seed, shown.totpSeed)
+        val edited = assertIs<OpenResult.Opened>(repo.openForEdit("s4")).item
+        assertEquals("", edited.totpSeed)
+        assertTrue(edited.hasSavedKey)
+        assertNull(edited.totp)
+        // Saving the form without touching the key sends no `totp`.
+        assertIs<WriteResult.Saved>(repo.update(edited, ItemCodec.draft(edited, edited.type).copy(name = "Mail 2")))
+        assertFalse("totp" in bodies.last())
+    }
+
+    @Test
+    fun aUseOnlyOrReadOnlyCopyCannotDeleteAPasskey() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        val useOnly = assertIs<OpenResult.Opened>(repo.open("s5")).item
+        assertIs<WriteResult.Refused>(repo.deletePasskey(useOnly, "c", "mail.example"))
+        // A read-only copy the user may still use: only the readOnly guard refuses it.
+        mailRow = mailRowWith(passkeysOf("a", "b")).replace("\"readOnly\":false", "\"readOnly\":true")
+        val readOnly = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertTrue(readOnly.row.readOnly && !readOnly.row.useOnly)
+        assertIs<WriteResult.Refused>(repo.deletePasskey(readOnly, "a", "mail.example"))
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aDeleteNeverRewritesAFreshValueThatIsNotAnArray() = runTest {
+        moreRows = listOf({ mailRow })
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        // Another client wrote one object instead of an array since the phone opened the login.
+        mailRow = mailRowWith(credential("a", "alice-a").toJson())
+        val refused = assertIs<WriteResult.Refused>(repo.deletePasskey(item, "a", "mail.example"))
+        // The server answered: the phone is not offline.
+        assertEquals(WriteProblemKind.FAILED, refused.problem.kind)
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aFieldThatCannotBeDecryptedKeepsTheRestOfTheItemOpen() = runTest {
+        repo.refresh(SyncTrigger.START)
+        mailRow = """{"id":"s4","name":"Mail","url":"https://mail.example","typeId":"1","key":"${enc("geheim-4")}","login":"${enc("alice")}",
+            "totp":"bm90IGNpcGhlcnRleHQ=","passkeys":"bm90IGNpcGhlcnRleHQ=","useOnly":false,"readOnly":false,"blocked":false}"""
+        val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
+        assertEquals("geheim-4", item.secret)
+        assertTrue(item.hasSavedKey)
+        assertNull(item.totp)
+        assertTrue(item.passkeys.isEmpty())
+        assertTrue(item.passkeysError)
     }
 }

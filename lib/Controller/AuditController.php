@@ -26,10 +26,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\AuditService;
-use OCA\Keepiq\Service\RecentlyUsedService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecentlyUsedServiceInterface;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -49,21 +49,21 @@ class AuditController extends Controller {
 	 * Constructor for AuditController.
 	 *
 	 * @param IRequest $request The request
-	 * @param AuditService $auditService The audit service
+	 * @param AuditServiceInterface $auditService The audit service
 	 * @param SecretMapper $secretMapper The secret mapper (for ownership checks)
 	 * @param IUserSession $userSession The user session
-	 * @param RecentlyUsedService $recentlyUsed The Recently used widget source
+	 * @param RecentlyUsedServiceInterface $recentlyUsed The Recently used widget source
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private AuditService $auditService,
+		private AuditServiceInterface $auditService,
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
-		private RecentlyUsedService $recentlyUsed,
+		private RecentlyUsedServiceInterface $recentlyUsed,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

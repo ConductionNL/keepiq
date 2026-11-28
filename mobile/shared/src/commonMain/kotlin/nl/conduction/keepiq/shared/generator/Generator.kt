@@ -35,7 +35,8 @@ data class GeneratorPolicy(
             val floorRaw = raw["generator_min_length"]
             val floor = if (floorRaw == null || floorRaw is kotlinx.serialization.json.JsonNull) 12 else parseIntLikeJs((floorRaw as? JsonPrimitive)?.contentOrNull)
             return GeneratorPolicy(
-                minLength = maxOf(Generator.MIN_LENGTH, floor ?: 12),
+                // The server stores any floor of 8 or more; above 128 nothing could be generated.
+                minLength = minOf(Generator.MAX_LENGTH, maxOf(Generator.MIN_LENGTH, floor ?: 12)),
                 requireUpper = raw.isTrue("generator_require_upper"),
                 requireLower = raw.isTrue("generator_require_lower"),
                 requireDigit = raw.isTrue("generator_require_digit"),
@@ -115,6 +116,9 @@ object Generator {
     const val SPECIAL = "!@#\$%^&*()-_=+[]{}|;:,.<>?/"
     private const val AMBIGUOUS = "IOl01"
 
+    /** The list without drop-down, felt-tip, t-shirt and yo-yo: with the `-` separator they let two word sequences give the same passphrase. */
+    private val passphraseWords: List<String> by lazy { EffWordlist.words.filter { '-' !in it } }
+
     /** randomInt: rejection sampling over 32-bit values, so no value is favoured. */
     val secureRandomInt: (Int, Int) -> Int = { min, max ->
         val range = max.toLong() - min + 1
@@ -157,7 +161,7 @@ object Generator {
                 separator = SPECIAL[rand(0, SPECIAL.length - 1)].toString()
             }
         }
-        val list = EffWordlist.words
+        val list = passphraseWords
         fun draw(): String {
             val word = list[rand(0, list.size - 1)]
             return if (capitalise) word[0].uppercase() + word.substring(1) else word
@@ -205,21 +209,15 @@ object Generator {
         return sb.toString()
     }
 
-    private fun forceRequiredClasses(result: String, policy: GeneratorPolicy, charset: String, rand: (Int, Int) -> Int): String {
-        val chars = result.toCharArray()
-        val used = HashSet<Int>()
-        for ((_, classSet) in requiredClasses(policy)) {
-            if (intersects(result, classSet)) continue
-            val allowed = classSet.filter { charset.contains(it) }
-            if (allowed.isEmpty()) continue
-            var position: Int
-            do {
-                position = rand(0, chars.size - 1)
-            } while (position in used)
-            used += position
-            chars[position] = allowed[rand(0, allowed.length - 1)]
+    /** Fisher–Yates, so a character forced in for a minimum may land on any position. */
+    private fun shuffle(chars: CharArray, rand: (Int, Int) -> Int): CharArray {
+        for (i in chars.size - 1 downTo 1) {
+            val j = rand(0, i)
+            val swap = chars[i]
+            chars[i] = chars[j]
+            chars[j] = swap
         }
-        return chars.concatToString()
+        return chars
     }
 
     private fun generateFromCharset(options: PasswordOptions, policy: GeneratorPolicy?, rand: (Int, Int) -> Int): String {
@@ -228,8 +226,8 @@ object Generator {
         var includeLower = options.includeLowercase
         var includeDigits = options.includeDigits
         var includeSpecial = options.includeSpecialCharacters
-        var minDigits = maxOf(0, options.minDigits)
-        var minSpecial = maxOf(0, options.minSpecial)
+        val minDigits = maxOf(0, options.minDigits)
+        val minSpecial = maxOf(0, options.minSpecial)
         val excluded = options.excludedCharacters.toCharArray().toMutableSet()
         if (options.avoidAmbiguous) excluded.addAll(AMBIGUOUS.toList())
 
@@ -243,11 +241,6 @@ object Generator {
         if (!includeUpper && !includeLower && !includeDigits && !includeSpecial) {
             throw GeneratorException(GeneratorErrorCode.NO_KIND_CHOSEN, "Choose at least one kind of character")
         }
-        minDigits = if (includeDigits) minDigits else 0
-        minSpecial = if (includeSpecial) minSpecial else 0
-        length = maxOf(length, minDigits + minSpecial)
-        assertLengthInRange(length)
-
         var charset = (if (includeUpper) UPPERCASE else "") + (if (includeLower) LOWERCASE else "") +
             (if (includeDigits) DIGITS else "") + (if (includeSpecial) SPECIAL else "")
         charset = dedupe(charset.filter { c -> c !in excluded }.toList())
@@ -256,39 +249,36 @@ object Generator {
                 if (!intersects(charset, classSet)) charset += classSet
             }
         }
+
+        // Every chosen kind appears at least once, on top of the minimums; a required class is chosen and in the set.
+        val minimums = listOf(
+            UPPERCASE to (if (includeUpper) 1 else 0),
+            LOWERCASE to (if (includeLower) 1 else 0),
+            DIGITS to (if (includeDigits) maxOf(minDigits, 1) else 0),
+            SPECIAL to (if (includeSpecial) maxOf(minSpecial, 1) else 0),
+        ).filter { (classSet, count) -> count > 0 && intersects(charset, classSet) }
+        // The length grows to hold every minimum, as Bitwarden's atLeastSum does.
+        length = maxOf(length, minimums.sumOf { it.second })
+        assertLengthInRange(length)
         assertCharsetViable(charset)
 
-        var result = buildString(charset, length, rand)
-        result = ensureMinimums(
-            result,
-            charset,
-            listOf(
-                UPPERCASE to (if (includeUpper) 1 else 0),
-                LOWERCASE to (if (includeLower) 1 else 0),
-                DIGITS to (if (includeDigits) maxOf(minDigits, 1) else 0),
-                SPECIAL to (if (includeSpecial) maxOf(minSpecial, 1) else 0),
-            ),
-            rand,
-        )
-        return if (policy != null) forceRequiredClasses(result, policy, charset, rand) else result
+        val value = ensureMinimums(buildString(charset, length, rand), charset, minimums, rand)
+        return shuffle(value.toCharArray(), rand).concatToString()
     }
 
+    /** Tops each class up to its count at random free positions; the length must hold the sum of the counts. */
     private fun ensureMinimums(value: String, charset: String, minimums: List<Pair<String, Int>>, rand: (Int, Int) -> Int): String {
         val chars = value.toCharArray()
         val reserved = HashSet<Int>()
         for ((classSet, count) in minimums) {
             val allowed = classSet.filter { charset.contains(it) }
-            if (count == 0 || allowed.isEmpty()) continue
             val have = chars.indices.filter { classSet.contains(chars[it]) }
             have.take(count).forEach { reserved += it }
-            var missing = count - minOf(have.size, count)
-            while (missing > 0) {
+            repeat(maxOf(0, count - have.size)) {
                 val free = chars.indices.filter { it !in reserved }
-                if (free.isEmpty()) break
                 val position = free[rand(0, free.size - 1)]
                 chars[position] = allowed[rand(0, allowed.length - 1)]
                 reserved += position
-                missing--
             }
         }
         return chars.concatToString()

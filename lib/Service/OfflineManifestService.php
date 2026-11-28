@@ -31,13 +31,16 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
+use OCA\Keepiq\Kernel\Contracts\OfflineManifestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Builds the owner-scoped offline snapshot.
  *
  * This service reads through the mappers directly and NEVER decrypts: the
- * secret key/login/additionalFields are already ciphertext (ADR-003), and the
+ * secret key/login/additionalFields/totp/passkeys are already ciphertext (ADR-003), and the
  * plaintext name/url metadata is encrypted at rest client-side. It is a bulk
  * cache sync, not an individual reveal, so it emits no `secret.read` audit
  * event.
@@ -47,7 +50,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * and is the org-wide switch on — while the snapshot's shape (which mappers,
  * in which order, serialised how) is assembled and tested here.
  */
-class OfflineManifestService {
+class OfflineManifestService implements OfflineManifestServiceInterface {
 	/**
 	 * Constructor for OfflineManifestService.
 	 *
@@ -56,6 +59,8 @@ class OfflineManifestService {
 	 * @param FolderMapper $folderMapper The folder mapper
 	 * @param SecretTypeMapper $typeMapper The secret type mapper
 	 * @param TwoFactorGate $twoFactor The two-factor vault policy
+	 * @param ShareTargetMapper $shareTargets The user's copies and their sources
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 */
@@ -65,6 +70,8 @@ class OfflineManifestService {
 		private FolderMapper $folderMapper,
 		private SecretTypeMapper $typeMapper,
 		private TwoFactorGate $twoFactor,
+		private ShareTargetMapper $shareTargets,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 	}//end __construct()
 
@@ -87,6 +94,7 @@ class OfflineManifestService {
 	 *
 	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 	 */
 	public function buildForUser(string $userId): array {
 		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
@@ -100,21 +108,10 @@ class OfflineManifestService {
 			$unlockBlocked = TwoFactorGate::CODE;
 		}
 
-		$secrets = array_map(
-			static fn (Secret $secret) => $secret->jsonSerialize(),
-			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
-		);
-
-		$folders = array_map(
-			static fn ($folder) => $folder->jsonSerialize(),
-			$this->folderMapper->findByOwner('user', $userId)
-		);
-
+		$secrets = $this->liveSecrets(userId: $userId);
+		$folders = $this->serialised(rows: $this->folderMapper->findByOwner('user', $userId));
 		// Secret types the list schema needs to render type badges offline.
-		$types = array_map(
-			static fn ($type) => $type->jsonSerialize(),
-			$this->typeMapper->findAvailableForUser($userId)
-		);
+		$types = $this->serialised(rows: $this->typeMapper->findAvailableForUser($userId));
 
 		return [
 			'suite' => $suite,
@@ -126,4 +123,88 @@ class OfflineManifestService {
 		];
 
 	}//end buildForUser()
+
+	/**
+	 * The user's live secrets, each with the version of its source when it
+	 * is a copy.
+	 *
+	 * @param string $userId The owning user
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 */
+	private function liveSecrets(string $userId): array {
+		$sourceVersions = $this->sourceVersions(userId: $userId);
+		// A privileged copy outside its approved window is not cached offline
+		// with its ciphertext (capability-requirements-from-the-matrix 3.1).
+		return array_map(
+			fn (Secret $secret) => [
+				...$this->servable(secret: $secret, userId: $userId),
+				'sourceUpdatedAt' => $sourceVersions[$secret->getId()] ?? null,
+			],
+			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
+		);
+	}//end liveSecrets()
+
+	/**
+	 * A row as it may be cached offline: without its ciphertext when it is a
+	 * privileged copy outside its approved window.
+	 *
+	 * @param Secret $secret The row
+	 * @param string $userId The holder
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function servable(Secret $secret, string $userId): array {
+		$data = $secret->jsonSerialize();
+		if ($this->privilegedGate === null) {
+			return $data;
+		}
+
+		return $this->privilegedGate->servable(secret: $secret, data: $data, userId: $userId, channel: 'offline');
+	}//end servable()
+
+	/**
+	 * Each row in its serialised form.
+	 *
+	 * @param array<int,\JsonSerializable> $rows The rows
+	 *
+	 * @return list<mixed>
+	 *
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+	 */
+	private function serialised(array $rows): array {
+		return array_map(static fn ($row) => $row->jsonSerialize(), $rows);
+	}//end serialised()
+
+	/**
+	 * The version of each of the user's copies' sources, keyed by copy id and
+	 * written as a row's own `updatedAt`, so an offline edit of a copy can
+	 * name the source version it was made from. Only the timestamp leaves
+	 * this method; it is null only when the source row is gone or carries
+	 * no version.
+	 *
+	 * @param string $userId The user holding the copies
+	 *
+	 * @return array<string,string|null>
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 */
+	private function sourceVersions(string $userId): array {
+		$sourceOf = [];
+		foreach ($this->shareTargets->findByTargetUser($userId) as $target) {
+			$sourceOf[$target->getSecretId()] = $target->getSourceSecretId();
+		}
+
+		$sources = $this->secretMapper->findByIds(ids: array_values($sourceOf));
+		$versions = [];
+		foreach ($sourceOf as $copyId => $sourceId) {
+			$versions[$copyId] = ($sources[$sourceId] ?? null)?->getUpdatedAt()?->format('c');
+		}
+
+		return $versions;
+	}//end sourceVersions()
 }//end class

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 // SPDX-License-Identifier: EUPL-1.2
 
+import CryptoKit
 import XCTest
 
 /// Task group 4 on the iOS simulator, as far as a simulator test reaches.
@@ -16,8 +17,13 @@ import XCTest
 /// - the sheet again, without a new unlock, listing that login from the
 ///   site file and filling it.
 ///
-/// Manual: Keepiq in the QuickType bar of Safari and an app, Face ID in the
-/// sheet, and the one-time code on the clipboard after a fill.
+/// One-time codes on iOS 17 (task 4.5), on webmail.example.com, where the
+/// seeded vault holds a login and an authenticator item: filling the login
+/// puts the authenticator's current code on the clipboard. A site with no
+/// authenticator item leaves the clipboard alone.
+///
+/// Manual: Keepiq in the QuickType bar of Safari and an app, and Face ID in
+/// the sheet.
 final class AutofillUITests: XCTestCase {
     private var app: XCUIApplication!
     private let env = ProcessInfo.processInfo.environment
@@ -28,8 +34,9 @@ final class AutofillUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["-keepiq-reset", "-keepiq-autofill-preview"]
         app.launchEnvironment["KEEPIQ_UITEST_NO_BROWSER"] = "1"
-        // A site the seeded replay vault has no login for.
-        app.launchEnvironment["KEEPIQ_AUTOFILL_SITE"] = "keepiq-autofill.test"
+        // The one-time code test fills the seeded webmail login; the other
+        // test uses a site the seeded replay vault has no login for.
+        app.launchEnvironment["KEEPIQ_AUTOFILL_SITE"] = name.contains("OneTimeCode") ? "webmail.example.com" : "keepiq-autofill.test"
         app.launch()
     }
 
@@ -155,6 +162,8 @@ final class AutofillUITests: XCTestCase {
         tap(app.buttons["autofillAddSave"])
         recordSavePrompt("autofill-add")
         waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: alice / 15")
+        // keepiq-autofill.test has no authenticator item: nothing on the clipboard.
+        waitForLabel(app.staticTexts["autofillCode"], containing: "no code on clipboard")
 
         // The refresh after the save rebuilt the index, and the site file is on disk.
         waitForLabel(app.staticTexts["autofillIndex"], containing: "keepiq-autofill.test: 1 logins on disk")
@@ -176,5 +185,75 @@ final class AutofillUITests: XCTestCase {
         XCTAssertFalse(app.secureTextFields["autofillMasterPassword"].exists)
         row.tap()
         waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: alice / 15")
+    }
+
+    /// The seeded "Authenticator (demo)" item of webmail.example.com
+    /// (mobile/e2e/server.mjs DEMO_ITEMS).
+    private let seededTotpSecret = "JBSWY3DPEHPK3PXP"
+
+    func testFillPutsTheOneTimeCodeOnTheClipboard() {
+        type(server, into: app.textFields["server"])
+        tap(app.buttons["useAppPassword"])
+        type("admin", into: app.textFields["loginName"])
+        type("manual-app-password", into: app.secureTextFields["appPassword"])
+        tap(app.buttons["connect"])
+        answerSavePromptAfterConnect()
+        type("Oj", into: app.secureTextFields["masterPassword"])
+        tap(app.buttons["unlock"])
+        XCTAssertTrue(app.buttons["lock"].waitForExistence(timeout: 60), "the vault opens after unlock")
+        // The unlock refreshes the vault and writes the site file (example.com): the login and the authenticator.
+        expectation(for: NSPredicate(format: "label BEGINSWITH 'example.com: ' AND NOT (label CONTAINS ': 0 logins')"),
+                    evaluatedWith: app.staticTexts["autofillIndex"])
+        waitForExpectations(timeout: 60)
+
+        tap(app.buttons["autofillPreview"])
+        type("Oj", into: app.secureTextFields["autofillMasterPassword"])
+        tap(app.buttons["autofillUnlock"])
+        let row = app.buttons["autofillRow"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 60), "the webmail login is listed")
+        shot("autofill-ios-06-code-site")
+        row.tap()
+        waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: anna.demo@example.com / 17")
+
+        let code = app.staticTexts["autofillCode"]
+        waitForLabel(code, containing: "code on clipboard: ", timeout: 20)
+        shot("autofill-ios-07-code-on-clipboard")
+        let copied = code.label.replacingOccurrences(of: "code on clipboard: ", with: "")
+        // The code of the current 30-second step, or of the one before when the step turned during the fill.
+        let now = Date().timeIntervalSince1970
+        let expected = [now, now - 30].map { Self.totp(secret: seededTotpSecret, at: $0) }
+        XCTAssertTrue(expected.contains(copied), "copied \(copied), expected one of \(expected)")
+    }
+
+    /// RFC 6238 with SHA-1, 6 digits and a 30-second step, written apart from
+    /// the shared core so the test does not check the core with itself.
+    static func totp(secret: String, at time: TimeInterval) -> String {
+        let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")
+        var bits = 0, value = 0
+        var key = [UInt8]()
+        for char in secret.uppercased() where char != "=" {
+            guard let index = alphabet.firstIndex(of: char) else { continue }
+            value = ((value << 5) | index) & 0xFFFF
+            bits += 5
+            if bits >= 8 {
+                key.append(UInt8((value >> (bits - 8)) & 0xFF))
+                bits -= 8
+            }
+        }
+        let message = withUnsafeBytes(of: UInt64(time / 30).bigEndian) { Data($0) }
+        let mac = Array(HMAC<Insecure.SHA1>.authenticationCode(for: message, using: SymmetricKey(data: key)))
+        let offset = Int(mac[mac.count - 1] & 0x0F)
+        let number = (UInt32(mac[offset] & 0x7F) << 24) | (UInt32(mac[offset + 1]) << 16)
+            | (UInt32(mac[offset + 2]) << 8) | UInt32(mac[offset + 3])
+        return String(format: "%06u", number % 1_000_000)
+    }
+
+    /// The RFC 6238 SHA-1 vectors, trimmed to 6 digits, so a wrong expected code cannot pass unseen.
+    func testTotpHelperMatchesTheRfcVectors() {
+        let secret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" // "12345678901234567890"
+        XCTAssertEqual(Self.totp(secret: secret, at: 59), "287082")
+        XCTAssertEqual(Self.totp(secret: secret, at: 1_111_111_109), "081804")
+        XCTAssertEqual(Self.totp(secret: secret, at: 1_234_567_890), "005924")
+        XCTAssertEqual(Self.totp(secret: secret, at: 2_000_000_000), "279037")
     }
 }

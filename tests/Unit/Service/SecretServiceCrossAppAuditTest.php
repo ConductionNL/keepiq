@@ -36,6 +36,8 @@ use OCA\Keepiq\Service\SecretRequestService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -145,6 +147,9 @@ class SecretServiceCrossAppAuditTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			secretRequestService: $this->createMock(SecretRequestService::class),
 			shareService: $this->createMock(ShareService::class),
 			groupShareMapper: $this->createMock(GroupShareMapper::class),

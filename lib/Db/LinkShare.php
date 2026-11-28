@@ -47,6 +47,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setFailedAttempts(int $failedAttempts)
  * @method string getCreatedBy()
  * @method void setCreatedBy(string $createdBy)
+ * @method string|null getOriginalCreatedBy()
+ * @method void setOriginalCreatedBy(?string $originalCreatedBy)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getExpiresAt()
@@ -55,6 +57,8 @@ use OCP\AppFramework\Db\Entity;
  * @SuppressWarnings(PHPMD.LongVariable) Property names mirror the spec-mandated DB columns.
  */
 class LinkShare extends Entity implements JsonSerializable {
+
+	use StringPrimaryKey;
 
 	/**
 	 * The ID of the secret this link share snapshots.
@@ -113,11 +117,22 @@ class LinkShare extends Entity implements JsonSerializable {
 	protected int $failedAttempts = 0;
 
 	/**
-	 * The Nextcloud user ID of the secret owner.
+	 * The Nextcloud user ID of the user who lists and revokes the link: its
+	 * maker, until an ownership transfer hands it to the secret's new owner.
 	 *
 	 * @var string
 	 */
 	protected string $createdBy = '';
+
+	/**
+	 * The user who made the link, set once it is handed to another user;
+	 * their compromise revoke cuts it. Null means the holder made it, and
+	 * LinkShareMapper::DELETED_ACCOUNT_MARKER that the maker's account is
+	 * deleted.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $originalCreatedBy = null;
 
 	/**
 	 * When the link share was created.
@@ -141,26 +156,6 @@ class LinkShare extends Entity implements JsonSerializable {
 	public $id = '';
 
 	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
-
-	/**
 	 * Constructor for LinkShare.
 	 *
 	 * @return void
@@ -176,6 +171,7 @@ class LinkShare extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'usageCount', type: 'integer');
 		$this->addType(fieldName: 'failedAttempts', type: 'integer');
 		$this->addType(fieldName: 'createdBy', type: 'string');
+		$this->addType(fieldName: 'originalCreatedBy', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 	}//end __construct()

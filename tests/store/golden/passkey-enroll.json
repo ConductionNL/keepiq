@@ -1,0 +1,5785 @@
+{
+	"enrolls with a label": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Laptop",
+							"displayName": "Laptop"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Laptop",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"enrolls with no label": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Keepiq vault",
+							"displayName": "Keepiq vault"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Passkey",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"enrolls with an undefined label": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Keepiq vault",
+							"displayName": "Keepiq vault"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Passkey",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"challenge with plus and slash": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								107,
+								230,
+								255,
+								115,
+								239
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								119,
+								231,
+								191
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"no current user": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									107,
+									101,
+									101,
+									112,
+									105,
+									113,
+									45,
+									117,
+									115,
+									101,
+									114
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"current user without uid": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									107,
+									101,
+									101,
+									112,
+									105,
+									113,
+									45,
+									117,
+									115,
+									101,
+									114
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"current user missing": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									107,
+									101,
+									101,
+									112,
+									105,
+									113,
+									45,
+									117,
+									115,
+									101,
+									114
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"excludes the active passkeys": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										1,
+										2,
+										3
+									]
+								}
+							},
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										255,
+										239
+									]
+								}
+							}
+						],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"options without credentials key": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"options with null data": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"vault locked: no key": {
+		"result": {
+			"threw": "Unlock your vault before enrolling a passkey",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": []
+	},
+	"vault locked: no envelope": {
+		"result": {
+			"threw": "Unlock your vault before enrolling a passkey",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": []
+	},
+	"challenge request fails": {
+		"result": {
+			"threw": "challenge down",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			]
+		]
+	},
+	"options request fails": {
+		"result": {
+			"threw": "options down",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			]
+		]
+	},
+	"authenticator already enrolled": {
+		"result": {
+			"threw": "This authenticator already unlocks your vault. Revoke its passkey first to enroll it again.",
+			"name": "Error",
+			"cause": "excluded"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"authenticator refuses otherwise": {
+		"result": {
+			"threw": "nope",
+			"name": "NotAllowedError",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"authenticator throws a non-error": {
+		"result": {
+			"threwValue": "string failure"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"create returns null": {
+		"result": {
+			"threw": "Cannot read properties of null (reading 'getClientExtensionResults')",
+			"name": "TypeError",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"no prf extension": {
+		"result": {
+			"threw": "Your authenticator does not support passkey unlock (PRF).",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"prf not enabled": {
+		"result": {
+			"threw": "Your authenticator does not support passkey unlock (PRF).",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"extension results null": {
+		"result": {
+			"threw": "Your authenticator does not support passkey unlock (PRF).",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			]
+		]
+	},
+	"no transports function": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": null,
+							"attestationObject": null
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": ""
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"no response": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": null,
+							"attestationObject": null
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": ""
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"transports null": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": null,
+							"attestationObject": null
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": ""
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"get fails": {
+		"result": {
+			"threw": "get refused",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		]
+	},
+	"get without prf result": {
+		"result": {
+			"threw": "Your authenticator did not return a PRF result.",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		]
+	},
+	"get with no extension results": {
+		"result": {
+			"threw": "Your authenticator did not return a PRF result.",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		]
+	},
+	"envelope decode fails": {
+		"result": {
+			"threw": "bad envelope",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			]
+		]
+	},
+	"derive fails": {
+		"result": {
+			"threw": "derive failed",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			]
+		]
+	},
+	"kek fails": {
+		"result": {
+			"threw": "kek failed",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			]
+		]
+	},
+	"wrap fails": {
+		"result": {
+			"threw": "wrap failed",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			]
+		]
+	},
+	"post fails": {
+		"result": {
+			"threw": "post failed",
+			"name": "Error",
+			"cause": "(none)"
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			]
+		]
+	},
+	"list after enrol fails": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "List down",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"list after enrol has a stale passkey": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [
+			{
+				"id": "a",
+				"status": "stale"
+			}
+		],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"previous error is cleared": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"list after enrol answers late": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "(null)",
+		"credentials": [
+			{
+				"id": "a",
+				"status": "active"
+			}
+		],
+		"hasActive": true,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	},
+	"list after enrol fails late": {
+		"result": {
+			"returned": {
+				"id": "new",
+				"status": "active"
+			}
+		},
+		"error": "late failure",
+		"credentials": [],
+		"hasActive": false,
+		"trace": [
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/challenge"
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys/login-options"
+			],
+			[
+				"create",
+				{
+					"publicKey": {
+						"rp": {
+							"id": "localhost",
+							"name": "Keepiq"
+						},
+						"user": {
+							"id": {
+								"bytes": [
+									97,
+									108,
+									105,
+									99,
+									101
+								]
+							},
+							"name": "Key",
+							"displayName": "Key"
+						},
+						"challenge": {
+							"bytes": [
+								1,
+								2,
+								3
+							]
+						},
+						"attestation": "none",
+						"pubKeyCredParams": [
+							{
+								"type": "public-key",
+								"alg": -7
+							},
+							{
+								"type": "public-key",
+								"alg": -257
+							}
+						],
+						"authenticatorSelection": {
+							"residentKey": "preferred",
+							"userVerification": "preferred"
+						},
+						"excludeCredentials": [],
+						"extensions": {
+							"prf": {}
+						}
+					}
+				}
+			],
+			[
+				"random",
+				32
+			],
+			[
+				"get",
+				{
+					"publicKey": {
+						"challenge": {
+							"bytes": [
+								4,
+								5,
+								6
+							]
+						},
+						"rpId": "localhost",
+						"allowCredentials": [
+							{
+								"type": "public-key",
+								"id": {
+									"bytes": [
+										7,
+										8,
+										250
+									]
+								}
+							}
+						],
+						"userVerification": "preferred",
+						"extensions": {
+							"prf": {
+								"eval": {
+									"first": {
+										"bytes": [
+											1,
+											8,
+											15,
+											22,
+											29,
+											36,
+											43,
+											50,
+											57,
+											64,
+											71,
+											78,
+											85,
+											92,
+											99,
+											106,
+											113,
+											120,
+											127,
+											134,
+											141,
+											148,
+											155,
+											162,
+											169,
+											176,
+											183,
+											190,
+											197,
+											204,
+											211,
+											218
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			],
+			[
+				"decode",
+				"ENVELOPE"
+			],
+			[
+				"derive",
+				"pw",
+				{
+					"bytes": [
+						5,
+						6
+					]
+				}
+			],
+			[
+				"kek",
+				{
+					"bytes": [
+						1,
+						1,
+						2,
+						3
+					]
+				},
+				"Bwj6"
+			],
+			[
+				"wrap",
+				"KEK",
+				{
+					"bytes": [
+						9,
+						9
+					]
+				}
+			],
+			[
+				"post",
+				"/x/apps/keepiq/api/v1/passkeys",
+				{
+					"credentialId": "Bwj6",
+					"wrappedUnlockKey": "WRAPPED",
+					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
+					"label": "Key",
+					"transports": "usb,nfc"
+				}
+			],
+			[
+				"get",
+				"/x/apps/keepiq/api/v1/passkeys"
+			]
+		]
+	}
+}

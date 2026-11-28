@@ -25,8 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
-use OCA\Keepiq\Service\JwtAuthService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -45,15 +45,15 @@ class ApplicationTokenController extends Controller {
 	 * Constructor for ApplicationTokenController.
 	 *
 	 * @param IRequest $request The HTTP request
-	 * @param JwtAuthService $service The JWT auth service
+	 * @param JwtAuthServiceInterface $service The JWT auth service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private JwtAuthService $service,
+		private JwtAuthServiceInterface $service,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -83,6 +83,11 @@ class ApplicationTokenController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 *
+	 * @no-admin-idor-exempt the assertion is the authorisation. The service
+	 * verifies its signature against the key the named application
+	 * registered, so a caller only gets a token for an application whose
+	 * private key it holds; failures are throttled.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

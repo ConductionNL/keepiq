@@ -31,6 +31,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\HoneyAlertRecorder;
 use OCA\Keepiq\Service\HoneyCredentialService;
+use OCA\Keepiq\Service\HoneyAccess;
 use OCA\Keepiq\Service\HoneyTripwireService;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -190,12 +191,14 @@ class HoneyCredentialServiceTest extends TestCase {
 			}));
 
 		$hit = $this->tripwireService->raiseAlert(
-			secretId: 'secret-1',
-			accessorType: 'application',
-			accessorId: 'app-9',
-			channel: 'machine_api',
-			remoteIp: '10.0.0.9',
-			userAgent: 'curl/8',
+			new HoneyAccess(
+				secretId: 'secret-1',
+				accessorType: 'application',
+				accessorId: 'app-9',
+				channel: 'machine_api',
+				remoteIp: '10.0.0.9',
+				userAgent: 'curl/8',
+			)
 		);
 
 		$this->assertTrue($hit);
@@ -227,7 +230,7 @@ class HoneyCredentialServiceTest extends TestCase {
 		$this->notificationService->expects($this->never())->method('notify');
 		$this->eventDispatcher->expects($this->once())->method('dispatchTyped');
 
-		$this->tripwireService->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+		$this->tripwireService->raiseAlert(new HoneyAccess(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui'));
 
 		$this->assertSame(2, $existing->getAccessCount());
 	}//end testRaiseAlertDedupsWithinWindow()
@@ -251,7 +254,7 @@ class HoneyCredentialServiceTest extends TestCase {
 		$this->notificationService->expects($this->never())->method('notify');
 		$this->eventDispatcher->expects($this->once())->method('dispatchTyped');
 
-		$this->tripwireService->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+		$this->tripwireService->raiseAlert(new HoneyAccess(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui'));
 	}//end testSnoozedAccessorIsAuditedButNotPaged()
 
 	/**
@@ -265,7 +268,7 @@ class HoneyCredentialServiceTest extends TestCase {
 		$this->notificationService->expects($this->never())->method('notify');
 		$this->eventDispatcher->expects($this->never())->method('dispatchTyped');
 
-		$hit = $this->tripwireService->raiseAlert(secretId: 'other', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+		$hit = $this->tripwireService->raiseAlert(new HoneyAccess(secretId: 'other', accessorType: 'user', accessorId: 'bob', channel: 'ui'));
 
 		$this->assertFalse($hit);
 	}//end testRaiseAlertMissOnUnflaggedSecret()
@@ -280,7 +283,7 @@ class HoneyCredentialServiceTest extends TestCase {
 		$this->flagMapper->method('findBySecretId')->willReturn($this->makeFlag());
 		$this->alertMapper->method('findLatestForAccessor')->willThrowException(new \RuntimeException('db down'));
 
-		$hit = $this->tripwireService->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+		$hit = $this->tripwireService->raiseAlert(new HoneyAccess(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui'));
 
 		$this->assertTrue($hit, 'the hit is still reported; the failure is logged, not thrown');
 	}//end testRaiseAlertIsFailSoft()

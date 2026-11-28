@@ -44,6 +44,12 @@ internal expect object Primitives {
 
     /** A new random ECDSA P-256 key pair, as raw bytes; [EcKeys] turns it into the formats the extension writes. */
     fun ecdsaP256Generate(): RawEcKeyPair
+
+    /**
+     * Verifies an RSA SHA-256 signature: PKCS#1 v1.5, or with [pss] RSASSA-PSS
+     * with MGF1-SHA-256 and a 32-byte salt. False for a key or signature that does not read.
+     */
+    fun rsaSha256Verify(spki: ByteArray, data: ByteArray, signature: ByteArray, pss: Boolean): Boolean
 }
 
 /** A P-256 key pair as raw bytes: the 32-byte scalar [d] and the 65-byte uncompressed [point] (0x04 ‖ x ‖ y). */

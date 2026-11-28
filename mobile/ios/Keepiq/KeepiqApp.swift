@@ -14,6 +14,8 @@ struct KeepiqApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(model)
+                // Keepiq's tint passes WCAG AA contrast; the system blue does not on white.
+                .tint(KeepiqPalette.accent)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.cameToForeground() }
@@ -68,16 +70,21 @@ struct AutofillPreviewButton: View {
     @ObservedObject private var index = IOSAutofillIndex.shared
     @State private var preview: AutofillModel?
     @State private var filled: String?
+    @State private var codeLine = "no fill yet"
+    @State private var pasteboardChange = 0
 
     var body: some View {
         if ProcessInfo.processInfo.arguments.contains("-keepiq-autofill-preview"), case .unlocked(let vault, _) = model.screen {
             VStack {
                 if let filled { Text(filled).accessibilityIdentifier("autofillFilled") }
+                Text(codeLine).accessibilityIdentifier("autofillCode")
                 Text(indexLine(vault.accountId))
                     .accessibilityIdentifier("autofillIndex")
                 Button("AutoFill preview") {
+                    pasteboardChange = UIPasteboard.general.changeCount
                     preview = AutofillModel(serviceIdentifiers: [site]) { login in
                         filled = "filled: \(login.user) / \(login.password.count)"
+                        codeLine = clipboardLine()
                         preview = nil
                         self.model.refreshAutofill(vault)
                     }
@@ -93,6 +100,18 @@ struct AutofillPreviewButton: View {
     }
 
     private var site: String { ProcessInfo.processInfo.environment["KEEPIQ_AUTOFILL_SITE"] ?? "example.com" }
+
+    /// What the fill put on the clipboard (task 4.5): the one-time code of
+    /// the site's authenticator item, or nothing. The app reads its own
+    /// write, so iOS shows no paste prompt; a UI test reading the pasteboard
+    /// itself would raise one.
+    ///
+    /// @spec openspec/changes/clients-mobile-apps/specs/mobile-system-autofill/spec.md
+    private func clipboardLine() -> String {
+        guard UIPasteboard.general.changeCount != pasteboardChange,
+              let text = UIPasteboard.general.string else { return "no code on clipboard" }
+        return "code on clipboard: \(text)"
+    }
 
     // MARK: Passkeys (task 5.2): the extension's passkey screens and calls, inside the app
 
@@ -164,12 +183,16 @@ struct AutofillPreviewButton: View {
         }
     }
 
-    /// The passkeys in the site file on disk, and in the identity store's last rebuild.
+    /// In the site file on disk, the logins with their own passkeys (where a
+    /// new passkey goes) and the standalone Passkey items, counted apart; and
+    /// the passkeys in the identity store's last rebuild.
     private func passkeyIndexLine(_ accountId: String, _ rp: String) -> String {
         let key = ApplePasskeys.shared.siteKey(rpId: rp)
-        let count = AutofillFiles.shared.read(accountId: accountId, site: key)
-            .map { AutofillIndex.companion.fromJson(text: $0).entries.filter { $0.isPasskey }.count } ?? 0
-        return "\(key): \(count) passkeys on disk, passkey identities \(index.lastPasskeyCount)"
+        let entries = AutofillFiles.shared.read(accountId: accountId, site: key)
+            .map { AutofillIndex.companion.fromJson(text: $0).entries } ?? []
+        let logins = entries.filter { $0.hasPasskeys }.count
+        let items = entries.filter { $0.isPasskey }.count
+        return "\(key): logins with passkeys \(logins), passkey items \(items), passkey identities \(index.lastPasskeyCount)"
     }
 
     /// What is on disk for the asked site, read back from its file, not counted on the way in.

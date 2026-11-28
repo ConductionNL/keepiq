@@ -1,0 +1,34 @@
+# Keepiq
+
+> Encrypted secrets manager for Nextcloud: a password manager and key store for users and applications, with RSA/AES encryption backed by a private Certificate Authority and its own encrypted database tables.
+
+## Docs
+
+- [README](README.md): overview, requirements, installation and development setup
+- [AGENTS.md](AGENTS.md): build, test, lint and OpenSpec commands for coding agents
+- [Introduction](docs/intro.md): what the app does, start page of the documentation site
+- [Architecture](docs/ARCHITECTURE.md): standards research, data model and Nextcloud integration
+- [Features](docs/FEATURES.md): competitive analysis and feature matrix
+- [Encryption overview](docs/encryption-overview.md): encryption parameters, generated from the crypto code
+- [Audit trail](docs/audit-trail.md): append-only record of who did what to a secret, and when
+- [Compromise recovery](docs/compromise-recovery.md): new key pair and re-encrypted vault after a master password is exposed
+- [Client libraries](docs/client-libraries.md): reading and writing application secrets from Go, Python or TypeScript
+- [CI integrations](docs/ci-integrations.md): using secrets in CI pipelines
+- [Terraform and OpenTofu](docs/terraform.md): managing secrets with the Terraform provider
+- [Kubernetes](docs/kubernetes.md): getting an application secret into a pod
+
+## API
+
+- [OpenAPI document](openapi.json): the app's REST API
+- [Admin API](docs/api/admin-v1.openapi.json): OpenAPI document for the admin API
+- [Routes](appinfo/routes.php): Nextcloud route table mapping URLs to controllers
+
+## Specs
+
+- [Feature specs](openspec/specs/): one folder per capability, the source of truth for behaviour
+- [Secrets](openspec/specs/secrets/spec.md): storing and managing secrets
+- [Encryption suites](openspec/specs/encryption-suites/spec.md): key pairs and certificates per user and application
+- [Secret store API](openspec/specs/secret-store-api/spec.md): machine API through which an approved application fetches and writes back its secrets
+- [Changes in progress](openspec/changes/): open OpenSpec changes; completed ones are in openspec/changes/archive/
+- [Architecture decisions](openspec/architecture/README.md): app-specific Architectural Decision Records
+- [Roadmap](openspec/ROADMAP.md): planned work

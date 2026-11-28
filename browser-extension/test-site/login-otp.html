@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login with a code</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Login with a code</h1>
+		<p class="tests">Username, password and authentication code in one form. One fill fills all three when the login has an authenticator item.</p>
+		<form method="post" action="/login">
+			<label>Username <input name="username" type="text" autocomplete="username"></label>
+			<label>Password <input name="password" type="password" autocomplete="current-password"></label>
+			<label>Authentication code <input name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+			<button type="submit">Sign in</button>
+		</form>
+	</main>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Card in split fields</title>
+	<link rel="stylesheet" href="/style.css">
+	<style>
+		.parts {
+			display: flex;
+			gap: 8px;
+		}
+
+		.parts input {
+			width: 5em;
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Card in split fields</h1>
+		<p class="tests">Fields without tokens that each take part of a member. A card with number 4111 1111 1111 1111 and expiry 03/27 fills the card type with "VISA", the four boxes with "4111" and "1111" in order, and the selects with "03" and "2027".</p>
+		<form method="post" action="/checkout" id="selects">
+			<label>Card type
+				<select name="brand">
+					<option value="">Choose</option>
+					<option value="VISA">VISA</option>
+					<option value="MC">MC</option>
+					<option value="AMEX">AMEX</option>
+				</select>
+			</label>
+			<div>
+				<label for="number-1">Card number</label>
+				<div class="parts">
+					<input id="number-1" name="number1" maxlength="4" inputmode="numeric">
+					<input name="number2" maxlength="4" inputmode="numeric" aria-label="Card number, digits 5 to 8">
+					<input name="number3" maxlength="4" inputmode="numeric" aria-label="Card number, digits 9 to 12">
+					<input name="number4" maxlength="4" inputmode="numeric" aria-label="Card number, digits 13 to 16">
+				</div>
+			</div>
+			<label>Expiry month
+				<select name="month">
+					<option value="">Month</option>
+					<option>01</option><option>02</option><option>03</option><option>04</option><option>05</option><option>06</option>
+					<option>07</option><option>08</option><option>09</option><option>10</option><option>11</option><option>12</option>
+				</select>
+			</label>
+			<label>Expiry year
+				<select name="year">
+					<option value="">Year</option>
+					<option>2026</option><option>2027</option><option>2028</option><option>2029</option><option>2030</option>
+					<option>2031</option><option>2032</option><option>2033</option><option>2034</option><option>2035</option>
+				</select>
+			</label>
+			<label>CVC <input name="cvc" maxlength="4" inputmode="numeric"></label>
+			<button type="submit">Pay</button>
+		</form>
+
+		<h2>Combined expiry</h2>
+		<p class="tests">One expiry field asking for a four-digit year: it takes "03 / 2027".</p>
+		<form method="post" action="/checkout" id="combined">
+			<label>Card number <input name="number" inputmode="numeric"></label>
+			<label>Expiry date <input name="expiry" placeholder="MM / YYYY"></label>
+			<label>CVC <input name="cvc" maxlength="4" inputmode="numeric"></label>
+			<button type="submit">Pay</button>
+		</form>
+	</main>
+</body>
+</html>

@@ -16,15 +16,23 @@
  */
 
 import axios from '@nextcloud/axios'
-import { translatePlural as n } from '@nextcloud/l10n'
+import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import {
+	copyCiphertext,
+	recipientFields,
+	sourceVersion,
+} from '../../services/recipientCopy.js'
 import { useAttachmentStore } from './attachment.js'
 import { useSecretStore } from './secret.js'
-import { useShareStore } from './share.js'
+import { MAX_STALE_SOURCE_ROUNDS, useShareStore } from './share.js'
 
 /** Number of (secret × recipient) rows per registration POST. */
 const FAN_OUT_CHUNK_SIZE = 20
+
+/** The reason the server skips a pair whose copy would lack the source's one-time code or passkeys. */
+const COPY_FIELDS_MISMATCH = 'copy_fields_mismatch'
 
 /** How often an unlocked vault confirms waiting members (admin-auto-confirm-members D5). */
 export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
@@ -38,26 +46,308 @@ export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
 let autoConfirmTimer = null
 
 /**
- * Turn decrypted secret fields into the shape encryptForRecipient takes.
+ * One posted recipient copy: the pair it is for, the ciphertext encrypted
+ * for that recipient and, when the source itself was decrypted, the version
+ * it was encrypted from (#1255).
  *
- * @param {object} plain The decrypted secret.
- * @return {{key: string, login: string, additionalFields: string}}
+ * @param {{secretId: string, userId: string}} pair The source secret and recipient.
+ * @param {object} blob The fields encrypted for the recipient.
+ * @param {{sourceUpdatedAt?: string}} [version] The source version, from sourceVersion().
+ * @return {object} The share row the server stores.
  */
-function recipientFields(plain) {
+function copyRow(pair, blob, version = {}) {
 	return {
-		key: plain.key ?? '',
-		login: plain.login ?? '',
-		additionalFields:
-			typeof plain.additionalFields === 'object'
-			&& plain.additionalFields !== null
-				? JSON.stringify(plain.additionalFields)
-				: (plain.additionalFields ?? ''),
+		sourceSecretId: pair.secretId,
+		targetUserId: pair.userId,
+		...copyCiphertext(blob),
+		...version,
+	}
+}
+
+/**
+ * The version of the source a copy holder's own copy stands for, read
+ * BEFORE the copy is decrypted: a save in between then makes the row stale
+ * and it is sent again, never the other way round (#1255). A share-save
+ * writes the source and every copy in one transaction, so the copy read
+ * after holds that version's value or a newer one. Nothing when the write
+ * context does not name this source.
+ *
+ * @param {object} shareStore The share store.
+ * @param {string} copyId The caller's own copy.
+ * @param {string} sourceId The source the row hangs on.
+ * @return {Promise<{sourceUpdatedAt?: string}>}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ */
+async function copySourceVersion(shareStore, copyId, sourceId) {
+	try {
+		const context = await shareStore.fetchWriteContext(copyId)
+		return context?.sourceSecretId === sourceId
+			? sourceVersion({ updatedAt: context.sourceUpdatedAt })
+			: {}
+	} catch {
+		return {}
+	}
+}
+
+/**
+ * The pairs of the rows the server skipped as `stale_source`: encrypted from
+ * a version a save replaced meanwhile, to be encrypted again (#1255).
+ *
+ * @param {object|undefined} data The server answer.
+ * @return {Array<{secretId: string, userId: string}>}
+ * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ */
+function stalePairs(data) {
+	return (data?.skipped ?? [])
+		.filter((entry) => entry.reason === 'stale_source')
+		.map((entry) => ({
+			secretId: entry.sourceSecretId,
+			userId: entry.targetUserId,
+		}))
+}
+
+/**
+ * Note the secrets the server refused a copy of because the copy would lose
+ * a one-time code or passkeys, by name where this browser knows it.
+ *
+ * @param {Set<string>} refused The refused names, added to.
+ * @param {object} refs The source secrets by id.
+ * @param {object|undefined} data The server answer.
+ * @return {void}
+ */
+function noteRefused(refused, refs, data) {
+	for (const entry of data?.skipped ?? []) {
+		if (entry.reason === COPY_FIELDS_MISMATCH) {
+			refused.add(refs[entry.sourceSecretId]?.name ?? entry.sourceSecretId)
+		}
+	}
+}
+
+/**
+ * The missing pairs of a reconcile, for one member only when asked.
+ *
+ * @param {object} state The reconcile state.
+ * @param {string|null} onlyUserId The one member, or null for every member.
+ * @return {Array<object>} The pairs to fan out.
+ */
+function pendingPairs(state, onlyUserId) {
+	return (state.missing ?? []).filter(
+		(pair) => onlyUserId === null || pair.userId === onlyUserId,
+	)
+}
+
+/**
+ * The message a failed fan-out reports: the server's, the error's, or a
+ * generic one.
+ *
+ * @param {Error|object} e The failure.
+ * @return {string} The message.
+ */
+function fanOutError(e) {
+	return e?.response?.data?.message || e?.message || 'Fan-out failed'
+}
+
+/**
+ * Post one chunk of copies, note what the server refused and re-grant the
+ * attachments of the rows it wrote.
+ *
+ * @param {object} store The team folder store (for regrantAttachments).
+ * @param {string} teamFolderId The team folder.
+ * @param {Array<object>} chunk The copy rows.
+ * @param {object} ctx The fan-out context (see fanOutCopy), with
+ *   `refused`, the refused source names, added to. A row the server skips
+ *   as `stale_source` is encrypted again from the current version and sent
+ *   once more, at most three times (#1255).
+ * @return {Promise<number>} How many copies the server created.
+ * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ */
+async function postFanOutChunk(store, teamFolderId, chunk, ctx) {
+	const { certByUser, refs, refused } = ctx
+	let created = 0
+	let rows = chunk
+	for (let round = 0; rows.length > 0; round++) {
+		const response = await axios.post(
+			generateUrl(`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`),
+			{ shares: rows },
+		)
+		created += response.data?.created ?? 0
+		noteRefused(refused, refs, response.data)
+		await store.regrantAttachments(response.data?.rows ?? [], certByUser)
+		const stale = stalePairs(response.data)
+		if (round >= MAX_STALE_SOURCE_ROUNDS) {
+			break
+		}
+		// Decrypt those sources again and send their rows once more.
+		for (const pair of stale) {
+			delete ctx.plaintextCache[pair.secretId]
+		}
+		rows = []
+		for (const pair of stale) {
+			const row = await fanOutCopy(pair, ctx)
+			if (row !== null) {
+				rows.push(row)
+			}
+		}
+	}
+	return created
+}
+
+/**
+ * Encrypt one missing pair's copy for its recipient. Null when the pair is
+ * passed over: the recipient has no certificate, or this user holds no copy
+ * of the source (then named in `skipped`).
+ *
+ * @param {object} pair The missing pair.
+ * @param {object} context The fan-out context.
+ * @param {object} context.refs The source secrets by id.
+ * @param {object} context.certByUser Recipient certificates by user id.
+ * @param {object} context.plaintextCache Recipient fields and source version by source id, filled.
+ * @param {Set<string>} context.skipped Sources without a readable copy, added to.
+ * @param {object} context.secretStore The secret store.
+ * @param {object} context.shareStore The share store.
+ * @return {Promise<object|null>} The copy row, or null.
+ */
+async function fanOutCopy(
+	pair,
+	{ refs, certByUser, plaintextCache, skipped, secretStore, shareStore },
+) {
+	const certificate = certByUser[pair.userId]
+	if (!certificate) {
+		return null
+	}
+
+	// The copy this browser decrypts: the owner's own row, or a manager's
+	// recipient copy (or none).
+	const ref = refs[pair.secretId]
+	const readId = ref && 'copyId' in ref ? ref.copyId : pair.secretId
+	if (!readId) {
+		skipped.add(ref?.name ?? pair.secretId)
+		return null
+	}
+
+	if (!plaintextCache[pair.secretId]) {
+		// fetchSecret decrypts with the session CryptoKey and returns the
+		// PLAINTEXT secret — do not decrypt twice.
+		// A manager's copy names the source's version, read first.
+		const copyVersion =
+			readId === pair.secretId
+				? null
+				: await copySourceVersion(shareStore, readId, pair.secretId)
+		const plain = await secretStore.fetchSecret(readId)
+		plaintextCache[pair.secretId] = {
+			fields: recipientFields(plain),
+			version: copyVersion ?? sourceVersion(plain),
+		}
+	}
+
+	const { fields, version } = plaintextCache[pair.secretId]
+	const blob = await shareStore.encryptForRecipient(fields, certificate)
+	return copyRow(pair, blob, version)
+}
+
+/**
+ * Confirm one team folder's waiting pairs: decrypt each needed secret once
+ * (the owner's source, or the member's own copy), encrypt it for each
+ * recipient with a certificate and post only ciphertext, in chunks.
+ *
+ * @param {object} store The team folder store (for regrantAttachments).
+ * @param {object} folder The folder from the pending-confirmations answer.
+ * @param {object} stores The secret and share stores.
+ * @param {object} stores.secretStore The secret store.
+ * @param {object} stores.shareStore The share store.
+ * @param {{created: number, refused: number, members: Set<string>}} totals Running totals, updated.
+ * @return {Promise<void>}
+ */
+async function confirmFolder(store, folder, { secretStore, shareStore }, totals) {
+	const certByUser = Object.fromEntries(
+		(folder.recipients ?? []).map((r) => [r.userId, r.certificate]),
+	)
+	const fieldsBySecret = {}
+	let chunk = []
+
+	// The copy row of one pair, naming the source version it was encrypted
+	// from (#1255): an owner reads the source, a member their own copy.
+	const rowFor = async (pair) => {
+		const certificate = certByUser[pair.userId]
+		if (!certificate) {
+			return null
+		}
+		const readId = pair.ownCopyId ?? pair.secretId
+		if (!fieldsBySecret[readId]) {
+			// A member's copy names the source's version, read first.
+			const copyVersion =
+				readId === pair.secretId
+					? null
+					: await copySourceVersion(shareStore, readId, pair.secretId)
+			const raw = await axios.get(
+				generateUrl(`/apps/keepiq/api/v1/secrets/${readId}`),
+			)
+			fieldsBySecret[readId] = {
+				fields: recipientFields(await secretStore.decryptSecret(raw.data)),
+				version: copyVersion ?? sourceVersion(raw.data),
+			}
+		}
+		const { fields, version } = fieldsBySecret[readId]
+		const blob = await shareStore.encryptForRecipient(fields, certificate)
+		return copyRow(pair, blob, version)
+	}
+
+	const post = async () => {
+		const pairs = new Map(
+			(folder.missing ?? []).map((p) => [`${p.secretId}\u0000${p.userId}`, p]),
+		)
+		for (let round = 0; chunk.length > 0; round++) {
+			const result = await axios.post(
+				generateUrl(
+					`/apps/keepiq/api/v1/team-folders/${folder.teamFolderId}/shares`,
+				),
+				{ shares: chunk },
+			)
+			totals.created += result.data?.created ?? 0
+			totals.refused += (result.data?.skipped ?? []).filter(
+				(entry) => entry.reason === COPY_FIELDS_MISMATCH,
+			).length
+			for (const row of result.data?.rows ?? []) {
+				totals.members.add(row.targetUserId)
+			}
+			await store.regrantAttachments(result.data?.rows ?? [], certByUser)
+			const stale =
+				round < MAX_STALE_SOURCE_ROUNDS ? stalePairs(result.data) : []
+			chunk = []
+			for (const { secretId, userId } of stale) {
+				const pair = pairs.get(`${secretId}\u0000${userId}`) ?? {
+					secretId,
+					userId,
+				}
+				delete fieldsBySecret[pair.ownCopyId ?? pair.secretId]
+				const row = await rowFor(pair)
+				if (row !== null) {
+					chunk.push(row)
+				}
+			}
+		}
+	}
+
+	for (const pair of folder.missing ?? []) {
+		const row = await rowFor(pair)
+		if (row === null) {
+			continue
+		}
+		chunk.push(row)
+
+		if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
+			await post()
+		}
+	}
+
+	if (chunk.length > 0) {
+		await post()
 	}
 }
 
 export const useTeamFolderStore = defineStore('teamFolder', {
 	state: () => ({
-		/** @type {{created: number, members: number, at: number}|null} The last automatic confirmation run. */
+		/** @type {{created: number, members: number, refused: number, at: number}|null} The last automatic confirmation run. */
 		lastAutoConfirm: null,
 		/** @type {Array<object>} Team folders the user owns (with members). */
 		owned: [],
@@ -319,12 +609,12 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					continue
 				}
 				try {
-					await attachmentStore.regrantForRecipient(
-						row.sourceSecretId,
-						row.recipientSecretId,
-						row.targetUserId,
-						certificate,
-					)
+					await attachmentStore.regrantForRecipient({
+						sourceSecretId: row.sourceSecretId,
+						copySecretId: row.recipientSecretId,
+						recipientId: row.targetUserId,
+						recipientCertificate: certificate,
+					})
 				} catch {
 					// Best-effort — surfaced by the attachment list for the recipient.
 				}
@@ -345,7 +635,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {object} [options] Options.
 		 * @param {string} [options.onlyUserId] Fan out to this member only
 		 *   (a per-member approval, keepiq#747); every member when omitted.
-		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>}>}
+		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>, refused: Array<string>}>}
+		 *   `skipped` holds the secrets this user holds no copy of, `refused` those
+		 *   the server would not copy because it would lack their one-time code or passkeys.
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
@@ -358,119 +650,71 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 
 			try {
 				const state = await this.reconcile(teamFolderId)
-				const missing = (state.missing ?? []).filter(
-					(pair) => onlyUserId === null || pair.userId === onlyUserId,
-				)
+				const missing = pendingPairs(state, onlyUserId)
 				this.fanOut.total = missing.length
 				if (missing.length === 0) {
-					return { created: 0, cancelled: false, skipped: [] }
+					return { created: 0, cancelled: false, skipped: [], refused: [] }
 				}
 
-				// The copy this browser decrypts for each source secret: the
-				// owner's own row, or a manager's recipient copy (or none).
-				const refs = Object.fromEntries(
-					(state.secrets ?? []).map((ref) => [ref.id, ref]),
-				)
-				const skipped = new Set()
-
-				const certByUser = Object.fromEntries(
-					(state.recipients ?? []).map((r) => [r.userId, r.certificate]),
-				)
-
-				// Decrypt each distinct source secret once, not per recipient.
-				const plaintextCache = {}
+				const ctx = {
+					// The copy this browser decrypts for each source secret: the
+					// owner's own row, or a manager's recipient copy (or none).
+					refs: Object.fromEntries(
+						(state.secrets ?? []).map((ref) => [ref.id, ref]),
+					),
+					certByUser: Object.fromEntries(
+						(state.recipients ?? []).map((r) => [
+							r.userId,
+							r.certificate,
+						]),
+					),
+					// Decrypt each distinct source secret once, not per recipient.
+					plaintextCache: {},
+					skipped: new Set(),
+					// Secrets the server refused a copy of, as `skipped` in its answer.
+					refused: new Set(),
+					secretStore,
+					shareStore,
+				}
 				let created = 0
 				let chunk = []
+				// Post one chunk of copies, count what the server created and
+				// re-grant the attachments of the rows it wrote.
+				const flush = async () => {
+					created += await postFanOutChunk(this, teamFolderId, chunk, ctx)
+					this.fanOut.done += chunk.length
+				}
 
 				for (const pair of missing) {
 					if (this.fanOutCancelled) {
 						break
 					}
 
-					const certificate = certByUser[pair.userId]
-					if (!certificate) {
+					const row = await fanOutCopy(pair, ctx)
+					if (row === null) {
 						this.fanOut.done++
 						continue
 					}
-
-					const ref = refs[pair.secretId]
-					const readId =
-						ref && 'copyId' in ref ? ref.copyId : pair.secretId
-					if (!readId) {
-						skipped.add(ref?.name ?? pair.secretId)
-						this.fanOut.done++
-						continue
-					}
-
-					if (!plaintextCache[pair.secretId]) {
-						// fetchSecret decrypts with the session CryptoKey and
-						// returns the PLAINTEXT secret — do not decrypt twice.
-
-						const plain = await secretStore.fetchSecret(readId)
-						plaintextCache[pair.secretId] = {
-							key: plain.key ?? '',
-							login: plain.login ?? '',
-							additionalFields:
-								typeof plain.additionalFields === 'object'
-								&& plain.additionalFields !== null
-									? JSON.stringify(plain.additionalFields)
-									: (plain.additionalFields ?? ''),
-						}
-					}
-
-					const blob = await shareStore.encryptForRecipient(
-						plaintextCache[pair.secretId],
-						certificate,
-					)
-					chunk.push({
-						sourceSecretId: pair.secretId,
-						targetUserId: pair.userId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
-					})
+					chunk.push(row)
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
-						const response = await axios.post(
-							generateUrl(
-								`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
-							),
-							{ shares: chunk },
-						)
-						created += response.data?.created ?? 0
-
-						await this.regrantAttachments(
-							response.data?.rows ?? [],
-							certByUser,
-						)
-						this.fanOut.done += chunk.length
+						await flush()
 						chunk = []
 					}
 				}
 
 				if (chunk.length > 0 && !this.fanOutCancelled) {
-					const response = await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
-						),
-						{ shares: chunk },
-					)
-					created += response.data?.created ?? 0
-					await this.regrantAttachments(
-						response.data?.rows ?? [],
-						certByUser,
-					)
-					this.fanOut.done += chunk.length
+					await flush()
 				}
 
 				return {
 					created,
 					cancelled: this.fanOutCancelled,
-					skipped: [...skipped],
+					skipped: [...ctx.skipped],
+					refused: [...ctx.refused],
 				}
 			} catch (e) {
-				this.error =
-					e?.response?.data?.message || e?.message || 'Fan-out failed'
+				this.error = fanOutError(e)
 				throw e
 			} finally {
 				this.fanOut.running = false
@@ -485,7 +729,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * each recipient and posts only ciphertext in chunks. A failure is
 		 * logged and retried on the next run; it never blocks the vault.
 		 *
-		 * @return {Promise<{enabled: boolean, created: number, members: number}>}
+		 * @return {Promise<{enabled: boolean, created: number, members: number, refused: number}>}
+		 *   `refused` counts the pairs the server would not copy because it would lack the
+		 *   secret's one-time code or passkeys.
 		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		async autoConfirm() {
@@ -497,75 +743,26 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				),
 			)
 			const enabled = response.data?.enabled === true
-			let created = 0
-			const members = new Set()
+
+			const totals = { created: 0, refused: 0, members: new Set() }
 
 			for (const folder of response.data?.folders ?? []) {
-				const certByUser = Object.fromEntries(
-					(folder.recipients ?? []).map((r) => [r.userId, r.certificate]),
+				await confirmFolder(
+					this,
+					folder,
+					{ secretStore, shareStore },
+					totals,
 				)
-				const fieldsBySecret = {}
-				let chunk = []
-
-				const post = async () => {
-					const result = await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/team-folders/${folder.teamFolderId}/shares`,
-						),
-						{ shares: chunk },
-					)
-					created += result.data?.created ?? 0
-					for (const row of result.data?.rows ?? []) {
-						members.add(row.targetUserId)
-					}
-					await this.regrantAttachments(
-						result.data?.rows ?? [],
-						certByUser,
-					)
-					chunk = []
-				}
-
-				for (const pair of folder.missing ?? []) {
-					const certificate = certByUser[pair.userId]
-					if (!certificate) {
-						continue
-					}
-
-					// An owner reads the source; a member reads their own copy.
-					const readId = pair.ownCopyId ?? pair.secretId
-					if (!fieldsBySecret[readId]) {
-						const raw = await axios.get(
-							generateUrl(`/apps/keepiq/api/v1/secrets/${readId}`),
-						)
-						fieldsBySecret[readId] = recipientFields(
-							await secretStore.decryptSecret(raw.data),
-						)
-					}
-
-					const blob = await shareStore.encryptForRecipient(
-						fieldsBySecret[readId],
-						certificate,
-					)
-					chunk.push({
-						sourceSecretId: pair.secretId,
-						targetUserId: pair.userId,
-						encryptedKey: blob.key ?? '',
-						encryptedLogin: blob.login ?? null,
-						encryptedAdditionalFields: blob.additionalFields ?? null,
-					})
-
-					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
-						await post()
-					}
-				}
-
-				if (chunk.length > 0) {
-					await post()
-				}
 			}
 
-			this.lastAutoConfirm = { created, members: members.size, at: Date.now() }
-			return { enabled, created, members: members.size }
+			const { created, refused, members } = totals
+			this.lastAutoConfirm = {
+				created,
+				members: members.size,
+				refused,
+				at: Date.now(),
+			}
+			return { enabled, created, members: members.size, refused }
 		},
 
 		/**
@@ -578,9 +775,21 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async startAutoConfirm() {
 			this.stopAutoConfirm()
+			// A refused pair is retried on every run: say so once per unlock, not every 15 minutes.
+			let refusedNoticed = false
 			const run = async () => {
 				try {
 					const result = await this.autoConfirm()
+					if (result.refused > 0 && refusedNoticed === false) {
+						refusedNoticed = true
+						const { showWarning } = await import('@nextcloud/dialogs')
+						showWarning(
+							t(
+								'keepiq',
+								'A new team folder member did not get a login that holds a one-time code or passkeys, which this version of Keepiq cannot copy yet.',
+							),
+						)
+					}
 					if (result.members > 0) {
 						// One quiet notice per run, never per secret. Loaded on
 						// demand: @nextcloud/dialogs needs a window at import

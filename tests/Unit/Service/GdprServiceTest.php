@@ -19,21 +19,27 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\QuarantinedShareTargetMapper;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\GdprService;
 use OCA\Keepiq\Service\SettingsService;
+use OCA\Keepiq\Tests\Support\ShareTargetDatabase;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for GdprService::collectMetadata.
  */
 class GdprServiceTest extends TestCase {
+	use ShareTargetDatabase;
+
 	/**
 	 * Build a service with all collaborator mocks.
 	 *
@@ -116,6 +122,61 @@ class GdprServiceTest extends TestCase {
 	}//end testSuitePrivateKeyExcludedWithNote()
 
 	/**
+	 * A link Alice made that a transfer handed to Dave is in Alice's export,
+	 * flagged as handed over, and in Dave's without the flag. Neither export
+	 * carries the token or the snapshot.
+	 *
+	 * @return void
+	 */
+	public function testAHandedOverLinkIsExportedToItsMakerAndItsHolder(): void {
+		$link = new LinkShare();
+		$link->setId('link-1');
+		$link->setSecretId('sec-1');
+		$link->setToken('THE-ACCESS-TOKEN');
+		$link->setEncryptedSecretSnapshot('THE-SNAPSHOT');
+		$link->setCreatedBy('dave');
+		$link->setOriginalCreatedBy('alice');
+
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findByOwner')->willReturn([]);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suiteMapper->method('findByOwner')->willReturn([]);
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getUserPreferences')->willReturn([]);
+		$linkShareMapper = $this->createMock(LinkShareMapper::class);
+		$linkShareMapper->method('findByCreatedBy')->willReturnCallback(
+			static fn (string $userId): array => array_values(array_filter([$link], static fn (LinkShare $row): bool => $row->getCreatedBy() === $userId))
+		);
+		$linkShareMapper->method('findHeldOrMadeBy')->willReturnCallback(
+			static fn (string $userId): array => array_values(array_filter([$link], static fn (LinkShare $row): bool => in_array($userId, [$row->getCreatedBy(), $row->getOriginalCreatedBy()], true)))
+		);
+
+		$service = new GdprService(
+			secretMapper: $secretMapper,
+			shareMapper: $this->createMock(ShareTargetMapper::class),
+			delegationMapper: $this->createMock(SecretDelegationMapper::class),
+			linkShareMapper: $linkShareMapper,
+			requestMapper: $this->createMock(SecretRequestMapper::class),
+			suiteMapper: $suiteMapper,
+			settingsService: $settingsService,
+		);
+
+		$alices = $service->collectMetadata('alice');
+		$daves = $service->collectMetadata('dave');
+
+		$this->assertCount(1, $alices['linkShares']);
+		$this->assertSame('link-1', $alices['linkShares'][0]['id']);
+		$this->assertTrue($alices['linkShares'][0]['handedOver']);
+		$this->assertCount(1, $daves['linkShares']);
+		$this->assertSame('link-1', $daves['linkShares'][0]['id']);
+		$this->assertFalse($daves['linkShares'][0]['handedOver']);
+		foreach ([$alices, $daves] as $doc) {
+			$this->assertStringNotContainsString('THE-ACCESS-TOKEN', json_encode($doc));
+			$this->assertStringNotContainsString('THE-SNAPSHOT', json_encode($doc));
+		}
+	}//end testAHandedOverLinkIsExportedToItsMakerAndItsHolder()
+
+	/**
 	 * The collector is strictly self-scoped: the userId drives every lookup.
 	 *
 	 * @return void
@@ -137,4 +198,59 @@ class GdprServiceTest extends TestCase {
 
 		$service->collectMetadata('alice');
 	}//end testStrictlySelfScoped()
+
+	/**
+	 * Quarantined share rows (GHSA-m5p9-6pw7-pf3g) that name the subject, as
+	 * the owner of their source or as their recipient, are exported and
+	 * flagged; live rows are flagged as not quarantined.
+	 *
+	 * @return void
+	 */
+	public function testExportsQuarantinedRowsNamingTheSubjectFlagged(): void {
+		$this->openDatabase();
+		try {
+			$subject = $this->user('subject');
+			$other   = $this->user('other');
+			$now     = new DateTime();
+			$source  = $this->insertSecret(ownerId: $subject, createdAt: $now);
+			foreach ([false, true] as $quarantined) {
+				$recipient = $this->user('recipient');
+				$this->insertShareTarget(
+					sourceSecretId: $source->getId(),
+					targetUserId: $recipient,
+					secretId: $this->insertSecret(ownerId: $recipient, createdAt: $now)->getId(),
+					createdBy: $subject,
+					createdAt: $now,
+					quarantined: $quarantined,
+				);
+			}
+
+			$planted = $this->insertShareTarget(
+				sourceSecretId: $this->insertSecret(ownerId: $other, createdAt: $now)->getId(),
+				targetUserId: $subject,
+				secretId: $this->insertSecret(ownerId: $subject, createdAt: $now)->getId(),
+				createdBy: $other,
+				createdAt: $now,
+				quarantined: true,
+			);
+
+			$doc = (new GdprService(
+				secretMapper: new SecretMapper(db: $this->db),
+				shareMapper: new ShareTargetMapper(db: $this->db),
+				delegationMapper: $this->createMock(SecretDelegationMapper::class),
+				linkShareMapper: $this->createMock(LinkShareMapper::class),
+				requestMapper: $this->createMock(SecretRequestMapper::class),
+				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+				settingsService: $this->createMock(SettingsService::class),
+				quarantinedMapper: new QuarantinedShareTargetMapper(db: $this->db),
+			))->collectMetadata($subject);
+
+			$this->assertSame([false, true], array_column($doc['sharesGiven'], 'quarantined'));
+			$this->assertCount(1, $doc['sharesReceived']);
+			$this->assertSame($planted->getSecretId(), $doc['sharesReceived'][0]['recipientCopyId']);
+			$this->assertTrue($doc['sharesReceived'][0]['quarantined']);
+		} finally {
+			$this->closeDatabase();
+		}
+	}//end testExportsQuarantinedRowsNamingTheSubjectFlagged()
 }//end class

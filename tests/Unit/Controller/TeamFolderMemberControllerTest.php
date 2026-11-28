@@ -124,6 +124,42 @@ class TeamFolderMemberControllerTest extends TestCase {
 	}//end testAViewerChangingAGradeIsRefusedVisibly()
 
 	/**
+	 * Olga, a manager, re-adds her own membership to lift its end date:
+	 * refused, and the browser receives 428 with error owner_only and the
+	 * reason (GHSA-xmrr-247r-hh35). Any other refusal of an add stays a 400.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerAddingTheirOwnMembershipIsRefusedVisibly(): void {
+		$this->service->method('addMember')->willThrowException(
+			new OwnerOnlyException(message: 'Only the owner can add or change a membership that covers you')
+		);
+
+		$response = $this->controller->addMember(id: 'tf-1', memberType: 'user', memberId: 'olga');
+		$this->assertSame(403, $response->getStatus());
+
+		$delivered = $this->refusals->afterController($this->controller, 'addMember', $response);
+		$this->assertSame(428, $delivered->getStatus());
+		$this->assertSame('owner_only', $delivered->getData()['error']);
+		$this->assertSame('Only the owner can add or change a membership that covers you', $delivered->getData()['message']);
+	}//end testAManagerAddingTheirOwnMembershipIsRefusedVisibly()
+
+	/**
+	 * A bad add stays a 400.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
+	 */
+	public function testABadAddStaysABadRequest(): void {
+		$this->service->method('addMember')->willThrowException(new InvalidArgumentException(message: 'User not found'));
+
+		$this->assertSame(400, $this->controller->addMember(id: 'tf-1', memberType: 'user', memberId: 'nobody')->getStatus());
+	}//end testABadAddStaysABadRequest()
+
+	/**
 	 * An invalid request stays a 400.
 	 *
 	 * @return void
@@ -202,4 +238,27 @@ class TeamFolderMemberControllerTest extends TestCase {
 		$this->assertSame(400, $response->getStatus());
 		$this->assertSame('Not authorized to manage this team folder', $response->getData()['message']);
 	}//end testApproveJoinRefusalIsABadRequestWithTheReason()
+
+	/**
+	 * A manager approving their own join is refused as owner-only, and the
+	 * browser receives 428 with error owner_only, not 400.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function testAManagerApprovingTheirOwnJoinIsRefusedVisibly(): void {
+		$this->service->method('approveJoin')->willThrowException(
+			new OwnerOnlyException(message: 'Only the owner can approve your own join')
+		);
+
+		$delivered = $this->refusals->afterController(
+			$this->controller,
+			'approveJoin',
+			$this->controller->approveJoin(id: 'tf-1', newMemberId: 'olga')
+		);
+		$this->assertSame(428, $delivered->getStatus());
+		$this->assertSame('owner_only', $delivered->getData()['error']);
+		$this->assertSame('Only the owner can approve your own join', $delivered->getData()['message']);
+	}//end testAManagerApprovingTheirOwnJoinIsRefusedVisibly()
 }//end class

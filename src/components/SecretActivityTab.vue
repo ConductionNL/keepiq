@@ -1,6 +1,9 @@
 <template>
-	<section class="secret-activity" data-testid="secret-activity-tab">
-		<h3 class="secret-activity__heading">
+	<section
+		class="secret-activity"
+		:class="{ 'secret-activity--embedded': hideHeading }"
+		data-testid="secret-activity-tab">
+		<h3 v-if="!hideHeading" class="secret-activity__heading">
 			{{ t('keepiq', 'Activity') }}
 		</h3>
 
@@ -38,6 +41,7 @@ import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import History from 'vue-material-design-icons/History.vue'
 import { useAuditStore } from '../store/modules/audit.js'
 import { auditActorLabel, auditEventLabel } from '../utils/auditEventLabels.js'
+import { auditTime } from '../utils/dateTime.js'
 
 /**
  * The Activity tab on the secret detail view (add-secret-audit-trail §5.2).
@@ -61,6 +65,15 @@ export default {
 		secretId: {
 			type: String,
 			required: true,
+		},
+
+		/**
+		 * Whether the tab leaves out its own "Activity" heading, where the
+		 * surrounding row already labels it.
+		 */
+		hideHeading: {
+			type: Boolean,
+			default: false,
 		},
 	},
 
@@ -126,23 +139,8 @@ export default {
 			return auditActorLabel(entry)
 		},
 
-		/**
-		 * Format an ISO timestamp as a localized relative time.
-		 *
-		 * @param {string} iso The ISO-8601 timestamp.
-		 * @return {string} A human-readable relative time.
-		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
-		 */
-		relativeTime(iso) {
-			if (!iso) {
-				return ''
-			}
-			try {
-				return new Date(iso).toLocaleString()
-			} catch (e) {
-				return iso
-			}
-		},
+		/** The shown timestamp (see `auditTime` in utils/dateTime.js). */
+		relativeTime: auditTime,
 	},
 }
 </script>
@@ -150,6 +148,10 @@ export default {
 <style scoped lang="scss">
 .secret-activity {
 	margin-block-start: 1rem;
+
+	&--embedded {
+		margin-block-start: 0;
+	}
 
 	&__heading {
 		font-weight: bold;

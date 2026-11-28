@@ -3,9 +3,10 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Vault password-health report. Runs the client-side analysis engine over the
-  unlocked vault and renders an overall score plus five finding categories —
-  weak, reused, stale, breached (when both breach gates are on), and
-  possibly-compromised — each finding deep-linking to the secret detail. All
+  unlocked vault and renders an overall score plus the finding categories —
+  weak, reused, stale, breached (when both breach gates are on),
+  possibly-compromised, unencrypted address, and two-factor and passkey
+  available (when the site directory is on) — each finding deep-linking to the secret detail. All
   value-bearing computation happens in the browser; nothing value-bearing leaves
   it. Shows an unlock prompt when the vault is locked and an "unavailable" state
   when the breach service is unreachable (password-health design D5/D6/D7).
@@ -89,12 +90,27 @@
 						{{ t('keepiq', 'Possibly compromised') }}:
 						{{ store.summary.compromisedCount }}
 					</li>
+					<li>
+						{{ t('keepiq', 'Unencrypted address') }}:
+						{{ store.summary.insecureAddressCount }}
+					</li>
+					<template v-if="siteDirectoryReady">
+						<li>
+							{{ t('keepiq', 'Two-factor available') }}:
+							{{ store.summary.twoFactorAvailableCount }}
+						</li>
+						<li>
+							{{ t('keepiq', 'Passkey available') }}:
+							{{ store.summary.passkeyAvailableCount }}
+						</li>
+					</template>
 				</ul>
 
 				<HealthCategory
 					:title="t('keepiq', 'Weak passwords')"
 					:findings="store.weakFindings"
 					testid="category-weak"
+					changePassword
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('keepiq', 'Reused passwords')"
@@ -103,6 +119,7 @@
 					"
 					:findings="store.reusedFindings"
 					testid="category-reused"
+					changePassword
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('keepiq', 'Old passwords')"
@@ -114,6 +131,7 @@
 					:title="t('keepiq', 'Breached passwords')"
 					:findings="store.breachedFindings"
 					testid="category-breached"
+					changePassword
 					@open="openSecret" />
 				<NcButton
 					v-if="breachActive && store.breachedFindings.length"
@@ -144,6 +162,67 @@
 					testid="category-compromised"
 					@open="openSecret" />
 				<HealthCategory
+					:title="t('keepiq', 'Unencrypted address')"
+					:description="
+						t(
+							'keepiq',
+							'These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.',
+						)
+					"
+					:findings="store.insecureAddressFindings"
+					:actionLabel="t('keepiq', 'Change to https')"
+					testid="category-insecure-address"
+					@open="openSecret"
+					@action="changeToHttps" />
+				<p
+					v-if="httpsError"
+					class="health-report__error"
+					data-testid="change-to-https-error">
+					{{ httpsError }}
+				</p>
+				<!-- Site directory categories (health-site-security-checks D3/D4). -->
+				<template v-if="siteDirectoryReady">
+					<HealthCategory
+						:title="t('keepiq', 'Two-factor available')"
+						:description="
+							t(
+								'keepiq',
+								'These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.',
+							)
+						"
+						:findings="store.twoFactorAvailableFindings"
+						:actionLabel="t('keepiq', 'How to turn it on')"
+						testid="category-two-factor-available"
+						@open="openSecret"
+						@action="openSiteDocs($event, 'twoFactor')" />
+					<HealthCategory
+						:title="t('keepiq', 'Passkey available')"
+						:description="
+							t(
+								'keepiq',
+								'These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.',
+							)
+						"
+						:findings="store.passkeyAvailableFindings"
+						:actionLabel="t('keepiq', 'How to add a passkey')"
+						testid="category-passkey-available"
+						@open="openSecret"
+						@action="openSiteDocs($event, 'passkey')" />
+					<p
+						class="health-report__attribution"
+						data-testid="site-directory-attribution">
+						{{
+							t(
+								'keepiq',
+								'Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.',
+							)
+						}}
+					</p>
+				</template>
+				<p v-else data-testid="site-directory-unavailable">
+					{{ siteDirectoryUnavailableText }}
+				</p>
+				<HealthCategory
 					:title="t('keepiq', 'Rotation due')"
 					:description="
 						t(
@@ -154,6 +233,13 @@
 					:findings="rotationFindings"
 					testid="category-rotation"
 					@open="openSecret" />
+				<!-- vault-duplicate-finder: grouped in the same browser pass; off when copies could not be told apart. -->
+				<HealthDuplicates
+					v-if="store.duplicatesAvailable"
+					:exact="store.duplicates.exact"
+					:likely="store.duplicates.likely"
+					@open="openSecret"
+					@merged="reanalyse" />
 			</div>
 
 			<div
@@ -172,23 +258,34 @@ import { loadState } from '@nextcloud/initial-state'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcSelect } from '@nextcloud/vue'
 import HealthCategory from '../components/HealthCategory.vue'
+import HealthDuplicates from '../components/HealthDuplicates.vue'
 import OwnershipFindings from '../components/OwnershipFindings.vue'
+import { httpsAddress } from '../health/insecureAddress.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useRotationStore } from '../store/modules/rotation.js'
+import { useSecretStore } from '../store/modules/secret.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
 
 export default {
 	name: 'HealthReportView',
-	components: { NcSelect, NcButton, HealthCategory, OwnershipFindings },
+	components: {
+		NcSelect,
+		NcButton,
+		HealthCategory,
+		HealthDuplicates,
+		OwnershipFindings,
+	},
 
 	data() {
 		return {
 			store: useHealthStore(),
 			session: useSessionStore(),
 			rotation: useRotationStore(),
+			secrets: useSecretStore(),
 			breachGateOn: loadState('keepiq', 'breachCheckEnabled', false),
 			breachOptIn: false,
+			httpsError: '',
 			stalenessOption: { value: '365', label: t('keepiq', '365 days') },
 		}
 	},
@@ -212,6 +309,35 @@ export default {
 		 */
 		breachActive() {
 			return this.breachGateOn && this.breachOptIn
+		},
+
+		/**
+		 * Whether the site directory copy loaded, so its two categories can show.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		siteDirectoryReady() {
+			return this.store.siteDirectoryStatus === 'ready'
+		},
+
+		/**
+		 * Why the two site directory categories are not shown.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		siteDirectoryUnavailableText() {
+			if (this.store.siteDirectoryStatus === 'unavailable') {
+				return t(
+					'keepiq',
+					'Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.',
+				)
+			}
+			return t(
+				'keepiq',
+				'Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.',
+			)
 		},
 
 		/**
@@ -315,6 +441,54 @@ export default {
 		},
 
 		/**
+		 * Save a finding's http address as https, then analyse again so the
+		 * login leaves the category. Only the address changes.
+		 *
+		 * @param {object} finding A finding of the Unencrypted address category.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
+		 */
+		async changeToHttps(finding) {
+			this.httpsError = ''
+			try {
+				await this.secrets.updateSecret(finding.id, {
+					url: httpsAddress(finding.url),
+				})
+			} catch {
+				this.httpsError = t(
+					'keepiq',
+					'Could not save the https address for {name}.',
+					{
+						name: finding.name,
+					},
+				)
+				return
+			}
+			await this.reanalyse()
+		},
+
+		/**
+		 * Open the directory's page for a site in a new tab, or the directory
+		 * itself when the entry links nowhere.
+		 *
+		 * @param {object} finding The finding.
+		 * @param {'twoFactor'|'passkey'} kind Which directory.
+		 * @return {void}
+		 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
+		 */
+		openSiteDocs(finding, kind) {
+			const fallback =
+				kind === 'passkey'
+					? 'https://passkeys.2fa.directory/'
+					: 'https://2fa.directory/'
+			window.open(
+				finding?.siteDocs?.[kind] || fallback,
+				'_blank',
+				'noopener,noreferrer',
+			)
+		},
+
+		/**
 		 * Batch-flag all breached findings for rotation — secret IDs
 		 * ONLY leave the client (no verdicts, counts, or digests).
 		 *
@@ -384,6 +558,11 @@ export default {
 <style scoped lang="scss">
 .health-report {
 	padding: 1rem;
+
+	&__attribution {
+		font-size: 0.85rem;
+		color: var(--color-text-maxcontrast);
+	}
 
 	&__score {
 		display: flex;

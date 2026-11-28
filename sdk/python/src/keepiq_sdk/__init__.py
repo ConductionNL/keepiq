@@ -1,13 +1,14 @@
 """Keepiq client library for Python.
 
-    from keepiq_sdk import Client
+    from keepiq_sdk import Client, ClientConfig, Credentials
 
-    client = Client("https://cloud.example.org", "billing", open("/run/secrets/keepiq.pem").read())
+    key = open("/run/secrets/keepiq.pem").read()
+    client = Client(ClientConfig("https://cloud.example.org", Credentials("billing", key)))
     secret = client.get_by_name("stripe-key")
     print(secret.key)
 """
 
-from .client import Client, Lease, Secret
+from .client import Client, ClientConfig, Credentials, Lease, Secret
 from .errors import (
     AmbiguousNameError,
     ApiError,
@@ -24,6 +25,8 @@ __all__ = [
     "ApiError",
     "Candidate",
     "Client",
+    "ClientConfig",
+    "Credentials",
     "KeepiqError",
     "KeyMismatchError",
     "Lease",
@@ -32,4 +35,4 @@ __all__ = [
     "Secret",
     "UnauthorizedError",
 ]
-__version__ = "0.1.0"
+__version__ = "1.0.0"

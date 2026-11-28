@@ -40,12 +40,18 @@ use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\ShareRowVerdict;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudFederationFactory;
@@ -58,6 +64,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -66,6 +73,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedSourceDetailsTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private Secret $source;
 
@@ -125,6 +133,7 @@ class FederatedSourceDetailsTest extends TestCase {
 	private function put(array $params) {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($this->source);
+		$secrets->method('advanceVersion')->willReturn(1);
 		$secrets->method('update')->willReturnArgument(0);
 
 		$shareMapper = $this->createMock(FederatedShareMapper::class);
@@ -132,6 +141,8 @@ class FederatedSourceDetailsTest extends TestCase {
 			fn (string $id): array => ($id === 'src') ? $this->shares : []
 		);
 		$shareMapper->method('update')->willReturnArgument(0);
+		$shareMapper->method('updateIfActive')->willReturn(1);
+		$shareMapper->method('updateIfUnchanged')->willReturn(1);
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationNotification')->willReturnCallback(static fn () => new FakeCloudFederationNotification());
@@ -157,9 +168,10 @@ class FederatedSourceDetailsTest extends TestCase {
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $this->createMock(IUserManager::class));
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
+		$delivery = new FederatedNotificationDelivery($shareMapper, $messenger, $audit, $secrets);
 		$federated = new FederatedShareService(
 			shareMapper: $shareMapper,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: new FederationPartnerService(
 				$this->partnerMapper([$this->partner('cloud.partner.example', true, true), $this->partner('cloud.other.example', true, true)]),
 				$this->createMock(IClientService::class),
@@ -169,7 +181,7 @@ class FederatedSourceDetailsTest extends TestCase {
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $this->createMock(ISecureRandom::class),
-			delivery: new FederatedNotificationDelivery($shareMapper, $messenger, $audit),
+			delivery: $delivery,
 			audit: $audit,
 		);
 
@@ -182,6 +194,9 @@ class FederatedSourceDetailsTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->shareSaveRequired(shareMapper: $shareMapper),
 			federatedShares: $federated,
 		);
 
@@ -195,6 +210,23 @@ class FederatedSourceDetailsTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return (new SecretUpdateController($request, $service, $session))->update('src');
+	}
+
+	/**
+	 * The real guard on Alice's `src`: no share row of its own, no live
+	 * copies, and the partner shares of this test.
+	 *
+	 * @param FederatedShareMapper $shareMapper The partner shares
+	 *
+	 * @return ShareSaveRequiredGuard
+	 */
+	private function shareSaveRequired(FederatedShareMapper $shareMapper): ShareSaveRequiredGuard {
+		$rowJudge = $this->createStub(ShareRowJudge::class);
+		$rowJudge->method('forCopy')->willReturn(new ShareRowVerdict(state: ShareRowVerdict::NONE));
+		$guards = $this->createStub(ShareSyncGuards::class);
+		$guards->method('liveCopies')->willReturn(['copies' => [], 'ignored' => [], 'unjudged' => []]);
+
+		return new ShareSaveRequiredGuard(rowJudge: $rowJudge, guards: $guards, federatedShares: $shareMapper);
 	}
 
 	/**
@@ -237,11 +269,14 @@ class FederatedSourceDetailsTest extends TestCase {
 		$this->assertSame([], $this->sent);
 	}
 
-	public function testAValueChangeLeavesTheNotificationToTheBrowserSync(): void {
-		// The browser encrypts the new value for each recipient and its
-		// PUT /federated-shares/{id} sends SHARE_UPDATED (task 4.1).
-		$this->put(['name' => 'Supplier portal (2026)', 'key' => 'NEW-ALICE-CIPHER']);
+	public function testAValueChangeIsRefusedForTheShareSave(): void {
+		// A new value must reach the partner shares in the same write, so
+		// the plain update refuses it and tells no one (keepiq#1300).
+		$response = $this->put(['name' => 'Supplier portal (2026)', 'key' => 'NEW-ALICE-CIPHER']);
 
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_save_required', $response->getData()['code']);
+		$this->assertSame('ALICE-CIPHER-KEY', $this->source->getKey());
 		$this->assertSame([], $this->sent);
 	}
 

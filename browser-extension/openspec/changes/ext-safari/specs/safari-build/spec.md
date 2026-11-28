@@ -1,0 +1,53 @@
+## Purpose
+
+Ships the extension to Safari 26 and later on macOS from the same source as Chrome and Firefox, inside a containing app that CI builds and loads in Safari on every change.
+
+## ADDED Requirements
+
+### Requirement: Safari build
+The build SHALL produce a Safari extension as Manifest V3 from the same source, with `browser_specific_settings.safari.strict_min_version` `26.0`, while Chrome stays MV3 and Firefox stays MV2. The Safari manifest MUST declare `nativeMessaging` and MUST NOT declare `idle`, `offscreen` or `privacy`. Server origins stay optional host permissions requested when an account is added; the manifest declares no `host_permissions`.
+
+#### Scenario: Three targets
+- **GIVEN** a clean checkout
+- **WHEN** `npm run build`, `npm run build:firefox` and `npm run build:safari` run
+- **THEN** `.output/chrome-mv3/manifest.json` has `manifest_version` 3 and `offscreen`, `.output/firefox-mv2/manifest.json` has 2 and neither `offscreen` nor `nativeMessaging`, and `.output/safari-mv3/manifest.json` has 3, `nativeMessaging`, `strict_min_version` `26.0`, and none of `idle`, `offscreen`, `privacy` or `host_permissions`
+
+### Requirement: Chromium-only features stay off Safari
+On Safari the extension SHALL NOT use or offer what Safari lacks: no offscreen document, no default password manager entry, and no link to `chrome://extensions/shortcuts`. A missing extension API MUST NOT stop the background from starting.
+
+#### Scenario: Background starts without idle
+- **GIVEN** the Safari build, where `browser.idle` is undefined
+- **WHEN** the background starts
+- **THEN** it registers its other listeners and the popup can unlock an account
+
+### Requirement: Containing app
+The Safari extension SHALL ship inside a macOS app named Keepiq with bundle identifier `nl.conduction.keepiq.safari`, whose extension's identifier starts with `nl.conduction.keepiq.safari.`. The app is generated from the Safari build by Safari's web extension packager; the repository holds only the native message handler, its tests and the script that packages, overlays and builds it. The handler keeps no state and never logs a copied value.
+
+#### Scenario: Packaging
+- **GIVEN** `.output/safari-mv3/` from `npm run build:safari` on a Mac with Xcode 26
+- **WHEN** `npm run package:safari` runs
+- **THEN** `.output/keepiq-safari.zip` holds `Keepiq.app`, ad-hoc signed, whose extension runs the repository's `SafariWebExtensionHandler.swift`
+- **AND** the script prints both bundle identifiers and fails when either differs from the rule above
+
+#### Scenario: Packager output changed
+- **GIVEN** a packager that generates no `SafariWebExtensionHandler.swift`, or more than one
+- **WHEN** `npm run package:safari` runs
+- **THEN** it fails with a message naming the missing handler, and builds nothing
+
+### Requirement: Safari is checked in CI
+Every change to the extension SHALL run a macOS job that builds the Safari target, runs the handler's tests, packages and builds the app, and installs the extension in Safari over WebDriver. The install step MUST fail when the extension does not install or Safari answers no id, and no WebDriver request may wait longer than 60 seconds. CI does not check the content scripts, since Safari asks a person for website access first; they are checked by hand on a Mac. The build and its artifacts are kept for 14 days, and safaridriver's logs when the install fails.
+
+#### Scenario: Install in Safari
+- **GIVEN** the job on a `macos-26` runner with `safaridriver` enabled
+- **WHEN** the install step installs `.output/safari-mv3` with `POST /session/{id}/webextension`, as a path or else as a base64 zip
+- **THEN** Safari answers the extension's id and the step passes
+
+#### Scenario: Install fails
+- **GIVEN** a build Safari refuses to install, or an install that gets no answer within 60 seconds
+- **WHEN** the job runs
+- **THEN** the install step fails, naming the request, and the job fails
+
+#### Scenario: Handler test fails
+- **GIVEN** a change that makes `clipboard.clear` clear a pasteboard someone wrote since
+- **WHEN** the job runs
+- **THEN** the handler test step fails and the job fails

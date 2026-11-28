@@ -21,6 +21,13 @@
  */
 
 import { t } from '@nextcloud/l10n'
+import {
+	fieldsOf,
+	SCHEMA_MEMBER,
+	schemaConflicts,
+	schemasOf,
+	withSchemas,
+} from './fieldSchema.js'
 
 /**
  * Names that address the Secret's own columns and can never be members.
@@ -64,11 +71,49 @@ export function memberNameError(name, taken = []) {
 		)
 	}
 
+	// The member that holds the field schemas is not a field.
+	if (trimmed === SCHEMA_MEMBER) {
+		return t('keepiq', '“{name}” is reserved — choose a different name.', {
+			name: SCHEMA_MEMBER,
+		})
+	}
+
 	if (taken.some((existing) => (existing || '').trim() === trimmed) === true) {
 		return t('keepiq', 'That field is already listed.')
 	}
 
 	return ''
+}
+
+/**
+ * Whether a member list may be saved: every checked member with a name has one the
+ * rules accept, also against the type's own field names, and a schema the
+ * server would not refuse. The editor shows why; this keeps Save from going
+ * ahead anyway, as a rename onto a type field's name would overwrite it.
+ *
+ * @param {Array<{name: string, schema?: object}>} members The member list.
+ * @param {Array<string>} reserved Names a member may not take: the type's own fields.
+ * @param {Array<object>} checked The members to check, by default all of them.
+ * @return {boolean}
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+export function membersValid(members = [], reserved = [], checked = members) {
+	return checked.every((member) => {
+		// A member left without a name is dropped on save (membersToObject).
+		if ((member.name || '').trim() === '') {
+			return true
+		}
+		const others = [
+			...members
+				.filter((other) => other !== member)
+				.map((other) => other.name),
+			...reserved,
+		]
+		return (
+			memberNameError(member.name, others) === ''
+			&& !schemaConflicts(member.schema)
+		)
+	})
 }
 
 /**
@@ -79,21 +124,30 @@ export function memberNameError(name, taken = []) {
  * means "nothing was sent", which the store reads as "leave whatever is stored
  * alone". Removing the last member has to say the former.
  *
- * @param {Array<{name: string, value: string}>} members The edited member list.
+ * A member's `schema` goes into the reserved `@schema` member; a plain-text
+ * schema is left out, so a blob without typed fields looks exactly as before.
+ *
+ * @param {Array<{name: string, value: string, schema?: object}>} members The edited member list.
  *
  * @return {object} A plain object of name → value, possibly empty.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function membersToObject(members = []) {
-	return members.reduce((acc, member) => {
+	const fields = {}
+	const schemas = {}
+	for (const member of members) {
 		const name = (member?.name || '').trim()
 		if (name !== '') {
-			acc[name] = member?.value ?? ''
+			fields[name] = member?.value ?? ''
+			if (member?.schema) {
+				schemas[name] = member.schema
+			}
 		}
+	}
 
-		return acc
-	}, {})
+	return withSchemas(fields, schemas)
 }
 
 /**
@@ -106,17 +160,23 @@ export function membersToObject(members = []) {
  *
  * @param {object|string|null|undefined} blob The decrypted `additionalFields`.
  *
- * @return {Array<{name: string, value: string}>} The editable member list.
+ * Each member carries its schema; a field without one reads as plain text.
+ * The reserved `@schema` member itself never becomes a member.
+ *
+ * @return {Array<{name: string, value: string, schema: object}>} The editable member list.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function objectToMembers(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {
 		return []
 	}
 
-	return Object.entries(blob).map(([name, value]) => ({
+	const schemas = schemasOf(blob)
+	return Object.entries(fieldsOf(blob)).map(([name, value]) => ({
 		name,
 		value: value === null || value === undefined ? '' : String(value),
+		schema: schemas[name] ?? { type: 'string' },
 	}))
 }

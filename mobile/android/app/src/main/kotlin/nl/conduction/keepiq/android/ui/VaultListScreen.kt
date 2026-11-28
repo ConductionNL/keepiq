@@ -198,7 +198,7 @@ private fun SyncNote(state: VaultState) {
     }
 }
 
-private fun lockText(reason: LockReason): Int = when (reason) {
+internal fun lockText(reason: LockReason): Int = when (reason) {
     LockReason.SUITE_CHANGED -> R.string.vault_locked_suite
     LockReason.MASTER_PASSWORD_CHANGED -> R.string.vault_locked_password
     LockReason.UNLOCK_BLOCKED -> R.string.vault_locked_two_factor

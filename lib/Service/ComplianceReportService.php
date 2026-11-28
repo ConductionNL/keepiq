@@ -26,11 +26,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ComplianceReport;
 use OCA\Keepiq\Db\ComplianceReportMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -46,7 +47,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The aggregator's whole
  *   job is composing counts across the domain tables.
  */
-class ComplianceReportService {
+class ComplianceReportService implements ComplianceReportServiceInterface {
 	/**
 	 * Section keys the aggregate may carry — anything else is rejected
 	 * before persistence (compliance-reporting §2.4).
@@ -110,7 +111,8 @@ class ComplianceReportService {
 			],
 			'secretsPerUser' => $this->secretsPerUserSection(),
 			'shareHygiene' => [
-				'userShares' => $this->countAll(table: 'keepiq_share_targets'),
+				// A quarantined row (GHSA-m5p9-6pw7-pf3g) is no share.
+				'userShares' => $this->countWhere(table: 'keepiq_share_targets', where: 'quarantined_at IS NULL'),
 				'groupShares' => $this->countAll(table: 'keepiq_group_shares'),
 				'linkShares' => $this->countAll(table: 'keepiq_link_shares'),
 				// Every link share carries an Argon2id-wrapped snapshot;
@@ -120,7 +122,7 @@ class ComplianceReportService {
 			],
 			'rotationPosture' => $this->rotationPostureSection(),
 			'auditIntegrity' => [
-				'retentionDays' => $this->appConfig->getValueInt(Application::APP_ID, 'audit_retention_days', 365),
+				'retentionDays' => $this->appConfig->getValueInt(AppIdentity::APP_ID, 'audit_retention_days', 365),
 				'totalEntries' => $this->countAll(table: 'keepiq_audit_log'),
 				'firstEntryAt' => $this->scalar(sql: 'SELECT MIN(occurred_at) FROM *PREFIX*keepiq_audit_log'),
 				'appendOnly' => true,
@@ -150,7 +152,7 @@ class ComplianceReportService {
 	 * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md
 	 */
 	public function generate(string $adminUid): ComplianceReport {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$config = [
 			'auditRetentionDays' => $this->appConfig->getValueInt($appId, 'audit_retention_days', 365),
 			'breachCheckEnabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
@@ -229,7 +231,7 @@ class ComplianceReportService {
 	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	public function refreshMetricsCache(): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$this->appConfig->setValueString($appId, 'compliance_metrics_cache', (string)json_encode($this->aggregate()));
 		$this->appConfig->setValueString($appId, 'compliance_metrics_computed_at', (new DateTime())->format('c'));
 	}//end refreshMetricsCache()
@@ -242,7 +244,7 @@ class ComplianceReportService {
 	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	public function cachedMetrics(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$cached = $this->appConfig->getValueString($appId, 'compliance_metrics_cache', '');
 		if ($cached === '') {
 			$this->refreshMetricsCache();
@@ -340,8 +342,9 @@ class ComplianceReportService {
 	}//end rotationPostureSection()
 
 	/**
-	 * Ciphertext-age bands from key_updated_at (§2.3) — explicitly
-	 * labelled ciphertext-age, never password strength.
+	 * Ciphertext-age bands from key_updated_at (§2.3), falling back to
+	 * created_at for a key with no change time as the expiry engine does —
+	 * explicitly labelled ciphertext-age, never password strength.
 	 *
 	 * @return array<string,int>
 	 */
@@ -352,11 +355,11 @@ class ComplianceReportService {
 			'over1Year' => 0,
 		];
 		$result = $this->db->executeQuery(
-			'SELECT key_updated_at FROM *PREFIX*keepiq_secrets WHERE key_updated_at IS NOT NULL'
+			'SELECT COALESCE(key_updated_at, created_at) AS aged_at FROM *PREFIX*keepiq_secrets'
 		);
 		$now = time();
 		while (($row = $result->fetch()) !== false) {
-			$age = $now - strtotime((string)$row['key_updated_at']);
+			$age = $now - strtotime((string)$row['aged_at']);
 			$band = 'over1Year';
 			if ($age < 7776000) {
 				$band = 'under90Days';
@@ -470,7 +473,7 @@ class ComplianceReportService {
 	 */
 	private function appVersion(): string {
 		try {
-			return $this->appManager->getAppVersion(Application::APP_ID);
+			return $this->appManager->getAppVersion(AppIdentity::APP_ID);
 		} catch (Throwable) {
 			return 'unknown';
 		}

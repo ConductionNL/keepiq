@@ -1,0 +1,4994 @@
+{
+	"no url, no key, totp missing, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp missing, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp missing, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp missing, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp null, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp null, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp null, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp null, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp empty, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp empty, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp empty, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp empty, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp set, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp set, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp set, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, no key, totp set, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp missing, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp missing, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp missing, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp missing, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp null, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp null, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp null, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp null, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp empty, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp empty, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp empty, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp empty, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp set, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp set, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp set, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"no url, key, totp set, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp missing, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp missing, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp missing, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp missing, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp null, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp null, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp null, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp null, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp empty, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp empty, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp empty, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp empty, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp set, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp set, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp set, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, no key, totp set, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp missing, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp missing, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp missing, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp missing, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp null, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp null, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp null, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp null, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp empty, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp empty, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp empty, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp empty, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp set, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp set, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp set, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"null url, key, totp set, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": null,
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp missing, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp missing, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp missing, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp missing, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp null, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp null, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp null, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp null, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp empty, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp empty, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp empty, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp empty, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp set, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp set, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp set, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, no key, totp set, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp missing, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp missing, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp missing, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp missing, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp null, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp null, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp null, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp null, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"passkeys": null,
+					"totp": "dec(ht|KEY)",
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp empty, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp empty, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp empty, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp empty, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp set, passkeys missing": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp set, passkeys null": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp set, passkeys empty": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": ""
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": ""
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	},
+	"url, key, totp set, passkeys set": {
+		"calls": [
+			"settle src",
+			"GET /apps/keepiq/api/v1/versions/v1",
+			"GET /apps/keepiq/api/v1/secrets/src",
+			{
+				"saveShared": {
+					"id": "src",
+					"plainDiff": {
+						"key": "p:k",
+						"login": "p:l",
+						"additionalFields": null,
+						"totp": "p:x",
+						"passkeys": "p:x"
+					},
+					"patch": {
+						"name": "Version name",
+						"url": "https://u",
+						"key": "E(p:k|CERT)",
+						"login": "E(p:l|CERT)",
+						"additionalFields": "E(null|CERT)",
+						"totp": "E(p:x|CERT)",
+						"passkeys": "E(p:x|CERT)"
+					},
+					"baseUpdatedAt": "base-src",
+					"restoredFrom": "v1"
+				},
+				"patchKeys": [
+					"name",
+					"url",
+					"key",
+					"login",
+					"additionalFields",
+					"totp",
+					"passkeys"
+				],
+				"full": {
+					"key": "p:k",
+					"login": "p:l",
+					"additionalFields": null,
+					"totp": "dec(ht|KEY)",
+					"passkeys": null,
+					"updatedAt": "base-src"
+				}
+			},
+			{
+				"notify": {
+					"ok": 1
+				}
+			},
+			"fetchSecret src",
+			"GET /apps/keepiq/api/v1/secrets/src/versions"
+		],
+		"error": null
+	}
+}

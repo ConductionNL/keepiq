@@ -29,7 +29,11 @@ struct GeneratorView: View {
     @State private var separator = "-"
     @State private var capitalise = false
     @State private var number = false
-    @State private var round = 0
+    /// The value on display. Made once per change of the settings or a tap on
+    /// regenerate, not in `body`: any other redraw (the text size, a toast
+    /// after Copy) keeps the value the user sees and copies.
+    @State private var outcome: GeneratorOutcome?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var settings: GeneratorSettings {
         GeneratorSettings(
@@ -53,8 +57,10 @@ struct GeneratorView: View {
     var body: some View {
         let policy = model.policy
         let safe = settings
-        let outcome = safe.tryGenerate(policy: policy)
-        let _ = round
+        // At the accessibility text sizes the buttons go under the value, so
+        // the value keeps the full width of the row instead of being squeezed
+        // into a narrow column and clipped.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         Form {
             Section {
                 Picker(L("gen_password"), selection: $passphrase) {
@@ -64,21 +70,35 @@ struct GeneratorView: View {
                 .pickerStyle(.segmented)
                 .disabled(policy?.allowPassphrase == false)
                 if policy?.allowPassphrase == false { Text(L("gen_passphrase_off")).font(.footnote) }
-                HStack {
-                    if let value = outcome.value {
-                        Text(value).font(.body.monospaced()).textSelection(.disabled).accessibilityIdentifier("generated")
-                    } else {
+                layout {
+                    if let value = outcome?.value {
+                        // A password has no word breaks: it wraps at any character.
+                        // A passphrase keeps its breaks at the separators.
+                        Text(FieldRow.breakableLongRuns(value))
+                            .font(.body.monospaced())
+                            .textSelection(.disabled)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityLabel(value)
+                            .accessibilityIdentifier("generated")
+                    } else if let outcome {
                         Text(generatorProblem(outcome.error)).foregroundStyle(.red)
                     }
-                    Spacer()
-                    Button { round += 1 } label: { Image(systemName: "arrow.clockwise") }
-                        .frame(minWidth: 44, minHeight: 44)
-                        .accessibilityLabel(L("cd_regenerate"))
-                    if let value = outcome.value {
-                        if let onUse {
-                            Button(L("action_use")) { onUse(value) }.frame(minWidth: 44, minHeight: 44)
-                        } else {
-                            Button(L("action_copy")) { model.copy(value) }.frame(minWidth: 44, minHeight: 44)
+                    if !typeSize.isAccessibilitySize { Spacer() }
+                    HStack {
+                        // The frame inside the label: a borderless button only takes taps on its label.
+                        Button { regenerate() } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                            .accessibilityLabel(L("cd_regenerate"))
+                        if let value = outcome?.value {
+                            if let onUse {
+                                Button(L("action_use")) { onUse(value) }.frame(minWidth: 44, minHeight: 44)
+                            } else {
+                                Button(L("action_copy")) { model.copy(value) }.frame(minWidth: 44, minHeight: 44)
+                            }
                         }
                     }
                 }
@@ -113,9 +133,16 @@ struct GeneratorView: View {
                 }
             }
         }
+        .onAppear { if outcome == nil { regenerate() } }
+        .onChange(of: safe) { regenerate() }
         .onChange(of: policy) { _, newPolicy in
             if let newPolicy { length = max(length, Double(newPolicy.minLength)) }
+            regenerate()
         }
+    }
+
+    private func regenerate() {
+        outcome = settings.tryGenerate(policy: model.policy)
     }
 
     private func generatorProblem(_ code: GeneratorErrorCode?) -> String {
@@ -213,7 +240,7 @@ struct SendListView: View {
             sends = list
             problem = nil
         } else {
-            problem = result?.problemOrNull?.write ?? WriteProblem(kind: .unreachable, serverMessage: nil, status: 0)
+            problem = result?.problemOrNull?.write ?? WriteProblem(kind: .unreachable)
         }
     }
 }
@@ -233,9 +260,11 @@ private struct SendRow: View {
             Text(created.map { L("send_row", kind, $0) } ?? kind)
             Text(detailText(expiry: expiry))
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(KeepiqPalette.secondaryText)
         }
         .frame(minHeight: 44)
+        // One element for the row, so its 44 pt is the hit area and not each line's.
+        .accessibilityElement(children: .combine)
     }
 
     private func expiryText(_ m: Int64) -> String {
@@ -254,8 +283,8 @@ private struct SendRow: View {
     }
 }
 
-/// Create a Send (task 3.6). A password needs Argon2id, which this device
-/// gets with task 1.3.1; until then the password field says so.
+/// Create a Send (task 3.6). A password needs Argon2id, which the core has on
+/// iOS since task 1.3.1; the core says whether this device can wrap.
 struct NewSendView: View {
     @ObservedObject var model: VaultModel
     let onDone: () -> Void
@@ -277,8 +306,9 @@ struct NewSendView: View {
     @State private var problem: String?
     @State private var created: CreatedSend?
 
-    /// Argon2id is not on iOS yet (task 1.3.1), so a password send cannot be made here.
-    private let passwordAvailable = false
+    /// Whether a password can protect the Send: the core answers (Argon2id, task 1.3.1).
+    /// @spec openspec/changes/clients-mobile-apps/tasks.md#3.6
+    private var passwordAvailable: Bool { model.session.sends.passwordAvailable }
 
     private let expiries: [(SendExpiry, String)] = [
         (.hour, "expiry_1h"), (.day, "expiry_1d"), (.twoDays, "expiry_2d"), (.threeDays, "expiry_3d"),
@@ -331,10 +361,14 @@ struct NewSendView: View {
                             TextField(L("send_hours_label"), text: $hours).keyboardType(.numberPad)
                         }
                     }
-                    LabeledField(L("send_password_label")) {
-                        SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode).disabled(!passwordAvailable)
+                    // Without a password option there is no field to fill in, only the reason.
+                    if passwordAvailable {
+                        LabeledField(L("send_password_label")) {
+                            SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode)
+                        }
+                    } else {
+                        Text(L("send_password_unavailable")).font(.footnote)
                     }
-                    if !passwordAvailable { Text(L("send_password_unavailable")).font(.footnote) }
                 }
                 Section {
                     if let problem { Text(problem).foregroundStyle(.red) }

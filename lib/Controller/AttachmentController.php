@@ -27,8 +27,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AttachmentService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AttachmentServiceInterface;
+use OCA\Keepiq\Service\AttachmentGrantRequest;
+use OCA\Keepiq\Service\AttachmentUpload;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -44,17 +47,17 @@ class AttachmentController extends OCSController {
 	 * Constructor for AttachmentController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param AttachmentService $attachmentService The attachment service
+	 * @param AttachmentServiceInterface $attachmentService The attachment service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private AttachmentService $attachmentService,
+		private AttachmentServiceInterface $attachmentService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -79,6 +82,10 @@ class AttachmentController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+	 *
+	 * @no-admin-idor-exempt scoped in the service. AttachmentService::upload()
+	 * loads the secret through loadOwnedSecret() with the session user, which
+	 * refuses a secret the caller does not own before anything is stored.
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -102,17 +109,16 @@ class AttachmentController extends OCSController {
 
 		try {
 			$result = $this->attachmentService->upload(
-				secretId: $secretId,
-				userId: $userId,
-				blob: $raw,
-				encryptedMetadata: $encryptedMetadata,
-				wrappedFileKey: $wrappedFileKey,
+				upload: new AttachmentUpload(
+					secretId: $secretId,
+					userId: $userId,
+					blob: $raw,
+					encryptedMetadata: $encryptedMetadata,
+					wrappedFileKey: $wrappedFileKey,
+				)
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		$row = $result['attachment']->jsonSerialize();
@@ -165,10 +171,7 @@ class AttachmentController extends OCSController {
 		try {
 			$bytes = $this->attachmentService->downloadBlob(attachmentId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['blob' => base64_encode($bytes)]);
@@ -188,6 +191,11 @@ class AttachmentController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
+	 *
+	 * @no-admin-idor-exempt scoped in the service. AttachmentService::addGrant()
+	 * loads the attachment's source secret through loadOwnedSecret() with the
+	 * session user, so only the owner adds a grant. Not yet checked: that
+	 * copySecretId is a copy of that source held by recipientId (keepiq#1876).
 	 */
 	#[NoAdminRequired]
 	public function addGrant(
@@ -204,18 +212,17 @@ class AttachmentController extends OCSController {
 
 		try {
 			$grant = $this->attachmentService->addGrant(
-				attachmentId: $id,
-				userId: $userId,
-				copySecretId: $copySecretId,
-				recipientId: $recipientId,
-				wrappedFileKey: $wrappedFileKey,
-				recipientType: $recipientType,
+				request: new AttachmentGrantRequest(
+					attachmentId: $id,
+					userId: $userId,
+					copySecretId: $copySecretId,
+					recipientId: $recipientId,
+					wrappedFileKey: $wrappedFileKey,
+					recipientType: $recipientType,
+				)
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $grant->jsonSerialize(), statusCode: Http::STATUS_CREATED);
@@ -242,10 +249,7 @@ class AttachmentController extends OCSController {
 		try {
 			$this->attachmentService->delete(attachmentId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: ['deleted' => true]);

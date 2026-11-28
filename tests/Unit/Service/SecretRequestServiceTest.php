@@ -28,18 +28,25 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RequestedFields;
 use OCA\Keepiq\Service\SecretPlaceholderCleaner;
 use OCA\Keepiq\Service\SecretRequestOutbox;
 use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCA\Keepiq\Service\SecretRequestSuiteLockService;
 use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -112,13 +119,18 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$this->service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->suiteLockService = new SecretRequestSuiteLockService(
@@ -146,7 +158,7 @@ class SecretRequestServiceTest extends TestCase {
 		$result = $this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['password', 'login'],
+			requestedFields: new RequestedFields(names: ['password', 'login']),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice'
@@ -177,12 +189,106 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: [],
+			requestedFields: new RequestedFields(names: []),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice'
 		);
 	}//end testCreateRejectsEmptyFields()
+
+	/**
+	 * Test create stores the schemas of the requested custom fields and returns them.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testCreateStoresTheFieldSchemas(): void {
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$result = $this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key', 'PIN'], schemas: ['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]]),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+
+		$this->assertSame(
+			expected: ['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]],
+			actual: json_decode(json: (string)$result->getFieldSchemas(), associative: true)
+		);
+		$this->assertEquals(
+			expected: (object)['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]],
+			actual: $result->jsonSerialize()['fieldSchemas']
+		);
+	}//end testCreateStoresTheFieldSchemas()
+
+	/**
+	 * Test create refuses a schema for a field the request does not ask for.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testCreateRefusesASchemaForAFieldNotRequested(): void {
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(exception: InvalidArgumentException::class);
+
+		$this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key'], schemas: ['PIN' => ['type' => 'string']]),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+	}//end testCreateRefusesASchemaForAFieldNotRequested()
+
+	/**
+	 * A request for an application's secret is refused when it names a field
+	 * schema: the fill writes the application's blob as sealed, so the schema
+	 * could never reach the secret. Without one the request is stored.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testARequestForAnApplicationsSecretRefusesFieldSchemas(): void {
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('application');
+		$secret->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$stored = $this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key', 'PIN']),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+		$this->assertSame('sec-1', $stored->getSecretId());
+
+		try {
+			$this->service->create(
+				secretId: 'sec-1',
+				encryptionSuiteId: 'suite-1',
+				requestedFields: new RequestedFields(names: ['key', 'PIN'], schemas: ['PIN' => ['type' => 'string', 'hidden' => true]]),
+				isReRequest: false,
+				expiresAt: null,
+				userId: 'alice',
+			);
+			$this->fail('A field schema on an application\'s secret was accepted');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame("A request for an application's secret cannot carry field schemas", $e->getMessage());
+			$this->assertSame(400, $e->getCode());
+		}
+	}//end testARequestForAnApplicationsSecretRefusesFieldSchemas()
 
 	/**
 	 * Test approve flips a pending request to fulfilled and sets the timestamp.
@@ -431,13 +537,18 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(notificationService: $notifier),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		// The linked Secret, user-owned.
@@ -503,13 +614,18 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
@@ -543,13 +659,18 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -558,16 +679,81 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFillRefusesAFieldThatCannotBeStored()
 
 	/**
+	 * Fills that put a value in the wrong bucket, with the refusal each gets.
+	 *
+	 * @return array<string,array{0:list<string>,1:array<string,string>,2:array<string,string>,3:string}>
+	 */
+	public static function misplacedFills(): array {
+		return [
+			'url as ciphertext'      => [['key'], ['key' => 'C', 'url' => 'C'], [], 'Field "url" is plaintext metadata and must be sent in plainFields'],
+			'a member on its own'    => [['key'], ['key' => 'C', 'api-key' => 'C'], [], 'Field "api-key" cannot be stored on a secret. Additional members belong inside the "additionalFields" blob, keyed by their own names.'],
+			'the key in plain'       => [['url'], [], ['url' => 'P', 'key' => 'P'], 'Field "key" is not plaintext metadata and must be encrypted'],
+		];
+	}//end misplacedFills()
+
+	/**
+	 * A value in the wrong bucket is refused with 400 and its reason, before
+	 * the secret is read or the request moves.
+	 *
+	 * @param list<string>          $requested The requested fields
+	 * @param array<string,string> $encrypted The encrypted bucket
+	 * @param array<string,string> $plain     The plaintext bucket
+	 * @param string               $message   The refusal
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('misplacedFills')]
+	public function testFillRefusesAMisplacedValueWithItsReason(array $requested, array $encrypted, array $plain, string $message): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode($requested));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretMapper->expects($this->never())->method('findById');
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: $encrypted, plainFields: $plain);
+			$this->fail('A misplaced value must be refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame([$message, 400], [$exception->getMessage(), $exception->getCode()]);
+		}
+	}//end testFillRefusesAMisplacedValueWithItsReason()
+
+	/**
+	 * A fill whose secret is gone is refused with 404 and leaves the request
+	 * pending.
+	 *
+	 * @return void
+	 */
+	public function testFillOfAVanishedSecretIsNotFound(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretMapper->method('findById')->willThrowException(new DoesNotExistException('gone'));
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'C']);
+			$this->fail('A fill of a vanished secret must be refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame(['The secret this request writes to no longer exists', 404], [$exception->getMessage(), $exception->getCode()]);
+		}
+	}//end testFillOfAVanishedSecretIsNotFound()
+
+	/**
 	 * Every field a Secret supports is requestable, each in its own bucket.
 	 *
 	 * `key` is ciphertext, `url` is plaintext metadata the owner searches on,
 	 * and any other requested name is a member of the single encrypted
 	 * additionalFields blob. Encrypting `url` would put ciphertext in a
-	 * searchable column.
+	 * searchable column. The blob is held back for the owner's browser to
+	 * merge, also when the secret has no extra fields yet.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function testFillStoresCiphertextPlaintextAndTheAdditionalBlob(): void {
 		$entity = $this->buildPending();
@@ -589,7 +775,6 @@ class SecretRequestServiceTest extends TestCase {
 				'sec-1',
 				[
 					'key' => 'CIPHER_KEY',
-					'additionalFields' => 'CIPHER_BLOB',
 					// Stored as given: plaintext, so it stays searchable.
 					'url' => 'https://example.test/api',
 				],
@@ -606,6 +791,8 @@ class SecretRequestServiceTest extends TestCase {
 		);
 
 		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+		$this->assertNull($secret->getAdditionalFields());
+		$this->assertSame(['CIPHER_BLOB'], $secret->pendingAdditionalFieldList());
 	}//end testFillStoresCiphertextPlaintextAndTheAdditionalBlob()
 
 	/**
@@ -621,6 +808,7 @@ class SecretRequestServiceTest extends TestCase {
 	public function testFillKeepsTheOwnersExtraFieldsAndHoldsTheFilledBlobPending(): void {
 		$entity = $this->buildPending();
 		$entity->setRequestedFields(json_encode(['key', 'api-interface-id']));
+		$entity->setFieldSchemas(json_encode(['api-interface-id' => ['type' => 'string', 'hidden' => true]]));
 
 		$this->mapper->method('findByToken')->willReturn($entity);
 		$this->mapper->method('findById')->willReturn($entity);
@@ -631,7 +819,7 @@ class SecretRequestServiceTest extends TestCase {
 		$secret->setOwnerType('user');
 		$secret->setOwnerId('requester');
 		$secret->setAdditionalFields('OWNERS_OWN_BLOB');
-		$secret->setPendingAdditionalFieldList(['EARLIER_FILL']);
+		$secret->setPendingAdditionalFields('["EARLIER_FILL"]');
 		$this->secretMapper->method('findById')->willReturn($secret);
 
 		$this->secretMapper->expects($this->once())
@@ -652,6 +840,11 @@ class SecretRequestServiceTest extends TestCase {
 		$this->assertSame('OWNERS_OWN_BLOB', $secret->getAdditionalFields());
 		$this->assertSame(['EARLIER_FILL', 'CIPHER_BLOB'], $secret->pendingAdditionalFieldList());
 		$this->assertSame(['EARLIER_FILL', 'CIPHER_BLOB'], $secret->jsonSerialize()['pendingAdditionalFields']);
+		// The request's checked schemas travel with its blob, so the merge never needs the request again.
+		$this->assertEquals(
+			[(object)[], (object)['api-interface-id' => ['type' => 'string', 'hidden' => true]]],
+			$secret->jsonSerialize()['pendingFieldSchemas']
+		);
 	}//end testFillKeepsTheOwnersExtraFieldsAndHoldsTheFilledBlobPending()
 
 	/**
@@ -740,20 +933,84 @@ class SecretRequestServiceTest extends TestCase {
 	/**
 	 * Build a service wired for the fill tests.
 	 *
+	 * @param ViewOnlyCopyGuard|null $viewOnlyCopies The view-only guard; a stub that lets every fill through when null
+	 *
 	 * @return SecretRequestService
 	 */
-	private function makeFillService(): SecretRequestService {
+	private function makeFillService(?ViewOnlyCopyGuard $viewOnlyCopies = null): SecretRequestService {
 		return new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $viewOnlyCopies ?? $this->createStub(ViewOnlyCopyGuard::class),
 		);
 	}//end makeFillService()
+
+	/**
+	 * Fills of a view-only copy that carry an extra-field blob: with a key,
+	 * and the blob alone.
+	 *
+	 * @return array<string,array{string[],array<string,string>}>
+	 */
+	public static function viewOnlyFills(): array {
+		return [
+			'a key and extra fields' => [['key', 'api-interface-id'], ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB']],
+			'extra fields only' => [['api-interface-id'], ['additionalFields' => 'CIPHER_BLOB']],
+		];
+	}//end viewOnlyFills()
+
+	/**
+	 * A fill onto a copy its holder may only view is refused before the
+	 * filled extra-field blob is held back, so nothing is stored and the
+	 * request stays pending (keepiq#1287).
+	 *
+	 * @param string[] $requested The requested fields
+	 * @param array<string,string> $filled The filled ciphertext
+	 *
+	 * @return void
+	 */
+	#[DataProvider('viewOnlyFills')]
+	public function testAFillOntoAViewOnlyCopyIsRefusedWithNothingStored(array $requested, array $filled): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode($requested));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$secret->setAdditionalFields('OWNERS_OWN_BLOB');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('update');
+
+		$guard = $this->createMock(ViewOnlyCopyGuard::class);
+		$guard->expects($this->once())->method('assertMayChangeValue')
+			->with($secret, array_keys($filled), 'requester')
+			->willThrowException(new ViewOnlyCopyException());
+
+		try {
+			$this->makeFillService(viewOnlyCopies: $guard)->fill(token: 'tok-good', encryptedFields: $filled);
+			$this->fail('A fill onto a view-only copy must be refused');
+		} catch (ViewOnlyCopyException) {
+			// Expected.
+		}
+
+		$this->assertSame([], $secret->pendingAdditionalFieldList());
+		$this->assertSame('OWNERS_OWN_BLOB', $secret->getAdditionalFields());
+		$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+	}//end testAFillOntoAViewOnlyCopyIsRefusedWithNothingStored()
 
 	/**
 	 * A failed write leaves the request pending, not fulfilled and empty.
@@ -786,13 +1043,18 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				typeMapper: $this->namedTypes()
+			),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		try {
@@ -804,6 +1066,189 @@ class SecretRequestServiceTest extends TestCase {
 			$this->assertNull($entity->getFulfilledAt());
 		}
 	}//end testFillLeavesTheRequestPendingWhenTheWriteFails()
+
+	/**
+	 * An owner's save that lands between the fill's read and its write
+	 * refuses the write, and the fill writes once more on the row as it is
+	 * now.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testFillWritesAgainOverASaveThatLandsDuringIt(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$calls = 0;
+		$this->secretService->expects($this->exactly(2))->method('update')
+			->with('sec-1', ['key' => 'CIPHER'], 'requester')
+			->willReturnCallback(
+				static function () use (&$calls, $secret): Secret {
+					$calls++;
+					if ($calls === 1) {
+						throw new StaleWriteException(current: $secret);
+					}
+
+					return $secret;
+				}
+			);
+
+		$result = $this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testFillWritesAgainOverASaveThatLandsDuringIt()
+
+	/**
+	 * Keepiq#750 with a save during the fill: the filled blob is held back
+	 * before the first write, so the second write, on the row as it is now,
+	 * carries only the other values and cannot overwrite the extra fields the
+	 * owner saved meanwhile.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key', 'api-interface-id']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$read = new Secret();
+		$read->setId('sec-1');
+		$read->setOwnerType('user');
+		$read->setOwnerId('requester');
+		$current = clone $read;
+		$current->setAdditionalFields('SAVED_MEANWHILE');
+		$this->secretMapper->method('findById')->willReturn($read);
+		$this->secretMapper->expects($this->once())->method('update')->with($this->identicalTo($read))->willReturnArgument(0);
+
+		$writes = [];
+		$this->secretService->expects($this->exactly(2))->method('update')->willReturnCallback(
+			static function (string $id, array $data) use (&$writes, $current): Secret {
+				$writes[] = $data;
+				if (count($writes) === 1) {
+					throw new StaleWriteException(current: $current);
+				}
+
+				return $current;
+			}
+		);
+
+		$this->makeFillService()->fill(
+			token: 'tok-good',
+			encryptedFields: ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'],
+		);
+
+		$this->assertSame([['key' => 'CIPHER_KEY'], ['key' => 'CIPHER_KEY']], $writes);
+		$this->assertSame('SAVED_MEANWHILE', $current->getAdditionalFields());
+		$this->assertSame(['CIPHER_BLOB'], $read->pendingAdditionalFieldList());
+	}//end testFillHoldsTheBlobBackWhenTheOwnerSavedExtraFieldsDuringIt()
+
+	/**
+	 * A fill of only an extra-field blob, on a secret with no extra fields
+	 * yet, is held back as well and makes no update: written as is, the blob
+	 * would keep whatever `@schema` the filler sealed into it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testAFillOfOnlyExtraFieldsIsHeldBackWithoutAnUpdate(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['api-interface-id']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->expects($this->once())->method('update')->with($this->identicalTo($secret))->willReturnArgument(0);
+		$this->secretService->expects($this->never())->method('update');
+
+		$result = $this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['additionalFields' => 'CIPHER_BLOB']);
+
+		$this->assertNull($secret->getAdditionalFields());
+		$this->assertSame(['CIPHER_BLOB'], $secret->pendingAdditionalFieldList());
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testAFillOfOnlyExtraFieldsIsHeldBackWithoutAnUpdate()
+
+	/**
+	 * A row that moves again during the second write refuses the fill with
+	 * 409 and leaves the request pending, so the filler can submit again.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testFillLeavesTheRequestPendingWhenTheSecretMovesTwice(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretService->expects($this->exactly(2))->method('update')
+			->willThrowException(new StaleWriteException(current: $secret));
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+			$this->fail('A secret that moved twice must refuse the fill');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(409, $e->getCode());
+			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+		}
+	}//end testFillLeavesTheRequestPendingWhenTheSecretMovesTwice()
+
+	/**
+	 * On an application-owned secret the application's update makes the
+	 * second attempt itself: its refusal is called once, not retried on top,
+	 * and refuses the fill with 409 like the user's, leaving the request pending.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testAnApplicationFillThatMovesTwiceIsRefusedOnceAndStaysPending(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('application');
+		$secret->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretService->expects($this->once())->method('updateByApplication')
+			->with('sec-1', ['key' => 'CIPHER'], 'app-1')
+			->willThrowException(new StaleWriteException(current: $secret));
+		$this->secretService->expects($this->never())->method('update');
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+			$this->fail('A secret that moved twice must refuse the fill');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(409, $e->getCode());
+			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+		}
+	}//end testAnApplicationFillThatMovesTwiceIsRefusedOnceAndStaysPending()
 
 	/**
 	 * fill rejects payloads that omit a required field.
@@ -915,6 +1360,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
@@ -946,6 +1392,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -973,6 +1420,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1043,6 +1491,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1050,7 +1499,7 @@ class SecretRequestServiceTest extends TestCase {
 		$service->createForApplication(
 			secretId: 'sec-1',
 			applicationId: 'app-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1092,13 +1541,14 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(ForbiddenException::class);
 
 		$service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1143,12 +1593,13 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->createForApplication(
 			secretId: 'sec-1',
 			applicationId: 'app-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1184,6 +1635,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1192,7 +1644,7 @@ class SecretRequestServiceTest extends TestCase {
 		$service->createForApplication(
 			secretId: 'sec-1',
 			applicationId: 'app-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1244,11 +1696,12 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$result = $service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'alice',
 		);
@@ -1287,6 +1740,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1294,7 +1748,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'alice',
 		);
@@ -1336,6 +1790,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1343,7 +1798,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'alice',
 		);
@@ -1388,8 +1843,8 @@ class SecretRequestServiceTest extends TestCase {
 
 		$request = $this->service->createForUserVault(
 			userId: 'alice',
-			requestedFields: ['key', 'url'],
-			name: 'Supplier API key',
+			requestedFields: new RequestedFields(names: ['key', 'url']),
+			placeholder: ['name' => 'Supplier API key'],
 		);
 
 		$this->assertSame('sec-placeholder', $captured->getSecretId());
@@ -1399,6 +1854,269 @@ class SecretRequestServiceTest extends TestCase {
 		$this->assertSame(SecretRequest::STATUS_PENDING, $captured->getStatus());
 		$this->assertNotSame('', (string)$request->getToken());
 	}//end testFreshRequestCreatesItsOwnPlaceholder()
+
+	/**
+	 * A FRESH request files its placeholder as the type the requester picked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestFilesThePlaceholderAsTheChosenType(): void {
+		$shell = new Secret();
+		$shell->setId('sec-placeholder');
+		$shell->setEncryptionSuiteId('suite-9');
+
+		$this->secretService->expects($this->once())
+			->method('create')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => $data['typeId'] === 'type-certificate'
+				),
+				'alice',
+				true
+			)
+			->willReturn($shell);
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$this->service->createForUserVault(
+			userId: 'alice',
+			requestedFields: new RequestedFields(names: ['key']),
+			placeholder: ['name' => 'Supplier TLS certificate', 'typeId' => 'type-certificate'],
+		);
+	}//end testFreshRequestFilesThePlaceholderAsTheChosenType()
+
+	/**
+	 * Without a type the placeholder keeps SecretService's default.
+	 *
+	 * Null is passed on rather than replaced here, so the default lives in one
+	 * place: SecretTypeService::resolveTypeForSecret().
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestWithoutATypeLeavesTheDefault(): void {
+		$shell = new Secret();
+		$shell->setId('sec-placeholder');
+		$shell->setEncryptionSuiteId('suite-9');
+
+		$this->secretService->expects($this->once())
+			->method('create')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => array_key_exists('typeId', $data) === true
+						&& $data['typeId'] === null
+				),
+				'alice',
+				true
+			)
+			->willReturn($shell);
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: ['key']), placeholder: ['name' => 'Anything']);
+	}//end testFreshRequestWithoutATypeLeavesTheDefault()
+
+	/**
+	 * A fresh request asked as an identity is refused before any placeholder exists.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder(): void {
+		$this->secretService->expects($this->never())->method('create');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$this->service->createForUserVault(
+			userId: 'alice',
+			requestedFields: new RequestedFields(names: ['key']),
+			placeholder: ['name' => 'Your passport', 'typeId' => 'type-identity'],
+		);
+	}//end testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder()
+
+	/**
+	 * A fill-in or re-request on an existing payment card is refused.
+	 *
+	 * Both end in create(), which is where the rule sits.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testRequestOnACardSecretIsRefused(): void {
+		$card = new Secret();
+		$card->setId('sec-card');
+		$card->setTypeId('type-card');
+		$this->secretMapper->method('findById')->willReturn($card);
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$this->service->create(
+			secretId: 'sec-card',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key']),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+	}//end testRequestOnACardSecretIsRefused()
+
+	/**
+	 * A request whose Secret was changed to a type that cannot be requested
+	 * after it was made is refused when its link is opened.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testALinkIsRefusedOnceItsSecretBecameACard(): void {
+		$this->mapper->method('findByToken')->willReturn($this->buildPending());
+		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
+
+		try {
+			$this->service->getByToken(token: 'tok-good');
+			$this->fail('A link onto a card must be refused');
+		} catch (InvalidArgumentException $e) {
+			// As any unavailable link: the recipient cannot tell this case apart.
+			$this->assertSame(410, $e->getCode());
+			// The anonymous recipient is not told what the Secret became.
+			$this->assertSame('Request is no longer available', $e->getMessage());
+		}
+
+		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $this->service->refusalReason(token: 'tok-good'));
+	}//end testALinkIsRefusedOnceItsSecretBecameACard()
+
+	/**
+	 * The member holding the field schemas is not a field, so it cannot be requested.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	 */
+	public function testTheSchemaMemberCannotBeRequested(): void {
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('@schema holds the field schemas and cannot be requested');
+
+		$this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key', '@schema']),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+	}//end testTheSchemaMemberCannotBeRequested()
+
+	/**
+	 * Another user's Secret is refused before its type is looked at, so the
+	 * answer does not tell whether it is a card.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testAnotherUsersCardIsRefusedWithoutNamingItsType(): void {
+		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Not authorized for this secret');
+		$this->expectExceptionCode(403);
+
+		$this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key']),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'mallory',
+		);
+	}//end testAnotherUsersCardIsRefusedWithoutNamingItsType()
+
+	/**
+	 * A re-request on the owner's own payment card is refused.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testReRequestOnACardSecretIsRefused(): void {
+		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
+		$this->mapper->method('findPendingBySecretId')->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->expects($this->never())->method('insert');
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				secretMapper: $this->secretMapper,
+				typeMapper: $this->namedTypes()
+			),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+		);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$service->createReRequest(secretId: 'sec-1', requestedFields: new RequestedFields(names: ['key']), expiresAt: null, userId: 'requester');
+	}//end testReRequestOnACardSecretIsRefused()
+
+	/**
+	 * A fill whose Secret was changed to a type that cannot be requested
+	 * after the request was made is refused, with nothing written and the
+	 * request left pending.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testAFillIsRefusedOnceItsSecretBecameACard(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
+		$this->secretService->expects($this->never())->method('update');
+
+		try {
+			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+			$this->fail('A fill onto a card must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(410, $e->getCode());
+			$this->assertSame('Request is no longer available', $e->getMessage());
+			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+		}
+	}//end testAFillIsRefusedOnceItsSecretBecameACard()
+
+	/**
+	 * A user-owned Secret of the payment card type.
+	 *
+	 * @return Secret
+	 */
+	private function cardSecret(): Secret {
+		$card = new Secret();
+		$card->setId('sec-1');
+		$card->setOwnerType('user');
+		$card->setOwnerId('requester');
+		$card->setTypeId('type-card');
+		$card->setEncryptionSuiteId('suite-1');
+		return $card;
+	}//end cardSecret()
 
 	/**
 	 * A failed request creation leaves no orphan placeholder behind.
@@ -1423,8 +2141,8 @@ class SecretRequestServiceTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->service->createForUserVault(
 			userId: 'alice',
-			requestedFields: ['key'],
-			name: 'doomed',
+			requestedFields: new RequestedFields(names: ['key']),
+			placeholder: ['name' => 'doomed'],
 		);
 	}//end testFreshRequestRollsBackThePlaceholderOnFailure()
 
@@ -1439,7 +2157,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->secretService->expects($this->never())->method('create');
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->createForUserVault(userId: 'alice', requestedFields: []);
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: []));
 	}//end testFreshRequestRefusesAnEmptyFieldList()
 
 	/**
@@ -1564,8 +2282,8 @@ class SecretRequestServiceTest extends TestCase {
 			}
 		);
 
-		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'one');
-		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'two');
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: ['key']), placeholder: ['name' => 'one']);
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: ['key']), placeholder: ['name' => 'two']);
 
 		$this->assertSame(['sec-a', 'sec-b'], $seen);
 		$this->assertCount(2, array_unique($seen));
@@ -1663,7 +2381,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->secretService->expects($this->never())->method('create');
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->createForUserVault(userId: '', requestedFields: ['key']);
+		$this->service->createForUserVault(userId: '', requestedFields: new RequestedFields(names: ['key']));
 	}//end testFreshRequestRefusesAnEmptyUserId()
 
 	/**
@@ -1690,8 +2408,8 @@ class SecretRequestServiceTest extends TestCase {
 		try {
 			$this->service->createForUserVault(
 				userId: 'alice',
-				requestedFields: ['key'],
-				name: 'doomed',
+				requestedFields: new RequestedFields(names: ['key']),
+				placeholder: ['name' => 'doomed'],
 			);
 			$this->fail('the original failure must surface');
 		} catch (RuntimeException $e) {
@@ -2122,6 +2840,7 @@ class SecretRequestServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			container: $this->container,
 			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $service->refusalReason(token: 'tok-good'));
@@ -2166,4 +2885,30 @@ class SecretRequestServiceTest extends TestCase {
 		$suites->method('findById')->willReturn($suite);
 		return $suites;
 	}//end activeSuites()
+
+	/**
+	 * A type mapper naming `type-card` and `type-identity` as such and every
+	 * other id a Login, so the not-requestable rule passes for tests that are
+	 * not about it.
+	 *
+	 * @return SecretTypeMapper
+	 */
+	private function namedTypes(): SecretTypeMapper {
+		$types = $this->createStub(SecretTypeMapper::class);
+		$types->method('findById')->willReturnCallback(
+			static function (string $id): SecretType {
+				$type = new SecretType();
+				$type->setId($id);
+				$type->setName(
+					match ($id) {
+						'type-card' => 'card',
+						'type-identity' => 'identity',
+						default => 'login',
+					}
+				);
+				return $type;
+			}
+		);
+		return $types;
+	}//end namedTypes()
 }//end class

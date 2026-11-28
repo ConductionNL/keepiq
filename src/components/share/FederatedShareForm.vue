@@ -100,6 +100,14 @@
 					>{{ stateText(row.status) }}</span
 				>
 				<NcButton
+					v-if="row.status === 'suspended'"
+					variant="secondary"
+					:disabled="busy"
+					data-testid="federated-share-resume"
+					@click="resume(row)">
+					{{ t('keepiq', 'Resume') }}
+				</NcButton>
+				<NcButton
 					v-if="row.status !== 'revoked'"
 					variant="tertiary"
 					:disabled="busy"
@@ -115,8 +123,13 @@
 <script>
 import { NcButton, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { FederatedCertificateError } from '../../crypto/federatedCertificate.js'
-import { useFederatedShareStore } from '../../store/modules/federatedShare.js'
+import {
+	CloudIdMismatchError,
+	partnerUpgradeText,
+	useFederatedShareStore,
+} from '../../store/modules/federatedShare.js'
 import { useSecretStore } from '../../store/modules/secret.js'
+import { isShareScanPending } from '../../utils/shareScanPending.js'
 
 export default {
 	name: 'FederatedShareForm',
@@ -221,6 +234,43 @@ export default {
 		},
 
 		/**
+		 * Resume a suspended share: verify the recipient's certificate again,
+		 * encrypt the current value for it and send it. When the secret
+		 * changed meanwhile the server refuses it as `stale_source`; it is
+		 * read and encrypted again, at most three times.
+		 *
+		 * @param {object} row The suspended federated share.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+		 */
+		async resume(row) {
+			this.busy = true
+			this.error = ''
+			try {
+				const store = useFederatedShareStore()
+				const recipient = await store.lookup(row.recipientCloudId)
+				for (let attempt = 1; ; attempt++) {
+					const secret = await useSecretStore().fetchSecret(this.secretId)
+					try {
+						await store.resume(row, secret, recipient)
+						return
+					} catch (e) {
+						if (
+							attempt >= 3
+							|| e?.response?.data?.error !== 'stale_source'
+						) {
+							throw e
+						}
+					}
+				}
+			} catch (e) {
+				this.error = this.explain(e)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
 		 * Revoke a federated share; the recipient's copy is deleted.
 		 *
 		 * @param {string} id The federated share.
@@ -251,7 +301,7 @@ export default {
 				active: t('keepiq', 'Shared'),
 				suspended: t(
 					'keepiq',
-					'Paused: their certificate or the partnership changed. Revoke it or share again.',
+					'Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.',
 				),
 
 				failed: t(
@@ -274,9 +324,23 @@ export default {
 		 * @param {Error|object} e The failure.
 		 * @return {string}
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 		 */
 		explain(e) {
-			if (e instanceof FederatedCertificateError) {
+			const tooOld = partnerUpgradeText(e)
+			if (tooOld !== null) {
+				return tooOld
+			}
+			if (isShareScanPending(e)) {
+				return t(
+					'keepiq',
+					'This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.',
+				)
+			}
+			if (
+				e instanceof FederatedCertificateError
+				|| e instanceof CloudIdMismatchError
+			) {
 				return t(
 					'keepiq',
 					'The certificate could not be verified. Nothing was shared.',
@@ -298,6 +362,12 @@ export default {
 					'The other organisation did not answer. Try again later.',
 				),
 
+				// The owner's server refused the partner's chain before the browser saw it.
+				bad_chain: t(
+					'keepiq',
+					'The certificate could not be verified. Nothing was shared.',
+				),
+
 				delivery_failed: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
@@ -306,6 +376,17 @@ export default {
 				already_shared: t(
 					'keepiq',
 					'This secret is already shared with that account.',
+				),
+
+				not_shareable: t(
+					'keepiq',
+					'This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.',
+				),
+
+				// The login holds a one-time code or passkeys this client does not send yet.
+				copy_fields_mismatch: t(
+					'keepiq',
+					'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
 				),
 			}
 			return (

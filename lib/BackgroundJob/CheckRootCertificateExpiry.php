@@ -23,7 +23,7 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use Exception;
 use OCA\Keepiq\Db\CACertificateMapper;
-use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -51,7 +51,7 @@ class CheckRootCertificateExpiry extends TimedJob {
 	 * @param CACertificateMapper $caCertMapper The CA certificate mapper
 	 * @param LoggerInterface $logger The logger interface
 	 * @param IGroupManager $groupManager The group manager (admin recipients)
-	 * @param NotificationService $notificationService The notification dispatcher
+	 * @param NotificationServiceInterface $notificationService The notification dispatcher
 	 * @param IAppConfig $appConfig Remembers which threshold was announced
 	 *
 	 * @return void
@@ -61,7 +61,7 @@ class CheckRootCertificateExpiry extends TimedJob {
 		private CACertificateMapper $caCertMapper,
 		private LoggerInterface $logger,
 		private IGroupManager $groupManager,
-		private NotificationService $notificationService,
+		private NotificationServiceInterface $notificationService,
 		private IAppConfig $appConfig,
 	) {
 		parent::__construct(time: $time);

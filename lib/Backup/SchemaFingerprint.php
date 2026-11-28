@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Backup;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IDBConnection;
 
 /**
@@ -58,7 +58,7 @@ class SchemaFingerprint {
 		$qb = $this->db->getQueryBuilder();
 		$result = $qb->select('version')
 			->from('migrations')
-			->where($qb->expr()->eq('app', $qb->createNamedParameter(Application::APP_ID)))
+			->where($qb->expr()->eq('app', $qb->createNamedParameter(AppIdentity::APP_ID)))
 			->executeQuery();
 		$versions = [];
 		while (($row = $result->fetch()) !== false) {

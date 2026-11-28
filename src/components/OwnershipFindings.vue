@@ -57,13 +57,46 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard, NcSelect } from '@nextcloud/vue'
+import { busyRequest } from '../mixins/busyRequest.js'
 import { fetchPolicy } from '../policy/policy.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 
+/**
+ * @param {string|undefined|null} value A decrypted value.
+ * @return {string} The value, or '' when there is none.
+ */
+function orEmpty(value) {
+	return value ?? ''
+}
+
+/**
+ * @param {object} plain The decrypted personal secret.
+ * @return {object} The contributed copy's name, URL and type.
+ */
+function contributedHeader(plain) {
+	return { name: plain.name, url: plain.url ?? null, typeId: plain.typeId }
+}
+
+/**
+ * @param {object} plain The decrypted personal secret.
+ * @return {object} The contributed copy's value fields, '' or null when absent.
+ */
+function contributedValues(plain) {
+	return {
+		key: orEmpty(plain.key),
+		login: orEmpty(plain.login),
+		additionalFields: plain.additionalFields ?? null,
+		totp: orEmpty(plain.totp),
+		passkeys: orEmpty(plain.passkeys),
+	}
+}
+
 export default {
 	name: 'OwnershipFindings',
 	components: { NcButton, NcNoteCard, NcSelect },
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -147,39 +180,59 @@ export default {
 			if (!target) {
 				return
 			}
-			this.busy = true
-			this.error = null
-			const secretStore = useSecretStore()
-			try {
+			await this.runBusy(async () => {
 				if (target.kind === 'owner') {
-					// Own team folder: a move, then share with its members.
-					await secretStore.updateSecret(finding.id, {
-						folderId: target.folderId,
-					})
-					await useTeamFolderStore().runFanOut(target.teamFolderId)
+					await this.moveIntoOwnFolder(finding, target)
 				} else {
-					// Someone else's team folder: contribute a copy, and only
-					// then remove the personal one.
-					const raw = await axios.get(
-						generateUrl(`/apps/keepiq/api/v1/secrets/${finding.id}`),
-					)
-					const plain = await secretStore.decryptSecret(raw.data)
-					await secretStore.contributeSecret(target.teamFolderId, {
-						name: plain.name,
-						url: plain.url ?? null,
-						typeId: plain.typeId,
-						key: plain.key ?? '',
-						login: plain.login ?? '',
-						additionalFields: plain.additionalFields ?? null,
-					})
-					await secretStore.deleteSecret(finding.id)
+					await this.contributeToFolder(finding, target)
 				}
 				this.findings = this.findings.filter((row) => row.id !== finding.id)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
+			})
+		},
+
+		/**
+		 * Own team folder: a move, then share with its members. When the
+		 * secret moved but its members did not all get a copy, say which.
+		 *
+		 * @param {object} finding The finding row.
+		 * @param {object} target The chosen own team folder.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
+		 */
+		async moveIntoOwnFolder(finding, target) {
+			await useSecretStore().updateSecret(finding.id, {
+				folderId: target.folderId,
+			})
+			const result = await useTeamFolderStore().runFanOut(target.teamFolderId)
+			if (result?.refused?.length > 0) {
+				this.error = this.t(
+					'keepiq',
+					'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+					{ names: result.refused.join(', ') },
+				)
 			}
+		},
+
+		/**
+		 * Someone else's team folder: contribute a copy, and only then remove
+		 * the personal one.
+		 *
+		 * @param {object} finding The finding row.
+		 * @param {object} target The chosen writable team folder.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
+		 */
+		async contributeToFolder(finding, target) {
+			const secretStore = useSecretStore()
+			const raw = await axios.get(
+				generateUrl(`/apps/keepiq/api/v1/secrets/${finding.id}`),
+			)
+			const plain = await secretStore.decryptSecret(raw.data)
+			await secretStore.contributeSecret(target.teamFolderId, {
+				...contributedHeader(plain),
+				...contributedValues(plain),
+			})
+			await secretStore.deleteSecret(finding.id)
 		},
 	},
 }

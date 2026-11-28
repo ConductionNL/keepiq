@@ -57,6 +57,9 @@ class SystemAutofillTest {
     private val service = "nl.conduction.keepiq/nl.conduction.keepiq.android.autofill.KeepiqAutofillService"
     private val seed = "otpauth://totp/Keepiq:e2e?secret=JBSWY3DPEHPK3PXP&issuer=Keepiq"
 
+    /** The login's own seed: another key than the Authenticator item's, so the test sees which one filled the code. */
+    private val loginSeed = "otpauth://totp/Keepiq:e2e-login?secret=GEZDGNBVGY3TQOJQ&issuer=Keepiq"
+
     @Before
     fun setUp() {
         E2e.requireServer()
@@ -91,7 +94,8 @@ class SystemAutofillTest {
         val appUrl = AppLink(testPackage, setOf(print)).toUrl()
         val lookAlikeUrl = AppLink(testPackage, setOf("00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF")).toUrl()
         val webId = create(api, keys, "login", "Test server", "https://10.0.2.2:8443", "webuser", "web-secret-1")
-        val appId = create(api, keys, "login", "Test app", appUrl, "appuser", "app-secret-1")
+        // The app's login carries its own seed (mobile-login-totp-passkeys D10); "Test code" is a standalone Authenticator item.
+        val appId = create(api, keys, "login", "Test app", appUrl, "appuser", "app-secret-1", totp = loginSeed)
         val lookAlikeId = create(api, keys, "login", "Look-alike", lookAlikeUrl, "wrongcert", "look-alike-1")
         val codeId = create(api, keys, "totp", "Test code", appUrl, "", seed)
 
@@ -124,14 +128,17 @@ class SystemAutofillTest {
         waitFor(By.textContains("user=appuser password=12"))
         E2e.shot("autofill-04-filled-after-unlock")
 
-        // 4.3: the code on the next step.
+        // 4.3: the code on the next step, from the login's own seed and from the Authenticator item.
         device.findObject(By.res(testPackage, "submit")).click()
-        waitFor(By.textStartsWith("Code from Test code")).click()
+        waitFor(By.textStartsWith("Code from Test code"))
+        waitFor(By.textStartsWith("Code from Test app")).click()
         val statusText = waitForStatus { it.substringAfter("code=").length == 6 }
         val code = statusText.substringAfter("code=")
         val now = System.currentTimeMillis()
-        val valid = (-1..1).map { Totp.generate(Totp.parse(seed), now + it * 30_000L) }
-        assertTrue("code $code is one of $valid", code in valid)
+        val valid = (-1..1).map { Totp.generate(Totp.parse(loginSeed), now + it * 30_000L) }
+        assertTrue("code $code is one of the login's $valid", code in valid)
+        val itemCodes = (-1..1).map { Totp.generate(Totp.parse(seed), now + it * 30_000L) }
+        assertFalse("code $code came from the Authenticator item ($itemCodes)", code in itemCodes)
         E2e.shot("autofill-05-one-time-code")
 
         // 4.1 unlocked: the dropdown names the logins; the look-alike stays out.
@@ -215,9 +222,9 @@ class SystemAutofillTest {
         }
     }
 
-    private fun create(api: KeepiqApi, keys: RsaVaultKeys, type: String, name: String, url: String, login: String, secret: String): String = runBlocking {
+    private fun create(api: KeepiqApi, keys: RsaVaultKeys, type: String, name: String, url: String, login: String, secret: String, totp: String? = null): String = runBlocking {
         val typeId = api.listTypes().first { (it["name"] as? JsonPrimitive)?.contentOrNull == type }["id"]!!.let { (it as JsonPrimitive).content }
-        val saved = api.createSecret(ItemCodec.createBody(ItemParts(name, url, null, login, secret, null), typeId, keys))
+        val saved = api.createSecret(ItemCodec.createBody(ItemParts(name, url, null, login, secret, null, totp = totp), typeId, keys))
         (saved!!["id"] as JsonPrimitive).content
     }
 

@@ -1,0 +1,688 @@
+{
+	"memberNameError": [
+		[
+			[
+				null
+			],
+			"[keepiq] Give the field a name. null"
+		],
+		[
+			[
+				""
+			],
+			"[keepiq] Give the field a name. null"
+		],
+		[
+			[
+				"   "
+			],
+			"[keepiq] Give the field a name. null"
+		],
+		[
+			[
+				"Key"
+			],
+			"[keepiq] “{name}” is a built-in field, not an additional one — choose a different name. {\"name\":\"key\"}"
+		],
+		[
+			[
+				" URL "
+			],
+			"[keepiq] “{name}” is a built-in field, not an additional one — choose a different name. {\"name\":\"url\"}"
+		],
+		[
+			[
+				"notes"
+			],
+			""
+		],
+		[
+			[
+				"custom"
+			],
+			""
+		],
+		[
+			[
+				"custom",
+				[
+					"custom"
+				]
+			],
+			"[keepiq] That field is already listed. null"
+		],
+		[
+			[
+				" custom ",
+				[
+					" custom ",
+					null
+				]
+			],
+			"[keepiq] That field is already listed. null"
+		],
+		[
+			[
+				"Custom",
+				[
+					"custom"
+				]
+			],
+			""
+		],
+		[
+			[
+				"custom",
+				[
+					null,
+					null,
+					""
+				]
+			],
+			""
+		]
+	],
+	"fieldListError": [
+		[
+			[],
+			""
+		],
+		[
+			[
+				{}
+			],
+			"(keepiq) Give the field a name. null"
+		],
+		[
+			[
+				{
+					"label": "  "
+				}
+			],
+			"(keepiq) Give the field a name. null"
+		],
+		[
+			[
+				{
+					"label": "Key"
+				}
+			],
+			"(keepiq) “{name}” is a built-in field, not an additional one — choose a different name. {\"name\":\"key\"}"
+		],
+		[
+			[
+				{
+					"label": " URL "
+				}
+			],
+			"(keepiq) “{name}” is a built-in field, not an additional one — choose a different name. {\"name\":\"url\"}"
+		],
+		[
+			[
+				{
+					"label": "a"
+				},
+				{
+					"label": "b"
+				}
+			],
+			""
+		],
+		[
+			[
+				{
+					"label": "a"
+				},
+				{
+					"label": " A "
+				}
+			],
+			"(keepiq) That field is already listed. null"
+		],
+		[
+			[
+				{
+					"label": "a"
+				},
+				{
+					"label": ""
+				}
+			],
+			"(keepiq) Give the field a name. null"
+		],
+		[
+			[
+				{
+					"label": "a"
+				},
+				{
+					"label": "password"
+				}
+			],
+			""
+		]
+	],
+	"rowOpenLabel": [
+		[
+			"null",
+			"[keepiq] Open {name} {\"name\":\"\"}"
+		],
+		[
+			"undefined",
+			"[keepiq] Open {name} {\"name\":\"\"}"
+		],
+		[
+			{},
+			"[keepiq] Open {name} {\"name\":\"\"}"
+		],
+		[
+			{
+				"name": "n"
+			},
+			"[keepiq] Open {name} {\"name\":\"n\"}"
+		],
+		[
+			{
+				"name": "n",
+				"passkeys": ""
+			},
+			"[keepiq] Open {name} {\"name\":\"n\"}"
+		],
+		[
+			{
+				"name": "n",
+				"passkeys": "x"
+			},
+			"[keepiq] Open {name}, has passkeys {\"name\":\"n\"}"
+		],
+		[
+			{
+				"name": "n",
+				"totp": "x",
+				"loginTotp": "x",
+				"totpSeed": "x"
+			},
+			"[keepiq] Open {name}, has a one-time code {\"name\":\"n\"}"
+		],
+		[
+			{
+				"name": "n",
+				"passkeys": "x",
+				"totp": "x",
+				"loginTotp": "x",
+				"totpSeed": "x"
+			},
+			"[keepiq] Open {name}, has a one-time code and passkeys {\"name\":\"n\"}"
+		],
+		[
+			{
+				"passkeys": "x"
+			},
+			"[keepiq] Open {name}, has passkeys {\"name\":\"\"}"
+		]
+	],
+	"subfolderRows": [
+		[
+			[
+				null
+			],
+			[
+				{
+					"id": "folder:v1",
+					"folderId": "v1",
+					"name": "Alpha",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:u1",
+					"folderId": "u1",
+					"name": "undefined parent",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:v2",
+					"folderId": "v2",
+					"name": "zeta",
+					"isFolder": true,
+					"customIcon": "star",
+					"customColor": "#123"
+				}
+			]
+		],
+		[
+			[
+				"v1"
+			],
+			[
+				{
+					"id": "folder:a3",
+					"folderId": "a3",
+					"name": null,
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a1",
+					"folderId": "a1",
+					"name": "home work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a2",
+					"folderId": "a2",
+					"name": "Work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				}
+			]
+		],
+		[
+			[
+				"v1",
+				"WORK"
+			],
+			[
+				{
+					"id": "folder:a1",
+					"folderId": "a1",
+					"name": "home work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a2",
+					"folderId": "a2",
+					"name": "Work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				}
+			]
+		],
+		[
+			[
+				"v1",
+				"  work "
+			],
+			[
+				{
+					"id": "folder:a1",
+					"folderId": "a1",
+					"name": "home work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a2",
+					"folderId": "a2",
+					"name": "Work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				}
+			]
+		],
+		[
+			[
+				"v1",
+				""
+			],
+			[
+				{
+					"id": "folder:a3",
+					"folderId": "a3",
+					"name": null,
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a1",
+					"folderId": "a1",
+					"name": "home work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a2",
+					"folderId": "a2",
+					"name": "Work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				}
+			]
+		],
+		[
+			[
+				"v1",
+				null
+			],
+			[
+				{
+					"id": "folder:a3",
+					"folderId": "a3",
+					"name": null,
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a1",
+					"folderId": "a1",
+					"name": "home work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:a2",
+					"folderId": "a2",
+					"name": "Work",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				}
+			]
+		],
+		[
+			[
+				"none"
+			],
+			[]
+		],
+		[
+			[
+				null
+			],
+			[]
+		],
+		[
+			[
+				"v1",
+				"x"
+			],
+			[]
+		],
+		[
+			[
+				"",
+				"zeta"
+			],
+			[
+				{
+					"id": "folder:v2",
+					"folderId": "v2",
+					"name": "zeta",
+					"isFolder": true,
+					"customIcon": "star",
+					"customColor": "#123"
+				}
+			]
+		],
+		[
+			[
+				null
+			],
+			[
+				{
+					"id": "folder:v1",
+					"folderId": "v1",
+					"name": "Alpha",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:u1",
+					"folderId": "u1",
+					"name": "undefined parent",
+					"isFolder": true,
+					"customIcon": null,
+					"customColor": null
+				},
+				{
+					"id": "folder:v2",
+					"folderId": "v2",
+					"name": "zeta",
+					"isFolder": true,
+					"customIcon": "star",
+					"customColor": "#123"
+				}
+			]
+		]
+	],
+	"destinationRows": [
+		[
+			[],
+			[
+				{
+					"id": "v1",
+					"name": "Alpha",
+					"parentId": null,
+					"depth": 0
+				},
+				{
+					"id": "a3",
+					"name": null,
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "a1",
+					"name": "home work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "b1",
+					"name": "deep",
+					"parentId": "a1",
+					"depth": 2
+				},
+				{
+					"id": "a2",
+					"name": "Work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "u1",
+					"name": "undefined parent",
+					"depth": 0
+				},
+				{
+					"id": "v2",
+					"name": "zeta",
+					"parentId": null,
+					"customIcon": "star",
+					"customColor": "#123",
+					"depth": 0
+				}
+			]
+		],
+		[
+			[
+				null
+			],
+			[
+				{
+					"id": "v1",
+					"name": "Alpha",
+					"parentId": null,
+					"depth": 0
+				},
+				{
+					"id": "a3",
+					"name": null,
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "a1",
+					"name": "home work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "b1",
+					"name": "deep",
+					"parentId": "a1",
+					"depth": 2
+				},
+				{
+					"id": "a2",
+					"name": "Work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "u1",
+					"name": "undefined parent",
+					"depth": 0
+				},
+				{
+					"id": "v2",
+					"name": "zeta",
+					"parentId": null,
+					"customIcon": "star",
+					"customColor": "#123",
+					"depth": 0
+				}
+			]
+		],
+		[
+			[
+				"v1"
+			],
+			[
+				{
+					"id": "u1",
+					"name": "undefined parent",
+					"depth": 0
+				},
+				{
+					"id": "v2",
+					"name": "zeta",
+					"parentId": null,
+					"customIcon": "star",
+					"customColor": "#123",
+					"depth": 0
+				}
+			]
+		],
+		[
+			[
+				"a1"
+			],
+			[
+				{
+					"id": "v1",
+					"name": "Alpha",
+					"parentId": null,
+					"depth": 0
+				},
+				{
+					"id": "a3",
+					"name": null,
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "a2",
+					"name": "Work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "u1",
+					"name": "undefined parent",
+					"depth": 0
+				},
+				{
+					"id": "v2",
+					"name": "zeta",
+					"parentId": null,
+					"customIcon": "star",
+					"customColor": "#123",
+					"depth": 0
+				}
+			]
+		],
+		[
+			[
+				"none"
+			],
+			[
+				{
+					"id": "v1",
+					"name": "Alpha",
+					"parentId": null,
+					"depth": 0
+				},
+				{
+					"id": "a3",
+					"name": null,
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "a1",
+					"name": "home work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "b1",
+					"name": "deep",
+					"parentId": "a1",
+					"depth": 2
+				},
+				{
+					"id": "a2",
+					"name": "Work",
+					"parentId": "v1",
+					"depth": 1
+				},
+				{
+					"id": "u1",
+					"name": "undefined parent",
+					"depth": 0
+				},
+				{
+					"id": "v2",
+					"name": "zeta",
+					"parentId": null,
+					"customIcon": "star",
+					"customColor": "#123",
+					"depth": 0
+				}
+			]
+		],
+		[
+			[],
+			[]
+		],
+		[
+			[
+				"x"
+			],
+			[]
+		],
+		[
+			[],
+			[]
+		]
+	]
+}

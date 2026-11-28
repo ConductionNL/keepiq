@@ -26,8 +26,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ApplicationLeasePolicyMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -62,7 +62,7 @@ class LeasePolicyService {
 	 * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md
 	 */
 	public function effectivePolicy(string $applicationId): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$defaultTtl = $this->appConfig->getValueInt($appId, 'lease_default_ttl_seconds', 900);
 		$maxTtl = $this->appConfig->getValueInt($appId, 'lease_max_ttl_seconds', 86400);
 		$renewable = $this->appConfig->getValueBool($appId, 'lease_renewable', true);
@@ -100,7 +100,7 @@ class LeasePolicyService {
 	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 	 */
 	public function instancePolicy(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		return [
 			'defaultTtl' => max(60, $this->appConfig->getValueInt($appId, 'lease_default_ttl_seconds', 900)),

@@ -14,21 +14,28 @@ func AL(_ key: String, _ args: CVarArg...) -> String {
 
 /// The vault keys the extension opened, kept in its process for the idle
 /// time, so a second fill soon after needs no new unlock
-/// (provideCredentialWithoutUserInteraction, design D6).
+/// (provideCredentialWithoutUserInteraction, design D6). The app's lock
+/// state decides how long (task 2.5): the idle time capped by the
+/// organisation's maximum the app read, and never past a lock of the app or
+/// the phone (`SharedLockState`).
+///
+/// @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
 enum ExtensionSession {
     private static var keys: VaultKeys?
     private static var accountId: String?
-    private static var until = Date.distantPast
+    private static var keptAtMillis: Int64 = 0
 
-    static func keep(_ keys: VaultKeys, accountId: String, minutes: Int) {
+    static func keep(_ keys: VaultKeys, accountId: String, now: Date = Date()) {
         self.keys = keys
         self.accountId = accountId
-        until = Date().addingTimeInterval(Double(minutes) * 60)
+        keptAtMillis = Int64(now.timeIntervalSince1970 * 1000)
     }
 
-    static func current(_ accountId: String) -> VaultKeys? {
-        guard self.accountId == accountId, Date() < until else {
-            keys = nil
+    static func current(_ accountId: String, client: KeepiqClient) -> VaultKeys? {
+        let choice = client.accounts.settings(id: accountId).idleMinutes
+        guard self.accountId == accountId,
+              client.lockState.isOpen(accountId: accountId, keptAtMillis: keptAtMillis, choice: choice) else {
+            forget()
             return nil
         }
         return keys
@@ -108,6 +115,7 @@ final class AutofillModel: ObservableObject {
     private var keys: VaultKeys?
     private var gate: UnlockGate?
 
+    /// @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
     init(
         serviceIdentifiers: [String],
         record: String? = nil,
@@ -127,7 +135,7 @@ final class AutofillModel: ObservableObject {
             phase = .noAccount
         } else if configuration {
             phase = .configuration
-        } else if let accountId, let kept = ExtensionSession.current(accountId) {
+        } else if let accountId, let kept = ExtensionSession.current(accountId, client: client) {
             keys = kept
             phase = .list
             afterUnlock()
@@ -155,6 +163,7 @@ final class AutofillModel: ObservableObject {
         }
     }
 
+    /// @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
     private func open(_ unlock: @escaping (String, Suite) async throws -> UnlockedVault) {
         guard let accountId else { return }
         busy = true
@@ -178,7 +187,7 @@ final class AutofillModel: ObservableObject {
                 let keys = try AutofillSites.shared.keysOf(vault: vault)
                 vault.lock()
                 self.keys = keys
-                ExtensionSession.keep(keys, accountId: accountId, minutes: Int(self.client.accounts.settings(id: accountId).idleMinutes))
+                ExtensionSession.keep(keys, accountId: accountId)
                 self.phase = .list
                 self.afterUnlock()
             } catch {
@@ -288,7 +297,8 @@ final class AutofillModel: ObservableObject {
             let json = AutofillFiles.shared.read(accountId: accountId, site: ApplePasskeys.shared.siteKey(rpId: rpId)) ?? "[]"
             let allow = credentialId.map { [$0.base64EncodedString()] } ?? allowed.map { $0.base64EncodedString() }
             passkeyChoices = ApplePasskeys.shared.choices(siteJson: json, rpId: rpId, keys: keys, allowed: allow)
-            passkeyRows = passkeyChoices.map { PasskeyRow(id: $0.itemId, name: $0.name, user: $0.label) }
+            // A login can hold several passkeys: the row id names the passkey, not only its item.
+            passkeyRows = passkeyChoices.map { PasskeyRow(id: $0.id, name: $0.name, user: $0.label) }
             if passkeyChoices.count == 1 { sign(passkeyChoices[0]) }
         case .registration(let rpId, let userName, let userHandle, let hash, let algorithms):
             register(accountId: accountId, keys: keys, rpId: rpId, userName: userName, userHandle: userHandle, hash: hash, algorithms: algorithms)
@@ -296,7 +306,7 @@ final class AutofillModel: ObservableObject {
     }
 
     func choosePasskey(_ row: PasskeyRow) {
-        guard let choice = passkeyChoices.first(where: { $0.itemId == row.id }) else { return }
+        guard let choice = passkeyChoices.first(where: { $0.id == row.id }) else { return }
         sign(choice)
     }
 
@@ -373,6 +383,12 @@ final class AutofillModel: ObservableObject {
                 )
                 if result == SaveResult.refused {
                     self.message = AL("add.refused")
+                } else if result == SaveResult.notUpdated {
+                    self.message = AL("add.notUpdated")
+                } else if result == SaveResult.viewOnly {
+                    self.message = AL("add.viewOnly")
+                } else if result == SaveResult.failed {
+                    self.message = AL("add.notUpdatedFailed")
                 } else {
                     clearFields()
                     try? await Task.sleep(nanoseconds: 200_000_000)

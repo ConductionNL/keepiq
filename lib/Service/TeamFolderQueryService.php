@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
@@ -39,7 +40,9 @@ use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Exception\ManagerOnlyException;
+use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\Group\ISubAdmin;
 use OCP\IGroupManager;
 
 /**
@@ -63,6 +66,7 @@ class TeamFolderQueryService {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param IGroupManager $groupManager The Nextcloud group manager
 	 * @param TeamFolderMembershipResolver $memberships The membership resolver
+	 * @param ISubAdmin $subAdmin Group subadmins (a subadmin can join the group)
 	 *
 	 * @return void
 	 *
@@ -75,6 +79,7 @@ class TeamFolderQueryService {
 		private SecretMapper $secretMapper,
 		private IGroupManager $groupManager,
 		private TeamFolderMembershipResolver $memberships,
+		private ISubAdmin $subAdmin,
 	) {
 	}//end __construct()
 
@@ -178,13 +183,7 @@ class TeamFolderQueryService {
 				continue;
 			}
 
-			// Recipients see the folder identity, never the member list
-			// (share-visibility rule, user-sharing spec); a manager sees the
-			// list it manages (sharing-team-folder-manager-role D5).
-			$grade = $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId);
-			$entry = $this->describe(teamFolder: $teamFolder, includeMembers: $grade === 'manage');
-			$entry['grade'] = $grade;
-			$memberOf[] = $entry;
+			$memberOf[] = $this->memberEntry(teamFolder: $teamFolder, userId: $userId);
 		}
 
 		return [
@@ -192,6 +191,37 @@ class TeamFolderQueryService {
 			'memberOf' => $memberOf,
 		];
 	}//end listForUser()
+
+	/**
+	 * A shared team folder as its member sees it.
+	 *
+	 * Recipients see the folder identity, never the member list
+	 * (share-visibility rule, user-sharing spec); a manager sees the list it
+	 * manages (sharing-team-folder-manager-role D5) and the rows only the
+	 * owner may change, so its browser does not offer controls the server
+	 * refuses.
+	 *
+	 * @param TeamFolder $teamFolder The shared team folder
+	 * @param string     $userId     The member
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
+	 */
+	private function memberEntry(TeamFolder $teamFolder, string $userId): array {
+		$grade = $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId);
+		$entry = $this->describe(teamFolder: $teamFolder, includeMembers: $grade === 'manage');
+		$entry['grade'] = $grade;
+		if ($grade === 'manage') {
+			$entry['ownerOnlyMemberIds'] = $this->ownerOnlyMemberIds(
+				teamFolder: $teamFolder,
+				members: $entry['members'],
+				userId: $userId
+			);
+		}
+
+		return $entry;
+	}//end memberEntry()
 
 	/**
 	 * List the members of a team folder — full list for the owner only.
@@ -334,6 +364,12 @@ class TeamFolderQueryService {
 		$best = null;
 		foreach ($this->ancestorTeamFolders(folderId: $teamFolder->getFolderId()) as $ancestor) {
 			foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $ancestor->getId()) as $membership) {
+				if ($this->hasEnded(membership: $membership) === true) {
+					// Past its end date: it grants nothing, even before
+					// ExpireSharesJob removes it.
+					continue;
+				}
+
 				if ($this->membershipCovers(membership: $membership, userId: $userId) === true) {
 					$best = $this->higherGrade(current: $best, candidate: $membership->effectiveGrade());
 				}
@@ -342,6 +378,320 @@ class TeamFolderQueryService {
 
 		return $best;
 	}//end gradeOnTeamFolder()
+
+	/**
+	 * Whether a membership's end date has passed.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 */
+	private function hasEnded(TeamFolderMember $membership): bool {
+		$expiresAt = $membership->getExpiresAt();
+
+		return $expiresAt !== null && $expiresAt <= new DateTime();
+	}//end hasEnded()
+
+	/**
+	 * The `manage` membership rows whose managers a membership of this team
+	 * folder can reach: the rows of the folder, of its ancestor team folders
+	 * and of the team folders nested under it. A row on a parent covers the
+	 * nested folders too, so a nested folder's manager counts as well. A row
+	 * past its end date still counts, because the owner set that end date and
+	 * only the owner may undo it.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 *
+	 * @return TeamFolderMember[]
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function manageRows(TeamFolder $teamFolder): array {
+		$teamFolders = [];
+		foreach ($this->ancestorTeamFolders(folderId: $teamFolder->getFolderId()) as $ancestor) {
+			$teamFolders[$ancestor->getId()] = $ancestor;
+		}
+
+		foreach ($this->folderMapper->getSubtreeIds($teamFolder->getFolderId()) as $folderId) {
+			try {
+				$nested = $this->mapper->findByFolder(folderId: (string)$folderId);
+			} catch (DoesNotExistException) {
+				continue;
+			}
+
+			$teamFolders[$nested->getId()] = $nested;
+		}
+
+		$rows = [];
+		foreach ($teamFolders as $candidate) {
+			foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $candidate->getId()) as $membership) {
+				if ($membership->effectiveGrade() === 'manage') {
+					$rows[] = $membership;
+				}
+			}
+		}
+
+		return $rows;
+	}//end manageRows()
+
+	/**
+	 * The managers behind `manage` rows, the owner left out. Only a `manage`
+	 * group row is expanded; those groups name who manages, so they stay small.
+	 *
+	 * @param TeamFolderMember[] $manageRows The `manage` rows (see manageRows())
+	 * @param string             $ownerId    The team folder's owner
+	 *
+	 * @return string[] User IDs
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function managersFrom(array $manageRows, string $ownerId): array {
+		$managers = [];
+		foreach ($manageRows as $membership) {
+			$expanded = $this->memberships->expandMember(
+				memberType: $membership->getMemberType(),
+				memberId: $membership->getMemberId()
+			);
+			foreach ($expanded as $managerId) {
+				$managers[(string)$managerId] = true;
+			}
+		}
+
+		$managers = array_keys($managers);
+
+		return array_values(
+			array_filter(
+				array_map('strval', $managers),
+				static fn (string $managerId): bool => self::sameUser(left: $managerId, right: $ownerId) === false
+			)
+		);
+	}//end managersFrom()
+
+	/**
+	 * The managers of a team folder: every user other than the owner whom a
+	 * `manage` row of it, of an ancestor team folder or of a team folder nested
+	 * under it covers.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 *
+	 * @return string[] User IDs
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function managersOf(TeamFolder $teamFolder): array {
+		return $this->managersFrom(manageRows: $this->manageRows(teamFolder: $teamFolder), ownerId: $teamFolder->getOwnerId());
+	}//end managersOf()
+
+	/**
+	 * Whether two Nextcloud user IDs name the same user; user lookups ignore
+	 * case, so the comparison does too.
+	 *
+	 * @param string $left  One user ID
+	 * @param string $right The other user ID
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private static function sameUser(string $left, string $right): bool {
+		return mb_strtolower($left) === mb_strtolower($right);
+	}//end sameUser()
+
+	/**
+	 * Whether a membership covers one of the given users, or may come to cover
+	 * them without the owner: a user membership of one of them, or a group one
+	 * of them is in or is a subadmin of (a subadmin can add themselves to the
+	 * group). Membership is read through `isInGroup()`, as the read side does.
+	 *
+	 * @param string   $memberType The membership's member type (`user`|`group`)
+	 * @param string   $memberId   The membership's user or group ID
+	 * @param string[] $userIds    The users to look for
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function mayCoverAnyOf(string $memberType, string $memberId, array $userIds): bool {
+		if ($memberType === 'user') {
+			foreach ($userIds as $userId) {
+				if (self::sameUser(left: $memberId, right: $userId) === true) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if ($memberType !== 'group') {
+			return false;
+		}
+
+		foreach ($userIds as $userId) {
+			if ($this->groupManager->isInGroup($userId, $memberId) === true) {
+				return true;
+			}
+		}
+
+		return $this->hasSubAdminAmong(groupId: $memberId, userIds: $userIds);
+	}//end mayCoverAnyOf()
+
+	/**
+	 * Whether one of the given users is a subadmin of a group, and so can add
+	 * themselves to it.
+	 *
+	 * @param string   $groupId The group ID
+	 * @param string[] $userIds The users to look for
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function hasSubAdminAmong(string $groupId, array $userIds): bool {
+		$group = $this->groupManager->get($groupId);
+		if ($group === null) {
+			return false;
+		}
+
+		foreach ($this->subAdmin->getGroupsSubAdmins($group) as $subAdmin) {
+			foreach ($userIds as $userId) {
+				if (self::sameUser(left: $subAdmin->getUID(), right: $userId) === true) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}//end hasSubAdminAmong()
+
+	/**
+	 * Keep every manager's access with the owner: a caller who is not the
+	 * owner may not add or change a membership that covers a manager, the
+	 * caller included, or may come to cover one without the owner (a group a
+	 * manager is a subadmin of). Grants are unioned, so any such membership
+	 * without the owner's use-only flag or end date would let a manager keep
+	 * the folder past the end the owner set.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $memberType The membership's member type (`user`|`group`)
+	 * @param string     $memberId   The membership's user or group ID
+	 * @param string     $userId     The caller
+	 *
+	 * @return void
+	 *
+	 * @throws OwnerOnlyException When the membership covers a manager and the caller is not the owner
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function assertCoversNoManager(
+		TeamFolder $teamFolder,
+		string $memberType,
+		string $memberId,
+		string $userId,
+	): void {
+		if ($teamFolder->getOwnerId() === $userId) {
+			return;
+		}
+
+		if ($this->coversAManager(teamFolder: $teamFolder, memberType: $memberType, memberId: $memberId) === true) {
+			throw new OwnerOnlyException(message: 'Only the owner can add or change a membership that covers a manager');
+		}
+	}//end assertCoversNoManager()
+
+	/**
+	 * Whether a membership covers a manager of the team folder, or may come to
+	 * cover one without the owner; such a membership is the owner's to set.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $memberType The membership's member type (`user`|`group`)
+	 * @param string     $memberId   The membership's user or group ID
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function coversAManager(TeamFolder $teamFolder, string $memberType, string $memberId): bool {
+		$manageRows = $this->manageRows(teamFolder: $teamFolder);
+		if ($memberType === 'user') {
+			// One user: ask each `manage` row whether it covers them, so no
+			// group is expanded. The owner is never a member row (see
+			// TeamFolderMembershipResolver::assertMemberAddable()).
+			return $this->anyRowCovers(manageRows: $manageRows, userId: $memberId);
+		}
+
+		return $this->mayCoverAnyOf(
+			memberType: $memberType,
+			memberId: $memberId,
+			userIds: $this->managersFrom(manageRows: $manageRows, ownerId: $teamFolder->getOwnerId())
+		);
+	}//end coversAManager()
+
+	/**
+	 * Whether any of the given rows covers a user: a user row of theirs, or a
+	 * group row of a group they are in.
+	 *
+	 * @param TeamFolderMember[] $manageRows The rows
+	 * @param string             $userId     The user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function anyRowCovers(array $manageRows, string $userId): bool {
+		foreach ($manageRows as $membership) {
+			if ($membership->getMemberType() === 'user'
+				&& self::sameUser(left: $membership->getMemberId(), right: $userId) === true
+			) {
+				return true;
+			}
+
+			if ($membership->getMemberType() === 'group'
+				&& $this->groupManager->isInGroup($userId, $membership->getMemberId()) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end anyRowCovers()
+
+	/**
+	 * The ids of the membership rows a caller who is not the owner may not
+	 * change: every `manage` row and every row that covers a manager, or may
+	 * come to cover one. The browser greys out their controls; the server
+	 * refuses the change either way. Empty for the owner. The managers are
+	 * worked out once for the whole list.
+	 *
+	 * @param TeamFolder              $teamFolder The team folder
+	 * @param array<TeamFolderMember> $members    Its membership rows
+	 * @param string                  $userId     The caller
+	 *
+	 * @return string[]
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	public function ownerOnlyMemberIds(TeamFolder $teamFolder, array $members, string $userId): array {
+		if ($teamFolder->getOwnerId() === $userId || $members === []) {
+			return [];
+		}
+
+		$managers = $this->managersOf(teamFolder: $teamFolder);
+		$ids = [];
+		foreach ($members as $member) {
+			if ($member->effectiveGrade() === 'manage'
+				|| $this->mayCoverAnyOf(
+					memberType: $member->getMemberType(),
+					memberId: $member->getMemberId(),
+					userIds: $managers
+				) === true
+			) {
+				$ids[] = (string)$member->getId();
+			}
+		}
+
+		return $ids;
+	}//end ownerOnlyMemberIds()
 
 	/**
 	 * Load a team folder the caller may manage: its owner, or a member whose

@@ -10,7 +10,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import { certificateFingerprint, chainsTo } from '../../certificates/x509.js'
+import { verifiedCertificate } from '../../certificates/x509.js'
 import {
 	buildEnrolmentEnvelope,
 	createRecoveryKey,
@@ -98,6 +98,95 @@ export const requestKeyStore = {
 	},
 }
 
+/**
+ * The one-time request key this browser kept for a request, if any.
+ *
+ * @param {object|null} request The user's request.
+ * @return {Promise<object|undefined>}
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ */
+async function storedRequestKey(request) {
+	return request ? await requestKeyStore.get(request.id) : undefined
+}
+
+/**
+ * @return {Error} The refusal of a recovery finished in another browser
+ *   than the one it was asked from.
+ */
+function otherBrowserError() {
+	return new Error(
+		t('keepiq', 'Finish the recovery in the browser you asked from.'),
+	)
+}
+
+/**
+ * Open the sealed result with the one-time request key.
+ *
+ * @param {object} request The approved request.
+ * @param {object} stored The one-time request key.
+ * @return {Promise<string>} The recovered private key (PEM).
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ */
+async function openedPrivateKey(request, stored) {
+	return openHandoff(
+		request.sealedResult,
+		stored.privateKey,
+		stored.publicKeyRaw,
+		request.id,
+	)
+}
+
+/**
+ * Wrap the recovered private key under the new master password and replace
+ * the suite's wrapping with it, proved by the recovered key.
+ *
+ * @param {object} request The approved request.
+ * @param {{pem: string, newMasterPassword: string}} recovered The recovered key and the new password.
+ * @return {Promise<void>}
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ */
+async function rewrapSuiteKey(request, recovered) {
+	const envelope = await encryptPrivateKey(
+		recovered.pem,
+		recovered.newMasterPassword,
+	)
+	const headers = await buildKeyProofHeaders({
+		suiteId: request.suiteId,
+		purpose: PROOF_PURPOSE.UPDATE_PRIVATE_KEY,
+		encryptedPrivateKey: envelope,
+		masterPassword: recovered.newMasterPassword,
+		boundValues: [envelope],
+	})
+	await axios.put(
+		generateUrl(`/apps/keepiq/api/v1/suites/${request.suiteId}/private-key`),
+		{ encryptedPrivateKey: envelope },
+		{ headers },
+	)
+}
+
+/**
+ * Mark the request fulfilled and forget the one-time key.
+ *
+ * @param {object} request The request.
+ * @return {Promise<string>} The officer who handled it.
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ */
+async function reportCompleted(request) {
+	const done = await axios.post(
+		generateUrl(`${API}/requests/${request.id}/complete`),
+	)
+	await requestKeyStore.delete(request.id)
+	return done.data?.handledBy ?? ''
+}
+
+/**
+ * @param {object} request The request.
+ * @return {object} It as fulfilled, its sealed result dropped.
+ */
+function fulfilled(request) {
+	return { ...request, status: 'fulfilled', sealedResult: undefined }
+}
+
 export const useAccountRecoveryStore = defineStore('accountRecovery', {
 	state: () => ({
 		/** { policy, enrolled, current, key } */
@@ -126,11 +215,15 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * instance CA, and its fingerprint must be the one the server shows.
 		 *
 		 * @param {object} key { certificate, fingerprint, caChain }.
-		 * @return {Promise<string>} The fingerprint to show the user.
+		 * @return {Promise<{fingerprint: string, spki: Uint8Array}>} The
+		 *   fingerprint to show the user and the key to enrol to.
 		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async verifyKey(key) {
-			if (!key || !(await chainsTo(key.certificate, key.caChain ?? []))) {
+			const verified = key
+				? await verifiedCertificate(key.certificate, key.caChain ?? [])
+				: null
+			if (verified === null || verified.fingerprint !== key.fingerprint) {
 				throw new Error(
 					t(
 						'keepiq',
@@ -138,16 +231,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 					),
 				)
 			}
-			const fingerprint = await certificateFingerprint(key.certificate)
-			if (fingerprint !== key.fingerprint) {
-				throw new Error(
-					t(
-						'keepiq',
-						'The recovery certificate is not issued by this Keepiq. Do not enrol and tell your administrator.',
-					),
-				)
-			}
-			return fingerprint
+			return verified
 		},
 
 		/**
@@ -160,16 +244,13 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 */
 		async enrol(masterPassword) {
 			const status = this.status ?? (await this.fetchStatus())
-			await this.verifyKey(status.key)
+			const { spki } = await this.verifyKey(status.key)
 			const session = useSessionStore()
 			const pem = await decryptPrivateKey(
 				session.encryptedPrivateKey,
 				masterPassword,
 			)
-			const envelope = await buildEnrolmentEnvelope(
-				pem,
-				status.key.certificate,
-			)
+			const envelope = await buildEnrolmentEnvelope(pem, spki)
 			const response = await axios.put(generateUrl(`${API}/enrolment`), {
 				recoveryKeyId: status.key.id,
 				envelope,
@@ -388,34 +469,15 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 */
 		async unlockDevice() {
 			const request = this.myRequest
-			const stored = request
-				? await requestKeyStore.get(request.id)
-				: undefined
+			const stored = await storedRequestKey(request)
 			if (!request?.sealedResult || !stored || request.purpose !== 'device') {
-				throw new Error(
-					t(
-						'keepiq',
-						'Finish the recovery in the browser you asked from.',
-					),
-				)
+				throw otherBrowserError()
 			}
-			const pem = await openHandoff(
-				request.sealedResult,
-				stored.privateKey,
-				stored.publicKeyRaw,
-				request.id,
-			)
+			const pem = await openedPrivateKey(request, stored)
 			await useSessionStore().unlockWithPrivateKeyPem(pem)
-			const done = await axios.post(
-				generateUrl(`${API}/requests/${request.id}/complete`),
-			)
-			await requestKeyStore.delete(request.id)
-			this.myRequest = {
-				...request,
-				status: 'fulfilled',
-				sealedResult: undefined,
-			}
-			return done.data?.handledBy ?? ''
+			const handledBy = await reportCompleted(request)
+			this.myRequest = fulfilled(request)
+			return handledBy
 		},
 
 		/**
@@ -430,49 +492,16 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 */
 		async complete(newMasterPassword) {
 			const request = this.myRequest
-			const stored = request
-				? await requestKeyStore.get(request.id)
-				: undefined
+			const stored = await storedRequestKey(request)
 			if (!request?.sealedResult || !stored) {
-				throw new Error(
-					t(
-						'keepiq',
-						'Finish the recovery in the browser you asked from.',
-					),
-				)
+				throw otherBrowserError()
 			}
-			const pem = await openHandoff(
-				request.sealedResult,
-				stored.privateKey,
-				stored.publicKeyRaw,
-				request.id,
-			)
-			const envelope = await encryptPrivateKey(pem, newMasterPassword)
-			const headers = await buildKeyProofHeaders({
-				suiteId: request.suiteId,
-				purpose: PROOF_PURPOSE.UPDATE_PRIVATE_KEY,
-				encryptedPrivateKey: envelope,
-				masterPassword: newMasterPassword,
-				boundValues: [envelope],
-			})
-			await axios.put(
-				generateUrl(
-					`/apps/keepiq/api/v1/suites/${request.suiteId}/private-key`,
-				),
-				{ encryptedPrivateKey: envelope },
-				{ headers },
-			)
-			const done = await axios.post(
-				generateUrl(`${API}/requests/${request.id}/complete`),
-			)
-			await requestKeyStore.delete(request.id)
+			const pem = await openedPrivateKey(request, stored)
+			await rewrapSuiteKey(request, { pem, newMasterPassword })
+			const handledBy = await reportCompleted(request)
 			await useSessionStore().unlock(newMasterPassword)
-			this.myRequest = {
-				...request,
-				status: 'fulfilled',
-				sealedResult: undefined,
-			}
-			return done.data?.handledBy ?? ''
+			this.myRequest = fulfilled(request)
+			return handledBy
 		},
 	},
 })

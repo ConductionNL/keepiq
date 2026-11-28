@@ -16,10 +16,12 @@ import kotlinx.serialization.json.longOrNull
 import nl.conduction.keepiq.shared.account.AccountLimitException
 import nl.conduction.keepiq.shared.account.AccountStore
 import nl.conduction.keepiq.shared.account.SecureStorage
+import nl.conduction.keepiq.shared.account.SharedLockState
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.InsecureServerException
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.api.KeepiqApiException
+import nl.conduction.keepiq.shared.api.MissingCapabilityException
 import nl.conduction.keepiq.shared.api.Suite
 import nl.conduction.keepiq.shared.api.platformHttpEngine
 import nl.conduction.keepiq.shared.pairing.LoginFlowCredentials
@@ -74,6 +76,13 @@ class KeepiqClient(
 
     val accounts: AccountStore = AccountStore(storage)
     val pins: PinUnlock = PinUnlock(storage)
+
+    /**
+     * The lock state the app shares with its autofill extension (task 2.5).
+     *
+     * @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
+     */
+    val lockState: SharedLockState = SharedLockState(storage, clock)
 
     /** Called with the account id on unpair, before the account is removed. */
     var onWipe: (String) -> Unit = {}
@@ -168,6 +177,9 @@ class KeepiqClient(
                     "Ask your administrator to update Keepiq.",
             )
         }
+        if (!response.capabilities.containsAll(REQUIRED_CAPABILITIES)) {
+            throw PairingException(MissingCapabilityException.MESSAGE)
+        }
         return try {
             accounts.add(server, loginName, appPassword, response.serverVersion)
         } catch (e: AccountLimitException) {
@@ -202,10 +214,16 @@ class KeepiqClient(
         return revoked
     }
 
-    /** Deletes every trace of an account on the device. */
+    /**
+     * Deletes every trace of an account on the device, the shared lock state
+     * included.
+     *
+     * @spec openspec/changes/clients-mobile-apps/specs/mobile-pairing-and-unlock/spec.md
+     */
     fun wipe(accountId: String) {
         runCatching { onWipe(accountId) }
         pins.remove(accountId)
+        lockState.forget(accountId)
         storage.delete(suiteKey(accountId))
         accounts.remove(accountId)
     }
@@ -324,6 +342,14 @@ class KeepiqClient(
     companion object {
         /** The pair response's `apiVersion` values this app speaks. */
         val SUPPORTED_API_VERSIONS: Set<Int> = setOf(1)
+
+        /**
+         * The pair response's capabilities this app needs: a login's own code
+         * and passkeys (mobile-login-totp-passkeys D1). An account paired
+         * before this check is checked again before such a write
+         * (KeepiqApi.requireLoginFields).
+         */
+        val REQUIRED_CAPABILITIES: Set<String> = MissingCapabilityException.LOGIN_FIELDS
 
         /** What went wrong when pairing (browser-extension/src/background/router.js pairingProblem). */
         fun pairingProblem(status: Int): String = when {

@@ -52,6 +52,13 @@ describe('parseCertificatePem', () => {
 		)
 	})
 
+	it('reads the first certificate of a stored bundle, for display only', async () => {
+		const parsed = await parseCertificatePem(
+			`${FIXTURE_PEM}\n${FIXTURE_PEM}\n-----BEGIN PRIVATE KEY-----\n...`,
+		)
+		expect(parsed.subject).toContain('CN=x509-fixture.doriath.test')
+	})
+
 	it('returns null for non-certificate input', async () => {
 		expect(await parseCertificatePem('not a pem')).toBeNull()
 		expect(await parseCertificatePem('')).toBeNull()

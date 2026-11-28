@@ -21,6 +21,11 @@ struct ItemDetailView: View {
     @State private var confirmTrash = false
     @State private var moving = false
     @State private var editing = false
+    /// A copy shared to view only: no Edit (keepiq#1300); the save checks again.
+    /// Nil until write-context says, and when it can't: Edit is then not enabled.
+    @State private var viewOnly: Bool?
+    /// What the last save could not deliver to everyone; the repository says it once.
+    @State private var note: ShareSaveNote?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -40,6 +45,10 @@ struct ItemDetailView: View {
 
     private func load() async {
         result = try? await model.repository.open(id: itemId)
+        if let taken = model.repository.takeShareSaveNote(id: itemId) { note = taken }
+        if let opened = result as? OpenResult.Opened, !opened.item.fromCache, !opened.item.row.useOnly {
+            viewOnly = (try? await model.repository.isViewOnly(id: itemId))?.boolValue
+        }
     }
 
     @ViewBuilder
@@ -53,20 +62,25 @@ struct ItemDetailView: View {
                 if item.fromCache { Text(L("detail_from_cache")) }
                 if row.useOnly { Text(L("detail_use_only")) }
                 if row.readOnly && !row.useOnly { Text(L("detail_read_only")) }
+                if viewOnly == true && !row.readOnly { Text(L("detail_view_only")) }
+                if let note { Text(shareSaveNoteText(note)) }
                 if let problem { Text(writeProblemText(problem)).foregroundStyle(.red) }
             }
             if row.blocked {
                 Text(row.blockedReason ?? L("detail_blocked"))
             } else {
+                if item.kind == .totp { Section { TotpRow(item: item, onCopy: model.copy) } }
                 Section { fields(item) }
                 if !row.useOnly {
                     Section {
-                        Button(L("action_edit")) { editing = true }.disabled(offline)
-                        Button(L("action_move")) { moving = true }.disabled(offline)
+                        if viewOnly != true {
+                            Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline || viewOnly == nil)
+                        }
+                        Button { moving = true } label: { Text(L("action_move")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
                     }
                 }
                 Section {
-                    Button(L("action_trash"), role: .destructive) { confirmTrash = true }.disabled(offline)
+                    Button(role: .destructive) { confirmTrash = true } label: { Text(L("action_trash")).foregroundStyle(KeepiqPalette.destructive) }.disabled(offline)
                     if offline { Text(L("write_offline")).font(.footnote) }
                 }
             }
@@ -102,8 +116,6 @@ struct ItemDetailView: View {
             if !row.useOnly {
                 FieldRow(label: kind == .login ? L("detail_password") : L("detail_value"), value: item.secret, masked: true, onCopy: model.copy)
             }
-        } else if kind == .totp {
-            TotpRow(item: item, onCopy: model.copy)
         } else if kind == .note {
             if !row.useOnly { FieldRow(label: L("detail_notes"), value: item.secret, onCopy: model.copy) }
         } else if kind == .card || kind == .identity {
@@ -137,7 +149,8 @@ struct ItemDetailView: View {
             }
             if item.additionalFieldsError { Text(L("detail_fields_error")).foregroundStyle(.red) }
             ForEach(Array(item.extraFields.enumerated()), id: \.offset) { _, pair in
-                FieldRow(label: (pair.first as? String) ?? "", value: (pair.second as? String) ?? "", onCopy: model.copy)
+                let name = (pair.first as? String) ?? ""
+                FieldRow(label: name, value: (pair.second as? String) ?? "", masked: item.masksExtra(name: name), onCopy: model.copy)
             }
         }
     }
@@ -158,30 +171,38 @@ struct ItemDetailView: View {
 private struct TotpRow: View {
     let item: DecryptedItem
     let onCopy: (String) -> Void
+    /// The countdown ring grows with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var gaugeSize: CGFloat = 44
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // At the accessibility text sizes the countdown and Copy go under the
+        // code, so the code keeps the full width instead of being squeezed.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         if let params = item.totp {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let millis = Int64(context.date.timeIntervalSince1970 * 1000)
                 let code = Totp.shared.generate(params: params, epochMillis: millis)
                 let left = Totp.shared.secondsRemaining(period: params.period, epochMillis: millis)
                 VStack(alignment: .leading) {
-                    Text(L("detail_code")).font(.caption).foregroundStyle(.secondary)
-                    HStack {
+                    Text(L("detail_code")).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
+                    layout {
                         Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
                         // A circular ProgressView spins on iOS whatever its value, so
                         // the seconds left are a gauge with the number in it.
                         Gauge(value: Double(left), in: 0...Double(params.period)) {
                             EmptyView()
-                        } currentValueLabel: {
-                            Text("\(Int(left))")
                         }
                         .gaugeStyle(.accessoryCircularCapacity)
+                        .tint(KeepiqPalette.accent)
                         .scaleEffect(0.7)
-                        .frame(width: 44, height: 44)
+                        .frame(width: gaugeSize, height: gaugeSize)
+                        // The accessory style draws its value label for widgets, with
+                        // vibrancy; a plain Text keeps the full contrast of the primary colour.
+                        .overlay { Text("\(Int(left))").font(.caption2).monospacedDigit().foregroundStyle(.primary) }
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(L("detail_code_seconds", Int(left)))
-                        Spacer()
+                        if !typeSize.isAccessibilitySize { Spacer() }
                         Button(L("action_copy")) { onCopy(code) }
                             .frame(minWidth: 44, minHeight: 44)
                             .accessibilityLabel(L("cd_copy_field", L("detail_code")))
@@ -246,6 +267,8 @@ struct ItemEditView: View {
     @State private var typed: [String: String] = [:]
     @State private var fieldNames: [String] = []
     @State private var fieldValues: [String] = []
+    /// Each row's schema as JSON text, "" for none, kept with its row through a rename.
+    @State private var fieldSchemas: [String] = []
     @State private var problem: WriteProblem?
     @State private var showErrors = false
     @State private var busy = false
@@ -282,7 +305,7 @@ struct ItemEditView: View {
         // Load once: coming back to the form keeps what the user typed.
         guard base == nil else { return }
         if let itemId {
-            let opened = try? await model.repository.open(id: itemId)
+            let opened = try? await model.repository.openForEdit(id: itemId)
             if let opened = opened as? OpenResult.Opened {
                 item = opened.item
                 type = opened.item.type
@@ -322,12 +345,13 @@ struct ItemEditView: View {
         typed = draft.typed
         fieldNames = draft.fieldNames
         fieldValues = draft.fieldValues
+        fieldSchemas = draft.fieldSchemas
     }
 
     private func current(_ base: ItemDraft) -> ItemDraft {
         base.edited(
             name: name, url: url, folderId: folder, login: login, secret: secret, notes: notes,
-            composite: composite, typed: typed, fieldNames: fieldNames, fieldValues: fieldValues
+            composite: composite, typed: typed, fieldNames: fieldNames, fieldValues: fieldValues, fieldSchemas: fieldSchemas
         )
     }
 
@@ -391,14 +415,21 @@ struct ItemEditView: View {
                 }
             }
             if kind != .passkey {
-                Section(L("detail_extra_fields")) {
+                Section(titled: L("detail_extra_fields")) {
                     ForEach(fieldNames.indices, id: \.self) { i in
                         VStack {
                             LabeledInput(label: L("edit_field_name"), text: $fieldNames[i], problem: error("field-\(i)"))
-                            LabeledInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil)
+                            if ItemCodec.shared.masksField(name: fieldNames[i], schema: i < fieldSchemas.count ? fieldSchemas[i] : "") {
+                                // Keyed by the row count too, so a removed row's Show state never passes to the row taking its place.
+                                SecretInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil, onGenerate: nil)
+                                    .id("\(i)-\(fieldNames.count)")
+                            } else {
+                                LabeledInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil)
+                            }
                             Button(L("action_remove"), role: .destructive) {
                                 fieldNames.remove(at: i)
                                 fieldValues.remove(at: i)
+                                if i < fieldSchemas.count { fieldSchemas.remove(at: i) }
                             }
                             .accessibilityLabel(L("cd_remove_field", fieldNames[i]))
                         }
@@ -406,12 +437,20 @@ struct ItemEditView: View {
                     Button(L("edit_add_field")) {
                         fieldNames.append("")
                         fieldValues.append("")
+                        fieldSchemas.append("")
                     }
                 }
             }
             Section {
                 if let problem { Text(writeProblemText(problem)).foregroundStyle(.red) }
                 if let fieldsProblem = error("fields") { Text(fieldsProblem).foregroundStyle(.red) }
+                // Leaving out the partners that can't be reached pauses sharing with them until the item is shared with them again.
+                if let problem, problem.kind == .partnerUnreachable, !problem.partners.isEmpty {
+                    Button(L("action_save_without_them")) {
+                        save(draft, valid: errors.isEmpty, withoutUnreachable: Set(problem.partners.map { $0.shareId }))
+                    }
+                    .disabled(busy || model.repository.state.offline)
+                }
                 Button(L("action_save")) { save(draft, valid: errors.isEmpty) }
                     .disabled(busy || model.repository.state.offline)
                 if model.repository.state.offline { Text(L("write_offline")).font(.footnote) }
@@ -428,7 +467,7 @@ struct ItemEditView: View {
         }
     }
 
-    private func save(_ draft: ItemDraft, valid: Bool) {
+    private func save(_ draft: ItemDraft, valid: Bool, withoutUnreachable: Set<String> = []) {
         dismissKeyboard()
         showErrors = true
         guard valid else { return }
@@ -437,7 +476,7 @@ struct ItemEditView: View {
         Task { @MainActor in
             let outcome: WriteResult?
             if let item {
-                outcome = try? await model.repository.update(item: item, draft: draft)
+                outcome = try? await model.repository.update(item: item, draft: draft, withoutUnreachable: withoutUnreachable)
             } else {
                 outcome = try? await model.repository.create(draft: draft, type: type)
             }
@@ -449,7 +488,7 @@ struct ItemEditView: View {
             } else if let refused = outcome as? WriteResult.Refused {
                 problem = refused.problem
             } else {
-                problem = WriteProblem(kind: .failed, serverMessage: nil, status: 0)
+                problem = WriteProblem(kind: .failed)
             }
         }
     }

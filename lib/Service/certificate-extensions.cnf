@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: EUPL-1.2
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+#
+# The extensions of every certificate Keepiq's private CA signs with
+# openssl_csr_sign(). Without a section openssl takes the host openssl.cnf
+# default, v3_ca on most systems, which marks a user certificate as a CA and
+# leaves the CA certificates' constraints to the host.
+
+[keepiq_root]
+basicConstraints = critical,CA:true
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+# Self-signed: its own key identifier. `keyid,issuer` would write an empty one.
+authorityKeyIdentifier = keyid:always
+
+[keepiq_intermediate]
+basicConstraints = critical,CA:true,pathlen:0
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+# Falls back to the root's name and serial when the root has no key identifier.
+authorityKeyIdentifier = keyid,issuer
+
+[keepiq_leaf]
+basicConstraints = critical,CA:false
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer

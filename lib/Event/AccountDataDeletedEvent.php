@@ -82,7 +82,7 @@ class AccountDataDeletedEvent extends Event {
 
 	/**
 	 * Get the audit metadata payload — counts and trigger only, never secret
-	 * material. Keys match the AuditEventTypes whitelist for
+	 * material. Keys match the AuditMetadataPolicy whitelist for
 	 * vault.account_deleted.
 	 *
 	 * @return array<string,mixed>

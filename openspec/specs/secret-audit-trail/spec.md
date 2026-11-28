@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-secret-audit-trail. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Server-Observable Operation Capture
 The system MUST record an audit entry for every server-observable secret operation: secret created, updated, read (individual encrypted-blob fetch), and deleted; folder cascade deletion; share granted, revoked, delegated, and delegation reclaimed; link share created, accessed, access-attempt failed, revoked, and auto-deleted; secret request created, fulfilled, re-requested, and revoked; suite revoked, reinstated, and compromise recovery started/completed; application registered, approved, rejected, deleted, token issued, and application secret retrieved; **emergency access granted, requested, declined, approved, accessed, revoked, and invalidated**.
 
@@ -56,7 +58,7 @@ Because export runs client-side, these entries cover the supported, client-repor
 - **THEN** an audit entry MUST be recorded with event type `vault.account_deleted` carrying the per-entity deletion counts
 
 ### Requirement: No Secret Material in Audit Entries
-Audit entries MUST NEVER contain secret values, login fields, additional fields, plaintext passwords, or ciphertext. Entry metadata MUST be validated against a per-event-type whitelist of keys; unknown keys MUST be dropped, and any attempt to record a forbidden key (`key`, `login`, `password`, `value`, `additionalFields`, `ciphertext`, `payload`) MUST be rejected with an error. A secret's `name` and `url` (plaintext metadata per the secrets spec) are the only object-identifying strings permitted.
+Audit entries MUST NEVER contain secret values, login fields, additional fields, plaintext passwords, or ciphertext. Entry metadata MUST be validated against a per-event-type whitelist of keys; unknown keys MUST be dropped, and any attempt to record a forbidden key (`key`, `login`, `password`, `value`, `additionalFields`, `totp`, `passkeys`, `ciphertext`, `payload`) MUST be rejected with an error. A secret's `name` and `url` (plaintext metadata per the secrets spec) are the only object-identifying strings permitted. Naming a field is not secret material: `secret.updated` lists the value fields an update changed by name in `changedFields`, `totp` and `passkeys` included, so a changed second factor is never an empty update.
 
 #### Scenario: Forbidden metadata rejected
 @e2e exclude Structural guarantee enforced in AuditService::record — a server-side validation/exception path with no DOM surface; covered by PHPUnit (AuditService forbidden-key tests, one per forbidden key + nested).
@@ -130,3 +132,20 @@ The system MUST provide administrators an instance-wide audit view: paginated (5
 - **WHEN** a regular user calls the instance-wide audit endpoint
 - **THEN** the request MUST be rejected by the admin authorization check
 
+### Requirement: Risky events raise an alert at once
+
+When one of the following events is recorded, the system MUST send a Nextcloud notification to the people it concerns at that moment, not in a digest: a honey secret is accessed (its owner and every administrator), an emergency contact requests access (the grantor), a secret is flagged as possibly compromised (its owner), a new device asks for approval (the user), and an account recovery request is filed (the recovery officers). A notification MUST name the event, the actor and the secret or account, and MUST NOT carry secret material. The event MUST also reach the audit trail and any configured SIEM sink as usual. Events that the server cannot observe, such as a wrong master password typed in the browser, are not alerted.
+
+#### Scenario: A grantor is told about an emergency access request
+
+- **GIVEN** a vault owner who named a colleague as emergency contact
+- **WHEN** the colleague requests emergency access
+- **THEN** the owner receives a Nextcloud notification at once that names the colleague and the wait period
+- **AND** the audit trail records the request
+
+#### Scenario: Administrators are told a decoy was touched
+
+- **GIVEN** a honey secret owned by a security officer
+- **WHEN** an application fetches it through the machine API
+- **THEN** the owner and every administrator receive a notification naming the application
+- **AND** the notification contains no value of the secret

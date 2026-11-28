@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Address forms</title>
+	<link rel="stylesheet" href="/style.css">
+	<style>
+		textarea {
+			padding: 8px 10px;
+			font: inherit;
+			color: inherit;
+			background: var(--bg);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Address forms</h1>
+		<p class="tests">Each field below opens the identity list, and a pick fills its form. For an identity Anna de Vries at "Kerkstraat 1" and "1234 AB Utrecht" on two lines, each form says what it gets. The BSN and "Address line 2" stay empty.</p>
+
+		<h2>Address</h2>
+		<p class="tests">Name parts, email, phone and a multi-line address, which keeps its two lines.</p>
+		<form method="post" action="/address" id="address">
+			<label>First name <input name="first" autocomplete="given-name"></label>
+			<label>Last name <input name="last" autocomplete="family-name"></label>
+			<label>Email <input name="email" type="email" autocomplete="email"></label>
+			<label>Phone <input name="phone" type="tel" autocomplete="tel"></label>
+			<label>Address <textarea name="address" rows="3" autocomplete="street-address"></textarea></label>
+			<label>BSN <input name="bsn" inputmode="numeric"></label>
+			<button type="submit">Save address</button>
+		</form>
+
+		<h2>Address lines</h2>
+		<p class="tests">The first line alone, "Kerkstraat 1".</p>
+		<form method="post" action="/address" id="lines">
+			<label>First name <input name="first" autocomplete="given-name"></label>
+			<label>Last name <input name="last" autocomplete="family-name"></label>
+			<label>Address line 1 <input name="line1" autocomplete="address-line1"></label>
+			<label>Address line 2 <input name="line2" autocomplete="address-line2"></label>
+			<button type="submit">Save address</button>
+		</form>
+
+		<h2>Full name</h2>
+		<p class="tests">One name field, "Anna de Vries", and a one-line address, "Kerkstraat 1, 1234 AB Utrecht".</p>
+		<form method="post" action="/address" id="full-name">
+			<label>Full name <input name="name" autocomplete="name"></label>
+			<label>Email <input name="email" type="email"></label>
+			<label>Address <input name="address" autocomplete="street-address"></label>
+			<button type="submit">Save address</button>
+		</form>
+
+		<h2>Nederlands</h2>
+		<p class="tests">Dutch labels without tokens.</p>
+		<form method="post" action="/adres" id="dutch" lang="nl">
+			<label>Voornaam <input name="voornaam"></label>
+			<label>Achternaam <input name="achternaam"></label>
+			<label>E-mailadres <input name="email"></label>
+			<label>Telefoon <input name="telefoon"></label>
+			<label>Adres <input name="adres"></label>
+			<button type="submit">Opslaan</button>
+		</form>
+	</main>
+</body>
+</html>

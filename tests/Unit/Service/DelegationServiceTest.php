@@ -30,14 +30,20 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DelegationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for DelegationService.
  */
 class DelegationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use AdminAreaFixture;
 
 	/**
@@ -50,7 +56,7 @@ class DelegationServiceTest extends TestCase {
 		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$service = new DelegationService(
 			mapper: $mapper,
-			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
+			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		return [$service, $mapper, $secretMapper];
@@ -63,13 +69,32 @@ class DelegationServiceTest extends TestCase {
 	 *
 	 * @return Secret
 	 */
-	private function buildSecret(string $ownerId = 'alice'): Secret {
+	private function buildSecret(string $ownerId = 'alice', string $id = 'sec-1'): Secret {
 		$secret = new Secret();
-		$secret->setId('sec-1');
+		$secret->setId($id);
 		$secret->setOwnerType('user');
 		$secret->setOwnerId($ownerId);
 		return $secret;
 	}//end buildSecret()
+
+	/**
+	 * Alice owns sec-1, and $holder holds a copy of it through a real share row.
+	 *
+	 * @param MockObject&SecretMapper      $secretMapper      The secret mapper
+	 * @param MockObject&ShareTargetMapper $shareTargetMapper The share-target mapper
+	 * @param string                       $holder            The copy's holder
+	 *
+	 * @return void
+	 */
+	private function holdsACopy(MockObject $secretMapper, MockObject $shareTargetMapper, string $holder): void {
+		$secretMapper->method('findById')->willReturnCallback(
+			fn (string $id): Secret => ($id === 'copy-1' ? $this->buildSecret(ownerId: $holder, id: 'copy-1') : $this->buildSecret(ownerId: 'alice'))
+		);
+		$row = new ShareTarget();
+		$row->setTargetUserId($holder);
+		$row->setSecretId('copy-1');
+		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn($row);
+	}//end holdsACopy()
 
 	/**
 	 * createDelegation persists a temporary delegation row.
@@ -122,6 +147,24 @@ class DelegationServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$service->createDelegation(secretId: 'sec-1', delegatedTo: 'alice', initiatedBy: 'alice');
 	}//end testCreateDelegationRejectsSelf()
+
+	/**
+	 * A recipient owns their received copy but may not delegate it: only the
+	 * source's owner delegates (keepiq#1298).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
+	public function testCreateDelegationRefusesAReceivedCopy(): void {
+		[$service, $mapper, $secretMapper] = $this->build();
+		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'bob', id: 'copy-of-bob'));
+		$mapper->expects(matcher: $this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A received copy cannot be delegated');
+		$service->createDelegation(secretId: 'copy-of-bob', delegatedTo: 'carol', initiatedBy: 'bob');
+	}//end testCreateDelegationRefusesAReceivedCopy()
 
 	/**
 	 * createDelegation refuses unknown secrets.
@@ -237,18 +280,88 @@ class DelegationServiceTest extends TestCase {
 		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
 		$groupManager = $this->createMock(originalClassName: IGroupManager::class);
+		// The secrets these tests delegate are originals, never received copies.
+		$shareTargetMapper->method('findByRecipientSecret')->willThrowException(new DoesNotExistException(msg: 'none'));
 
 		$service = new DelegationService(
 			mapper: $mapper,
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
-				shareTargetMapper: $shareTargetMapper,
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 				areas: $this->areaAuthorizer(groupManager: $groupManager, delegated: $delegated),
 			),
 		);
 
 		return [$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager];
 	}//end buildWithAdmin()
+
+	/**
+	 * A service over `copy-of-bob`, Bob's received copy of Alice's `sec-1`,
+	 * with a People area admin and the scan's verdict on the copy's row.
+	 *
+	 * @param string|null $heldBack The scan's verdict on the row (ShareQuarantineScanner::HELD_*), or null
+	 *
+	 * @return array{0:DelegationService,1:SecretDelegationMapper}
+	 */
+	private function buildOverBobsCopy(?string $heldBack = null): array {
+		$mapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
+		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'bob', id: 'copy-of-bob'));
+		$row = new ShareTarget();
+		$row->setSourceSecretId('sec-1');
+		$row->setTargetUserId('bob');
+		$row->setSecretId('copy-of-bob');
+		$targets = $this->createMock(originalClassName: ShareTargetMapper::class);
+		$targets->method('findByRecipientSecret')->willReturn($row);
+		$targets->method('findBySourceSecretAndTargetUser')->willReturn($row);
+		$scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($heldBack);
+
+		$service = new DelegationService(
+			mapper: $mapper,
+			authorizer: new DelegationAuthorizer(
+				secretMapper: $secretMapper,
+				rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secretMapper, scanner: $scanner),
+				areas: $this->areaAuthorizer(groupManager: $this->createMock(originalClassName: IGroupManager::class), delegated: [PeopleAdminSettings::class]),
+			),
+		);
+
+		return [$service, $mapper];
+	}//end buildOverBobsCopy()
+
+	/**
+	 * Bob's copy whose row waits for the quarantine scan is not refused as a
+	 * copy yet: he is told it waits for the scan.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
+	public function testCreateDelegationOfACopyAwaitingTheScanAnswersScanPending(): void {
+		[$service, $mapper] = $this->buildOverBobsCopy(heldBack: ShareQuarantineScanner::HELD_UNJUDGED);
+		$mapper->expects(matcher: $this->never())->method('insert');
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->expectExceptionMessage('This secret waits for the share quarantine scan, so it cannot be delegated yet');
+		$service->createDelegation(secretId: 'copy-of-bob', delegatedTo: 'carol', initiatedBy: 'bob');
+	}//end testCreateDelegationOfACopyAwaitingTheScanAnswersScanPending()
+
+	/**
+	 * An admin who holds a share of Bob's received copy is not handed that
+	 * copy: only an original is delegated.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
+	public function testCreateAdminHandoverRefusesAReceivedCopy(): void {
+		[$service, $mapper] = $this->buildOverBobsCopy();
+		$mapper->expects(matcher: $this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A received copy cannot be delegated');
+		$service->createAdminHandover(secretId: 'copy-of-bob', delegatedTo: 'mallory', initiatedBy: 'mallory');
+	}//end testCreateAdminHandoverRefusesAReceivedCopy()
 
 	/**
 	 * Owner self-delegation is rejected when the delegate holds no share
@@ -280,8 +393,7 @@ class DelegationServiceTest extends TestCase {
 	 */
 	public function testCreateDelegationAcceptsDelegateWithPreExistingShare(): void {
 		[$service, $mapper, $secretMapper, $shareTargetMapper, $_groupManager] = $this->buildWithAdmin();
-		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
-		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$this->holdsACopy(secretMapper: $secretMapper, shareTargetMapper: $shareTargetMapper, holder: 'bob');
 		$mapper->expects($this->once())
 			->method('insert')
 			->willReturnCallback(static fn (SecretDelegation $e): SecretDelegation => $e);
@@ -304,8 +416,7 @@ class DelegationServiceTest extends TestCase {
 		[$service, $mapper, $secretMapper, $shareTargetMapper, $_groupManager] = $this->buildWithAdmin(
 			delegated: [PeopleAdminSettings::class]
 		);
-		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
-		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$this->holdsACopy(secretMapper: $secretMapper, shareTargetMapper: $shareTargetMapper, holder: 'mallory');
 		$mapper->expects($this->once())
 			->method('insert')
 			->willReturnCallback(static fn (SecretDelegation $e): SecretDelegation => $e);

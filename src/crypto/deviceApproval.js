@@ -8,6 +8,7 @@
  */
 
 import { decryptPrivateKeyWithRawKey, deriveUnlockKeyRaw } from './aes.js'
+import { fromBase64, toBase64 } from './base64.js'
 import { decodeEnvelope } from './envelope.js'
 import { open, seal } from './hpke.js'
 
@@ -15,31 +16,6 @@ import { open, seal } from './hpke.js'
 export const DEVICE_APPROVAL_INFO = 'keepiq-device-approval-v1'
 
 const encoder = new TextEncoder()
-
-/**
- * @param {Uint8Array} bytes Bytes.
- * @return {string} Base64.
- */
-function toBase64(bytes) {
-	let binary = ''
-	for (const byte of bytes) {
-		binary += String.fromCharCode(byte)
-	}
-	return btoa(binary)
-}
-
-/**
- * @param {string} base64 Base64.
- * @return {Uint8Array} Bytes.
- */
-export function fromBase64(base64) {
-	const binary = atob(base64)
-	const bytes = new Uint8Array(binary.length)
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i)
-	}
-	return bytes
-}
 
 /**
  * Rebuild the raw unlock key from the master password and check it against
@@ -101,4 +77,4 @@ export async function openUnlockKey(sealed, privateKey, publicKeyRaw, requestId)
 	)
 }
 
-export { toBase64 }
+export { fromBase64, toBase64 }

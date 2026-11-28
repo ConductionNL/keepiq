@@ -46,6 +46,48 @@ function deviceLabel() {
 	return system ? `${name} on ${system}` : name
 }
 
+/**
+ * Rebuild the unlock key from the master password and seal it to the
+ * request key; the raw key is zeroed once sealed.
+ *
+ * @param {{id: string, requestPublicKey: string}} request The pending request.
+ * @param {{masterPassword: string, envelope: string}} unlock The master password and the wrapped private key.
+ * @return {Promise<string>} The sealed unlock key.
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+ */
+async function sealedUnlockKey(request, unlock) {
+	const raw = await unlockKeyFromPassword(unlock.masterPassword, unlock.envelope)
+	try {
+		return await sealUnlockKey(raw, request.requestPublicKey, request.id)
+	} finally {
+		raw.fill(0)
+	}
+}
+
+/**
+ * Send only the sealed key, with a vault-key proof bound to the request id
+ * and the sealed key.
+ *
+ * @param {{id: string}} request The pending request.
+ * @param {{sealed: string, masterPassword: string, envelope: string, suiteId: string}} approval The sealed key and what the proof is made with.
+ * @return {Promise<void>}
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+ */
+async function postApproval(request, approval) {
+	const headers = await buildKeyProofHeaders({
+		suiteId: approval.suiteId,
+		purpose: PROOF_PURPOSE.APPROVE_DEVICE,
+		encryptedPrivateKey: approval.envelope,
+		masterPassword: approval.masterPassword,
+		boundValues: [request.id, approval.sealed],
+	})
+	await axios.post(
+		generateUrl(`/apps/keepiq/api/v1/device-approvals/${request.id}/approve`),
+		{ sealedUnlockKey: approval.sealed },
+		{ headers },
+	)
+}
+
 export const useDeviceApprovalStore = defineStore('deviceApproval', {
 	state: () => ({
 		/** Whether an administrator left the feature on. */
@@ -196,31 +238,16 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 			if (!envelope || !session.suiteId) {
 				throw new Error('Vault is locked')
 			}
-			const raw = await unlockKeyFromPassword(masterPassword, envelope)
-			let sealed
-			try {
-				sealed = await sealUnlockKey(
-					raw,
-					request.requestPublicKey,
-					request.id,
-				)
-			} finally {
-				raw.fill(0)
-			}
-			const headers = await buildKeyProofHeaders({
-				suiteId: session.suiteId,
-				purpose: PROOF_PURPOSE.APPROVE_DEVICE,
-				encryptedPrivateKey: envelope,
+			const sealed = await sealedUnlockKey(request, {
 				masterPassword,
-				boundValues: [request.id, sealed],
+				envelope,
 			})
-			await axios.post(
-				generateUrl(
-					`/apps/keepiq/api/v1/device-approvals/${request.id}/approve`,
-				),
-				{ sealedUnlockKey: sealed },
-				{ headers },
-			)
+			await postApproval(request, {
+				sealed,
+				masterPassword,
+				envelope,
+				suiteId: session.suiteId,
+			})
 			this.pending = this.pending.filter((row) => row.id !== request.id)
 		},
 

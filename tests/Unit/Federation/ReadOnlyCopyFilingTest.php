@@ -35,6 +35,8 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -71,6 +73,7 @@ class ReadOnlyCopyFilingTest extends TestCase {
 	private function put(array $params) {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($this->copy);
+		$secrets->method('advanceVersion')->willReturn(1);
 		$secrets->method('update')->willReturnCallback(
 			function (Secret $secret): Secret {
 				$this->writes++;
@@ -88,6 +91,9 @@ class ReadOnlyCopyFilingTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			folderOwnership: $folders,
 		);
 

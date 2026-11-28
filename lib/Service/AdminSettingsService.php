@@ -32,7 +32,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
+use OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -49,8 +51,12 @@ use Throwable;
  *   is being split per admin area by admin-scoped-roles (keepiq#774), which
  *   removes this; a separate service now would add a dependency to a class
  *   that sits at its coupling limit.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 13 against a limit of 13,
+ *   reached when the trusted extension origins joined the admin settings
+ *   (extension-passkey-enrolment). The per-area split of admin-scoped-roles
+ *   (keepiq#774) removes this too.
  */
-class AdminSettingsService {
+class AdminSettingsService implements AdminSettingsServiceInterface {
 	/**
 	 * Admin default bounds for validation.
 	 */
@@ -94,11 +100,14 @@ class AdminSettingsService {
 		'general' => [
 			'ca_auto_renew_enabled',
 			'breach_check_enabled',
+			'site_directory_enabled',
 			'offline_cache_enabled',
 			'offline_edits_enabled',
 			'device_approval_enabled',
 			'attachment_max_bytes',
 			'attachment_user_quota_bytes',
+			'favicon_service_url',
+			'site_preview_service_url',
 		],
 		'applications' => [
 			'lease_default_ttl_seconds',
@@ -106,7 +115,7 @@ class AdminSettingsService {
 			'lease_renewable',
 			'lease_revocation_blocks_refetch',
 		],
-		'audit' => ['audit_retention_days'],
+		'audit' => ['audit_retention_days', 'flow_trigger_groups'],
 	];
 
 	/**
@@ -126,6 +135,9 @@ class AdminSettingsService {
 		'version_retention_days',
 		'trash_retention_days',
 		'extension_max_idle_minutes',
+		'extension_passkeys_enabled',
+		'extension_passkey_origins',
+		'extension_passkey_pinned_origins',
 	];
 
 	/**
@@ -159,6 +171,13 @@ class AdminSettingsService {
 	private PasswordPolicyService $policyService;
 
 	/**
+	 * The trusted browser-extension origins for passkeys.
+	 *
+	 * @var TrustedExtensionOrigins
+	 */
+	private TrustedExtensionOrigins $extensionOrigins;
+
+	/**
 	 * Constructor for the AdminSettingsService.
 	 *
 	 * @param IAppConfig $appConfig The app config interface
@@ -167,6 +186,7 @@ class AdminSettingsService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param PasswordPolicyService|null $policyService The org password policy
+	 * @param TrustedExtensionOrigins|null $extensionOrigins The trusted extension origins
 	 *
 	 * @return void
 	 *
@@ -179,7 +199,9 @@ class AdminSettingsService {
 		private LoggerInterface $logger,
 		?IEventDispatcher $eventDispatcher = null,
 		?PasswordPolicyService $policyService = null,
+		?TrustedExtensionOrigins $extensionOrigins = null,
 	) {
+		$this->extensionOrigins = ($extensionOrigins ?? new TrustedExtensionOrigins(appConfig: $appConfig));
 		$this->policyService = ($policyService ?? new PasswordPolicyService(
 			appConfig: $appConfig,
 			userSession: $userSession,
@@ -195,81 +217,144 @@ class AdminSettingsService {
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.3
 	 */
 	public function getAdminSettings(): array {
-		$appId = Application::APP_ID;
 		$settings = array_merge(
-			[
-				'min_password_length' => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
-				'min_password_score' => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
-				'default_session_timeout' => $this->appConfig->getValueString(
-					$appId,
-					'default_session_timeout',
-					self::DEFAULT_SESSION_TIMEOUT
-				),
-				'ca_auto_renew_enabled' => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
-				'audit_retention_days' => $this->appConfig->getValueInt(
-					$appId,
-					'audit_retention_days',
-					self::AUDIT_RETENTION_DEFAULT
-				),
-				'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
-				'expiry_default_max_age_days' => $this->appConfig->getValueInt(
-					$appId,
-					'expiry_default_max_age_days',
-					0
-				),
-				'expiry_reminder_days' => json_decode(
-					$this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
-					true
-				),
-				'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
-				'version_retention_days' => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
-				// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
-				'trash_retention_days' => $this->appConfig->getValueInt(
-					$appId,
-					'trash_retention_days',
-					SecretTrashService::RETENTION_DEFAULT
-				),
-				'attachment_max_bytes' => $this->appConfig->getValueInt(
-					$appId,
-					'attachment_max_bytes',
-					26214400
-				),
-				'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
-					$appId,
-					'attachment_user_quota_bytes',
-					104857600
-				),
-			],
+			$this->sessionAndAuditSettings(),
+			$this->expiryAndVersionSettings(),
+			$this->storageSettings(),
 			// Org password policy (org-password-policies §1.1) — one reader,
 			// shared with the user-visible getPolicy() floor.
 			$this->policyService->readAdminPolicyKeys(),
-			[
-				// Machine leases (machine-secret-leases §2.4).
-				'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
-					$appId,
-					'lease_default_ttl_seconds',
-					900
-				),
-				'lease_max_ttl_seconds' => $this->appConfig->getValueInt(
-					$appId,
-					'lease_max_ttl_seconds',
-					86400
-				),
-				'lease_renewable' => $this->appConfig->getValueBool($appId, 'lease_renewable', true),
-				'lease_revocation_blocks_refetch' => $this->appConfig->getValueBool(
-					$appId,
-					'lease_revocation_blocks_refetch',
-					false
-				),
-				// The longest idle lock delay a user may pick in the browser extension.
-				'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
-				// New device approval (crypto-new-device-approval D5), default on.
-				'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
-			],
-			$this->offlineSettings()
+			$this->leaseAndDeviceSettings(),
+			$this->offlineSettings(),
+			(new SiteImageSettings(appConfig: $this->appConfig))->read()
 		);
 
-		// Best-effort CA status; never blocks if the service is unavailable.
+		return $this->withCaStatus(settings: $settings);
+	}//end getAdminSettings()
+
+	/**
+	 * The password, session, CA renewal, audit and breach check settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function sessionAndAuditSettings(): array {
+		$appId = AppIdentity::APP_ID;
+		return [
+			'min_password_length' => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
+			'min_password_score' => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
+			'default_session_timeout' => $this->appConfig->getValueString(
+				$appId,
+				'default_session_timeout',
+				self::DEFAULT_SESSION_TIMEOUT
+			),
+			'ca_auto_renew_enabled' => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+			'audit_retention_days' => $this->appConfig->getValueInt(
+				$appId,
+				'audit_retention_days',
+				self::AUDIT_RETENTION_DEFAULT
+			),
+			'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+			'site_directory_enabled' => $this->appConfig->getValueBool($appId, 'site_directory_enabled', false),
+			'flow_trigger_groups' => (new VaultFlowTriggerCatalog())->parseEnabledGroups(
+				stored: $this->appConfig->getValueString($appId, 'flow_trigger_groups', '[]')
+			),
+		];
+	}//end sessionAndAuditSettings()
+
+	/**
+	 * The expiry defaults and the version retention settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function expiryAndVersionSettings(): array {
+		$appId = AppIdentity::APP_ID;
+		return [
+			'expiry_default_max_age_days' => $this->appConfig->getValueInt(
+				$appId,
+				'expiry_default_max_age_days',
+				0
+			),
+			'expiry_reminder_days' => json_decode(
+				$this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
+				true
+			),
+			'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
+			'version_retention_days' => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
+		];
+	}//end expiryAndVersionSettings()
+
+	/**
+	 * The trash retention and attachment size settings.
+	 *
+	 * @return array<string,int>
+	 */
+	private function storageSettings(): array {
+		$appId = AppIdentity::APP_ID;
+		return [
+			// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
+			'trash_retention_days' => $this->appConfig->getValueInt(
+				$appId,
+				'trash_retention_days',
+				SecretTrashService::RETENTION_DEFAULT
+			),
+			'attachment_max_bytes' => $this->appConfig->getValueInt(
+				$appId,
+				'attachment_max_bytes',
+				26214400
+			),
+			'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
+				$appId,
+				'attachment_user_quota_bytes',
+				104857600
+			),
+		];
+	}//end storageSettings()
+
+	/**
+	 * The machine lease, extension idle and new device approval settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function leaseAndDeviceSettings(): array {
+		$appId = AppIdentity::APP_ID;
+		return [
+			// Machine leases (machine-secret-leases §2.4).
+			'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
+				$appId,
+				'lease_default_ttl_seconds',
+				900
+			),
+			'lease_max_ttl_seconds' => $this->appConfig->getValueInt(
+				$appId,
+				'lease_max_ttl_seconds',
+				86400
+			),
+			'lease_renewable' => $this->appConfig->getValueBool($appId, 'lease_renewable', true),
+			'lease_revocation_blocks_refetch' => $this->appConfig->getValueBool(
+				$appId,
+				'lease_revocation_blocks_refetch',
+				false
+			),
+			// The longest idle lock delay a user may pick in the browser extension.
+			'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
+			// Extension passkeys: the switch, the admin-added origins and the pinned store origins.
+			'extension_passkeys_enabled' => $this->extensionOrigins->isEnabled(),
+			'extension_passkey_origins' => $this->extensionOrigins->adminOrigins(),
+			'extension_passkey_pinned_origins' => TrustedExtensionOrigins::PINNED_STORE_ORIGINS,
+			// New device approval (crypto-new-device-approval D5), default on.
+			'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
+		];
+	}//end leaseAndDeviceSettings()
+
+	/**
+	 * The settings with the CA status added: best effort, it never blocks
+	 * when the service is unavailable.
+	 *
+	 * @param array<string,mixed> $settings The admin settings
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function withCaStatus(array $settings): array {
 		try {
 			$caService = $this->container->get('OCA\Keepiq\Service\CertificateAuthorityService');
 			if (method_exists($caService, 'getStatus') === true) {
@@ -281,7 +366,7 @@ class AdminSettingsService {
 		}
 
 		return $settings;
-	}//end getAdminSettings()
+	}//end withCaStatus()
 
 	/**
 	 * The offline cache switches: offline reading (default on) and offline
@@ -293,7 +378,7 @@ class AdminSettingsService {
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
 	 */
 	private function offlineSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'offline_cache_enabled' => $this->appConfig->getValueBool($appId, 'offline_cache_enabled', true),
 			'offline_edits_enabled' => $this->appConfig->getValueBool($appId, 'offline_edits_enabled', false),
@@ -420,6 +505,7 @@ class AdminSettingsService {
 			case 'general':
 				$this->updateInstanceSettings(data: $data);
 				$this->updateAttachmentSettings(data: $data);
+				(new SiteImageSettings(appConfig: $this->appConfig))->update(data: $data);
 				return;
 			case 'policies':
 				$this->updateAuthenticationSettings(data: $data);
@@ -455,7 +541,6 @@ class AdminSettingsService {
 		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
 
-
 	/**
 	 * Password-strength and session keys (implement-dashboard-settings §1.4).
 	 *
@@ -466,7 +551,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateAuthenticationSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['min_password_length']) === true) {
 			$length = (int)$data['min_password_length'];
@@ -512,7 +597,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateInstanceSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['ca_auto_renew_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool)$data['ca_auto_renew_enabled']);
@@ -520,6 +605,10 @@ class AdminSettingsService {
 
 		if (isset($data['breach_check_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool)$data['breach_check_enabled']);
+		}
+
+		if (isset($data['site_directory_enabled']) === true) {
+			$this->appConfig->setValueBool($appId, 'site_directory_enabled', (bool)$data['site_directory_enabled']);
 		}
 
 		if (isset($data['offline_cache_enabled']) === true) {
@@ -536,7 +625,7 @@ class AdminSettingsService {
 	}//end updateInstanceSettings()
 
 	/**
-	 * Audit retention (add-secret-audit-trail §4.2), the one Audit area key.
+	 * Audit retention (add-secret-audit-trail §4.2) and the flow trigger groups.
 	 *
 	 * @param array<string,mixed> $data The admin-settings input
 	 *
@@ -545,6 +634,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException When the window is below the minimum.
 	 */
 	private function updateAuditSettings(array $data): void {
+		$this->updateFlowTriggerGroups(data: $data);
 		if (isset($data['audit_retention_days']) === false) {
 			return;
 		}
@@ -557,8 +647,40 @@ class AdminSettingsService {
 			);
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'audit_retention_days', $days);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'audit_retention_days', $days);
 	}//end updateAuditSettings()
+
+	/**
+	 * The trigger groups whose vault events may start OpenRegister flows
+	 * (clients-vault-event-flow-triggers D4): a list of known groups, stored
+	 * as JSON. An empty list, the default, fires nothing.
+	 *
+	 * @param array<string,mixed> $data The admin-settings input
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the value is not a list of known groups.
+	 *
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.1
+	 */
+	private function updateFlowTriggerGroups(array $data): void {
+		if (array_key_exists('flow_trigger_groups', $data) === false) {
+			return;
+		}
+
+		$groups = $data['flow_trigger_groups'];
+		if (is_array($groups) === false || array_is_list($groups) === false) {
+			throw new InvalidArgumentException('flow_trigger_groups must be a list of trigger groups');
+		}
+
+		$unknown = array_values(array_diff($groups, VaultFlowTriggerCatalog::GROUPS));
+		if ($unknown !== []) {
+			throw new InvalidArgumentException('Unknown flow trigger group: ' . (string)json_encode($unknown[0]));
+		}
+
+		$enabled = array_values(array_intersect(VaultFlowTriggerCatalog::GROUPS, $groups));
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'flow_trigger_groups', (string)json_encode($enabled));
+	}//end updateFlowTriggerGroups()
 
 	/**
 	 * Expiry defaults (rotation-expiry-policies §2.2): admin max age ships
@@ -571,7 +693,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateExpirySettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['expiry_default_max_age_days']) === true) {
 			$maxAge = (int)$data['expiry_default_max_age_days'];
@@ -608,7 +730,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateLeaseSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		foreach (['lease_default_ttl_seconds', 'lease_max_ttl_seconds'] as $leaseKey) {
 			if (isset($data[$leaseKey]) === true) {
@@ -645,7 +767,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateRetentionSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['version_retention_count']) === true) {
 			$count = (int)$data['version_retention_count'];
@@ -677,7 +799,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On a non-positive byte count.
 	 */
 	private function updateAttachmentSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['attachment_max_bytes']) === true) {
 			$maxBytes = (int)$data['attachment_max_bytes'];
@@ -719,7 +841,7 @@ class AdminSettingsService {
 			throw new InvalidArgumentException('trash_retention_days must be between 1 and 365');
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'trash_retention_days', $days);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'trash_retention_days', $days);
 	}//end updateTrashSettings()
 
 	/**
@@ -733,7 +855,7 @@ class AdminSettingsService {
 	 */
 	public function extensionMaxIdleMinutes(): int {
 		$minutes = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'extension_max_idle_minutes',
 			self::EXTENSION_MAX_IDLE_DEFAULT
 		);
@@ -756,6 +878,7 @@ class AdminSettingsService {
 	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
 	 */
 	private function updateExtensionSettings(array $data): void {
+		$this->updateExtensionPasskeySettings(data: $data);
 		if (isset($data['extension_max_idle_minutes']) === false) {
 			return;
 		}
@@ -765,6 +888,38 @@ class AdminSettingsService {
 			throw new InvalidArgumentException('extension_max_idle_minutes must be one of 1, 5, 15, 30, 60 or 240');
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'extension_max_idle_minutes', $minutes);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'extension_max_idle_minutes', $minutes);
 	}//end updateExtensionSettings()
+
+	/**
+	 * Persist the extension passkey switch and the admin-added origins. Each
+	 * origin must be one exact extension origin; an invalid entry refuses
+	 * the whole list, naming the entry.
+	 *
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On an invalid switch or origin entry.
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
+	 */
+	private function updateExtensionPasskeySettings(array $data): void {
+		if (array_key_exists('extension_passkey_origins', $data) === true) {
+			$origins = $this->extensionOrigins->validate(entries: $data['extension_passkey_origins']);
+			$this->appConfig->setValueString(
+				AppIdentity::APP_ID,
+				TrustedExtensionOrigins::ORIGINS_KEY,
+				(string)json_encode($origins)
+			);
+		}
+
+		if (array_key_exists('extension_passkeys_enabled', $data) === true) {
+			if (is_bool($data['extension_passkeys_enabled']) === false) {
+				throw new InvalidArgumentException('extension_passkeys_enabled must be true or false');
+			}
+
+			$this->appConfig->setValueBool(AppIdentity::APP_ID, TrustedExtensionOrigins::ENABLED_KEY, $data['extension_passkeys_enabled']);
+		}
+	}//end updateExtensionPasskeySettings()
 }//end class

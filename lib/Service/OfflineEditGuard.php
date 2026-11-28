@@ -29,7 +29,8 @@ use OCA\Keepiq\Exception\StaleWriteException;
  * The precondition an offline edit replays with: a write that names the
  * version it was made from (`baseUpdatedAt`) is refused, untouched, when the
  * secret changed since (offline-edit-queue). A write without a base is not
- * checked, so online clients behave as before.
+ * compared here; the write itself still refuses a change that lands between
+ * its read and its write.
  *
  * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
  */

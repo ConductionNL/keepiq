@@ -28,13 +28,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
-use InvalidArgumentException;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCP\AppFramework\Db\DoesNotExistException;
-use Ramsey\Uuid\Uuid;
+use Psr\Log\LoggerInterface;
 
 /**
  * Creates and deletes recipient copies of shared secrets.
@@ -44,8 +42,9 @@ class RecipientSecretCopyService {
 	 * Constructor for RecipientSecretCopyService.
 	 *
 	 * @param SecretMapper $secretMapper The secret mapper
-	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (recipient suite)
-	 * @param SecretTypeService $typeService The secret-type resolver (copy typing)
+	 * @param RecipientSecretCopyFactory $copies Mints a copy: its suite, type and extra website addresses
+	 * @param PartnerShareRevoker $partnerShares Ends the partner shares of a copy that is deleted
+	 * @param LoggerInterface|null $logger The logger (skipped cross-user deletes)
 	 *
 	 * @return void
 	 *
@@ -53,88 +52,73 @@ class RecipientSecretCopyService {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private EncryptionSuiteMapper $suiteMapper,
-		private SecretTypeService $typeService,
+		private RecipientSecretCopyFactory $copies,
+		private PartnerShareRevoker $partnerShares,
+		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
 
 	/**
-	 * Create the recipient's encrypted Secret copy from browser-supplied
-	 * ciphertext.
+	 * Create the recipient's encrypted Secret copy from the ciphertext their
+	 * sharer's browser encrypted for them.
 	 *
-	 * @param string $sourceSecretId The owner's source secret ID
-	 * @param string $targetUserId The recipient user ID
-	 * @param string $encryptedKey The RSA-encrypted key blob
-	 * @param string|null $encryptedLogin The RSA-encrypted login blob
-	 * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
+	 * @param string              $sourceSecretId The owner's source secret ID
+	 * @param RecipientCiphertext $ciphertext     The recipient and their copy's blobs
 	 *
-	 * @return Secret|null Null when the source is gone or the recipient has no active suite
+	 * @return Secret|string The copy, or why none was minted: `not_found` (the source is gone), `no_suite`
+	 *   (the recipient has no active suite) or `copy_fields_mismatch` (the totp or passkeys sent does not
+	 *   mirror the source's)
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
-	public function create(
-		string $sourceSecretId,
-		string $targetUserId,
-		string $encryptedKey,
-		?string $encryptedLogin,
-		?string $encryptedExtras,
-	): ?Secret {
+	public function createCopy(string $sourceSecretId, RecipientCiphertext $ciphertext): Secret|string {
 		try {
 			$source = $this->secretMapper->findById($sourceSecretId);
 		} catch (DoesNotExistException) {
-			return null;
+			return 'not_found';
 		}
 
-		try {
-			$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
-		} catch (DoesNotExistException) {
-			return null;
+		// A copy without the source's TOTP seed or passkeys, or with ones it
+		// does not hold, is not minted; the pair stays missing until a row
+		// carries them.
+		if ((new CredentialFields())->notMirrored(source: $source, copy: ['totp' => $ciphertext->totp, 'passkeys' => $ciphertext->passkeys]) !== []) {
+			return 'copy_fields_mismatch';
 		}
 
-		try {
-			$typeId = $this->typeService->resolveTypeForSecret($source->getTypeId(), $targetUserId);
-		} catch (InvalidArgumentException) {
-			// Owner's custom type is not visible to the recipient — default.
-			$typeId = $this->typeService->resolveTypeForSecret(null, $targetUserId);
-		}
-
-		$now = new DateTime();
-		$copy = new Secret();
-		$copy->setId(Uuid::uuid4()->toString());
-		$copy->setName($source->getName());
-		$copy->setUrl($source->getUrl());
-		$copy->setTypeId($typeId);
-		$copy->setFolderId(null);
-		$copy->setKey($encryptedKey);
-		$copy->setLogin($encryptedLogin);
-		$copy->setAdditionalFields($encryptedExtras);
-		$copy->setEncryptionSuiteId($suite->getId());
-		$copy->setOwnerType('user');
-		$copy->setOwnerId($targetUserId);
-		$copy->setCreatedAt($now);
-		$copy->setUpdatedAt($now);
-		$copy->setKeyUpdatedAt($now);
-		$this->secretMapper->insert($copy);
-
-		return $copy;
-	}//end create()
+		return $this->copies->createCopy(source: $source, ciphertext: $ciphertext) ?? 'no_suite';
+	}//end createCopy()
 
 	/**
 	 * Delete a recipient's encrypted Secret copy (best-effort — a missing
-	 * copy is already gone).
+	 * copy is already gone). Defence in depth: a copy not genuinely held by
+	 * the share's target (a poisoned or drifted `secret_id`) is kept, so
+	 * revoking a team-folder share can never delete another user's secret.
 	 *
-	 * @param string $secretId The recipient copy's secret ID
+	 * @param ShareTarget $share The share row whose copy is being removed
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-received-copy-deleted-for-good-ends-its-partner-shares
 	 */
-	public function deleteById(string $secretId): void {
+	public function deleteByShare(ShareTarget $share): void {
 		try {
-			$copy = $this->secretMapper->findById($secretId);
-			$this->secretMapper->delete($copy);
+			$copy = $this->secretMapper->findById($share->getSecretId());
 		} catch (DoesNotExistException) {
 			// Already gone.
+			return;
 		}
-	}//end deleteById()
+
+		if ($share->isHeldByTarget(copy: $copy) === false) {
+			$this->logger?->warning(
+				'Kept a secret not held by the revoked team-folder share target',
+				['app' => 'keepiq', 'shareId' => $share->getId(), 'secretId' => $share->getSecretId()]
+			);
+			return;
+		}
+
+		// Before the copy goes: a partner share its holder made of it would otherwise outlive it.
+		$this->partnerShares->queueForDeletedCopy(copyId: $copy->getId());
+		$this->secretMapper->delete($copy);
+	}//end deleteByShare()
 }//end class

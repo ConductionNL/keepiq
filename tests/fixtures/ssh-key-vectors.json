@@ -1,0 +1,15 @@
+{
+	"_note": "Public SSH keys and their SHA256 fingerprints as printed by phpseclib (vendor/phpseclib, getFingerprint sha256), an implementation independent of src/ssh/sshKey.js. Public data only.",
+	"ed25519": {
+		"publicKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBoJneOTtxFSNECPswfFsH3T+cckVsjDeknogABDGhI vector@keepiq",
+		"fingerprint": "SHA256:rJIGsSTIobhpdMcjRggss8LYJNg3rPUS2UTYAaW/hno"
+	},
+	"rsa": {
+		"publicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDa6nFFwU0Rn9GpN99hNW3PWvEqR/cCEljuDprNPWQQzPOH7ho5FZJ/XDnAQy8T74smIGVcaAptgNdjgiLLE4Luc5GpOZeCGRSf+enuW8pqlRa7maJb5ZCbRZ0ltn15AkAdjwMwax5JifsJLz+7WpjyQfGyPKdwgnvi6vF/7Q1k6LQmsF5GZORQ3qT2UQfNIWqdpwc6WNfh7a3w2wj5wBB5h18oePAs/4K+gbZO5MDvFbNNePqfbkRp6RjbfOtkPEcc/Evs2xZl1dPJ7NNKbYgeGHMY0zmMd2bUprlBfO8t/ohEHNZ0j1aC0XVi2J2pRJjnEyADIXTNKAQO9WcXGr8p phpseclib-generated-key",
+		"fingerprint": "SHA256:pzrDTcUk4UftEgVMo99gQRs+rWSA6mf+OG9xDkDXg/s"
+	},
+	"ec": {
+		"publicKey": "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBH6Iu8rxF9Adv1p++WtfOCRstY/4pf4BFE1+0/5HY/mpbimZjRC1IqHRbPSCbqrZ0dsB78XHHZS7V7/kVAlO8AU= phpseclib-generated-key",
+		"fingerprint": "SHA256:/3PtOMqrKCobYfifMM/26NDd/69KZK1FQ4bcSOlOnB0"
+	}
+}

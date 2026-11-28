@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Passkey in a same-origin frame</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main class="wide">
+		<a class="back" href="/">All test pages</a>
+		<h1>Passkey in a same-origin frame</h1>
+		<p class="tests">The <a href="/passkey.html">Passkey</a> page in a frame on this origin. Keepiq handles its requests as on the page itself. In Safari, choose "Use your device or hardware key" in the Keepiq window: the browser's own dialog opens as soon as the frame has focus again, not after the request's timeout.</p>
+		<iframe src="/passkey.html" title="Passkey page on this origin" allow="publickey-credentials-create; publickey-credentials-get" style="height: 640px"></iframe>
+	</main>
+</body>
+</html>

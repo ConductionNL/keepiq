@@ -29,6 +29,9 @@
  */
 
 import { h } from 'vue'
+// Dialog footers under test render the real component: its disabled and
+// loading states are the behaviour the dialogs rely on.
+import CnDialogActions from '@conduction/nextcloud-vue/src/components/CnDialogActions/CnDialogActions.vue'
 
 /**
  * CnIndexPage stub — renders a primary add button (emits `add`), a per-object
@@ -260,6 +263,19 @@ function folderColorTint(value, theme) {
 }
 
 /**
+ * CnJsonViewer stub: the real one loads CodeMirror, which does not render under
+ * jsdom. The value shows as text so a test can read it.
+ */
+const CnJsonViewer = {
+	name: 'CnJsonViewer',
+	props: ['value', 'readOnly', 'height', 'errorText', 'language'],
+	emits: ['update:value'],
+	render() {
+		return h('pre', { 'data-stub': 'CnJsonViewer' }, this.value)
+	},
+}
+
+/**
  * Non-reactive theme stub — jsdom has no NC theme attributes.
  *
  * @return {'light'} Always light.
@@ -270,8 +286,10 @@ function currentTheme() {
 
 export {
 	CnBreadcrumbs,
+	CnDialogActions,
 	CnIconColorPicker,
 	CnIndexPage,
+	CnJsonViewer,
 	CnStatusBadge,
 	currentTheme,
 	FOLDER_COLORS,

@@ -25,6 +25,7 @@ use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -34,6 +35,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
  */
 class ShareExpiryTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var SecretMapper&MockObject */
 	private SecretMapper $secrets;
@@ -164,7 +166,7 @@ class ShareExpiryTest extends TestCase {
 		$this->members->method('findEndingBetween')->willReturn([$membership]);
 		$this->teamFolders->method('findById')->willReturn($teamFolder);
 		$this->groupShareService->expects($this->once())->method('revokeGroupShare')->with('gs-1', 'alice');
-		$this->teamFolderService->expects($this->once())->method('removeMember')->with('tf-1', 'mem-1', 'olga');
+		$this->teamFolderService->expects($this->once())->method('expireMember')->with('tf-1', 'mem-1', 'olga');
 
 		$this->assertSame(2, $this->remover()->removeExpired($this->now));
 	}
@@ -179,6 +181,7 @@ class ShareExpiryTest extends TestCase {
 		$copy = new Secret();
 		$copy->setId('copy');
 		$copy->setName('Payroll portal');
+		$copy->setOwnerType('user');
 		$copy->setOwnerId('carla');
 		$copy->setUseOnly(false);
 		$copy->setAccessExpiresAt(new DateTime('2026-10-02T11:00:00Z'));
@@ -196,7 +199,14 @@ class ShareExpiryTest extends TestCase {
 			}
 		);
 
-		$service = new ShareExpiryService($this->secrets, $this->targets, $this->resolver, $remover, $notifications);
+		$service = new ShareExpiryService(
+			secretMapper: $this->secrets,
+			targetMapper: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
+			restrictions: $this->resolver,
+			remover: $remover,
+			notifications: $notifications
+		);
 		$this->assertSame(1, $service->expire($this->now));
 
 		$this->assertSame('share_access_ended', $sent[0][0]);
@@ -216,6 +226,7 @@ class ShareExpiryTest extends TestCase {
 		$copy = new Secret();
 		$copy->setId('copy');
 		$copy->setName('Payroll portal');
+		$copy->setOwnerType('user');
 		$copy->setOwnerId('carla');
 		$copy->setAccessExpiresAt(new DateTime('2026-10-03T11:00:00Z'));
 		$from = new DateTime('2026-10-02T12:00:00Z');
@@ -227,11 +238,12 @@ class ShareExpiryTest extends TestCase {
 			->with('share_access_ending', 'carla', $this->callback(static fn (array $p): bool => $p['secret_id'] === 'copy'));
 
 		$service = new ShareExpiryService(
-			$this->secrets,
-			$this->targets,
-			$this->resolver,
-			$this->createMock(ExpiredGrantRemover::class),
-			$notifications
+			secretMapper: $this->secrets,
+			targetMapper: $this->targets,
+			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
+			restrictions: $this->resolver,
+			remover: $this->createMock(ExpiredGrantRemover::class),
+			notifications: $notifications
 		);
 		$this->assertSame(1, $service->warnEnding($from, $to));
 	}

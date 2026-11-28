@@ -96,17 +96,9 @@ concurrency:
   # superseding really is correct.
   cancel-in-progress: ${{ github.event_name != 'push' }}
 
-# Permission CEILING for the called quality pipeline. GitHub statically
-# validates the called workflow's declared job permissions against this
-# grant — even for jobs that are disabled — so it must cover the maximum
-# any nested job declares: journeydoc-capture (contents+actions write),
-# update-baseline / features-extract (contents write), and the Quality
-# Report PR comment (issues / pull-requests write).
+# Read-only by default; the write grants sit on the job that needs them.
 permissions:
-  contents: write
-  actions: write
-  issues: write
-  pull-requests: write
+  contents: read
 
 jobs:
   quality:
@@ -125,6 +117,17 @@ jobs:
     # to `development` already checked; the shared workflow has no input to run
     # only the heavy tier.
     if: (github.event_name != 'pull_request' || github.head_ref != 'development' || github.base_ref == 'beta')
+    # Permission CEILING for the called quality pipeline. GitHub statically
+    # validates the called workflow's declared job permissions against this
+    # grant, even for jobs that are disabled, so it must cover the maximum
+    # any nested job declares: journeydoc-capture (contents+actions write),
+    # update-baseline / features-extract (contents write), and the Quality
+    # Report PR comment (issues / pull-requests write).
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+      pull-requests: write
     uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: keepiq
@@ -182,9 +185,12 @@ jobs:
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
+      # PHPUnit on every database Nextcloud supports that we can run in CI,
+      # so a query that only works on PostgreSQL shows up before a customer
+      # on MySQL or SQLite finds it.
+      database-test-matrix: '["pgsql", "mysql", "sqlite"]'
       enable-newman: true
-      # Keepiq needs no other app (ADR-006); standalone.yml proves that on an
-      # instance with Keepiq alone. OpenRegister is installed HERE so this
+      # Keepiq needs no other app (ADR-006). OpenRegister is installed HERE so this
       # suite covers the integrations that need it: the Flows pages and the
       # MCP tools, which appear only when OpenRegister is enabled.
       #
@@ -280,7 +286,12 @@ jobs:
       # renders the English source inside an otherwise translated form, silently.
       # The fleet had 30,459 such strings, so this records the current count and
       # fails only when it GROWS — burning it down stays an ordinary PR.
-      frontend-checks: '["check:manifest", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
+      # `check:path-case` fails when two tracked paths differ only in case.
+      # Linux holds both; Windows and macOS hold one file for the pair, so Git
+      # shows a phantom change, refuses branch switches, and `git add .` writes
+      # one file over the other (that lost a spec on keepiq#1830). The failure
+      # message says how to rename by case only without leaving the old path.
+      frontend-checks: '["check:manifest", "check:path-case", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both
@@ -304,6 +315,15 @@ jobs:
       # ONLY when `enable-axe: true` — un-skipping Playwright is not the fix;
       # with axe off the gate declares itself not applicable.
       enable-hydra-gates: true
+      # Gate 122 (SIG unit ratchet) blocks: a unit this change adds or makes
+      # worse must stay at NLOC 60, McCabe 10 and at most 4 parameters, and a
+      # new duplicated fragment of 6+ lines fails. Units the change does not
+      # touch, or touches without making worse, are inherited and do not count.
+      hydra-gates-sig-blocking: true
+      # Maintainability floor: no rating in .maintainability-floor.json may drop
+      # more than 0.01 against the merge base (pull request) or below the
+      # committed floor (push). The floor is raised after improving merges.
+      enable-maintainability-floor: true
       # No `hydra-gates-ref` here on purpose. The shared workflow defaults it
       # to @main, and this workflow is itself consumed at @main, so the two
       # sides move together and a gate fix reaches this repo without a commit

@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.8</version>
+    <version>0.3.43-unstable.20261128143046</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -87,12 +87,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
         name per app, taken ahead of the App Store launch.
     -->
     <dependencies>
-        <php min-version="8.3"/>
+        <php min-version="8.3.37"/>
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
         <!--
-            Floor is 32, fleet-wide, so PHP 8.3 is guaranteed by the platform.
+            Floor is 32, fleet-wide. The PHP minimum above is a patch release,
+            8.3.37, matching composer's config.platform.php: the platform alone
+            does not guarantee it.
 
             31 was never actually deliverable: the CI matrix is derived from
             this `<nextcloud>` range (no leg below 32), and OpenRegister, whose
@@ -114,9 +116,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\RenewIntermediateCertificate</job>
         <job>OCA\Keepiq\BackgroundJob\CheckRootCertificateExpiry</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeAuditLogJob</job>
+        <job>OCA\Keepiq\BackgroundJob\RefreshSiteDirectoryJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireSharesJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireDeviceApprovalsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\PurgeExtensionChallengesJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireShareSaveStagesJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireRecoveryRequestsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
@@ -129,6 +134,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\DeliverSiemEventsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScheduledVaultBackupJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ShareQuarantineScanJob</job>
     </background-jobs>
 
     <!--
@@ -193,6 +199,18 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Keepiq\Repair\InitializeSettings</step>
             <step>OCA\Keepiq\Repair\SeedSecretTypes</step>
+            <!--
+                Hands partner shares an ownership transfer left with the
+                previous owner to their secret's owner. Not under <install>:
+                a fresh install has no partner shares.
+            -->
+            <step>OCA\Keepiq\Repair\ReownTransferredPartnerShares</step>
+            <!--
+                Hands link shares a former owner created on a secret that was
+                transferred away from them to the secret's current owner. Not
+                under <install>: a fresh install has no link shares.
+            -->
+            <step>OCA\Keepiq\Repair\ReownTransferredLinkShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentData</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecrets</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentApplications</step>
@@ -200,6 +218,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\SeedDevelopmentLinkShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
+            <step>OCA\Keepiq\Repair\SeedDemoVaults</step>
         </post-migration>
         <install>
             <step>OCA\Keepiq\Repair\MigrateAppConfigKeys</step>
@@ -218,6 +237,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\SeedDevelopmentLinkShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentShares</step>
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
+            <step>OCA\Keepiq\Repair\SeedDemoVaults</step>
         </install>
     </repair-steps>
 
@@ -227,6 +247,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <command>OCA\Keepiq\Command\BackupList</command>
         <command>OCA\Keepiq\Command\BackupVerify</command>
         <command>OCA\Keepiq\Command\BackupRestore</command>
+        <!-- Quarantined share rows (GHSA-m5p9-6pw7-pf3g): list, release, drop. -->
+        <command>OCA\Keepiq\Command\ShareQuarantine</command>
     </commands>
 
     <settings>

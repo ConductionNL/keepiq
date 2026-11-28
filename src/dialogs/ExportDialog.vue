@@ -32,32 +32,12 @@
 			<!-- Secrets that could not be decrypted are not in the file: say
 			     how many before anything is written, and let the user choose
 			     to continue or cancel (keepiq#794). -->
-			<div
+			<SkippedSecretsNotice
 				v-if="skipped > 0"
+				v-model:acknowledged="skippedAcknowledged"
 				class="export-dialog__skipped"
-				data-testid="export-skipped-warning">
-				<NcNoteCard type="warning">
-					{{
-						n(
-							'keepiq',
-							'%n secret could not be decrypted and is not in this export.',
-							'%n secrets could not be decrypted and are not in this export.',
-							skipped,
-						)
-					}}
-				</NcNoteCard>
-				<NcCheckboxRadioSwitch
-					:modelValue="skippedAcknowledged"
-					data-testid="export-skipped-ack"
-					@update:modelValue="skippedAcknowledged = $event">
-					{{
-						t(
-							'keepiq',
-							'Continue without the secrets that could not be decrypted',
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-			</div>
+				name="export"
+				:skipped="skipped" />
 
 			<!-- The export ban (admin-vault-policies §2.2): every file mode is
 			     hidden; the personal data package stays available. -->
@@ -132,11 +112,42 @@
 				</NcNoteCard>
 
 				<NcSelect
-					v-model="scopeFolder"
+					v-model="scopeKind"
+					data-testid="export-scope-kind"
 					:inputLabel="t('keepiq', 'Scope')"
 					:options="scopeOptions"
 					:reduce="(opt) => opt.value"
 					:clearable="false" />
+				<NcSelect
+					v-if="scopeKind === 'folders'"
+					v-model="scopeFolderIds"
+					data-testid="export-scope-folders"
+					multiple
+					:inputLabel="t('keepiq', 'Folders')"
+					:options="folderOptions"
+					:reduce="(opt) => opt.value" />
+				<NcSelect
+					v-if="scopeKind === 'types' || scopeKind === 'folders'"
+					v-model="scopeTypeIds"
+					data-testid="export-scope-types"
+					multiple
+					:inputLabel="t('keepiq', 'Types')"
+					:options="typeOptions"
+					:reduce="(opt) => opt.value" />
+				<fieldset
+					class="export-dialog__omit"
+					data-testid="export-omit-fields">
+					<legend>{{ t('keepiq', 'Leave out') }}</legend>
+					<NcCheckboxRadioSwitch
+						v-for="field in omitChoices"
+						:key="field.value"
+						v-model="omitFields"
+						type="checkbox"
+						:value="field.value"
+						:data-testid="'export-omit-' + field.value">
+						{{ field.label }}
+					</NcCheckboxRadioSwitch>
+				</fieldset>
 
 				<!-- Encrypted backup path -->
 				<div
@@ -160,6 +171,8 @@
 						:class="'export-dialog__strength--' + passphraseScore">
 						{{ strengthLabel }}
 					</p>
+					<!-- crypto-recovery-kit 2.2: the kit sits beside the backup -->
+					<RecoveryKitPanel class="export-dialog__recovery-kit" />
 				</div>
 
 				<!-- Plaintext CSV or CXF path: warning -> ack -> re-auth. Each
@@ -222,11 +235,14 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
-import { verifyMasterPassword } from '../crypto/reauth.js'
+import RecoveryKitPanel from '../components/RecoveryKitPanel.vue'
+import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
+import { buildScope, serializerOptions } from '../export/exportScope.js'
+import exportSourceProps from '../mixins/exportSourceProps.js'
+import exportStoreDialog from '../mixins/exportStoreDialog.js'
+import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
 import { fetchPolicy, resetPolicyCache } from '../policy/policy.js'
-import { useExportStore } from '../store/modules/export.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
-import { useSessionStore } from '../store/modules/session.js'
 
 /** The zxcvbn score floor for a backup passphrase (D1). */
 const PASSPHRASE_FLOOR = 3
@@ -234,6 +250,8 @@ const PASSPHRASE_FLOOR = 3
 export default {
 	name: 'ExportDialog',
 	components: {
+		RecoveryKitPanel,
+		SkippedSecretsNotice,
 		NcDialog,
 		NcButton,
 		NcNoteCard,
@@ -242,46 +260,23 @@ export default {
 		NcCheckboxRadioSwitch,
 	},
 
+	mixins: [exportSourceProps, exportStoreDialog, masterPasswordCheck],
+
 	props: {
-		/** Whether the dialog is open. */
-		open: {
-			type: Boolean,
-			default: false,
-		},
-
-		/** Already-decrypted secrets to export. */
-		secrets: {
+		/** The items selected on the list, for an export of just those. */
+		selectedIds: {
 			type: Array,
 			default: () => [],
 		},
 
-		/** How many secrets could not be decrypted and are not in `secrets`. */
-		skipped: {
-			type: Number,
-			default: 0,
-		},
-
-		/** Folder rows ({ id, name, parentId }). */
-		folders: {
-			type: Array,
-			default: () => [],
+		/** The scope the dialog opens on: `vault`, or `selection` from the bulk strip. */
+		initialScope: {
+			type: String,
+			default: 'vault',
 		},
 	},
 
 	emits: ['update:open'],
-	/**
-	 * Provide the export + session Pinia stores to the component.
-	 *
-	 * @return {object}
-	 * @spec openspec/specs/secret-export/spec.md
-	 */
-	setup() {
-		return {
-			exportStore: useExportStore(),
-			sessionStore: useSessionStore(),
-		}
-	},
-
 	data() {
 		return {
 			mode: 'encrypted-backup',
@@ -291,7 +286,14 @@ export default {
 			warningAcknowledged: false,
 			/** Whether the user chose to export without the skipped secrets. */
 			skippedAcknowledged: false,
-			scopeFolder: 'vault',
+			/** What the export covers: vault, folders, types or selection. */
+			scopeKind: 'vault',
+			/** The folders chosen when scopeKind is folders. */
+			scopeFolderIds: [],
+			/** The types chosen when scopeKind is types, or to narrow chosen folders. */
+			scopeTypeIds: [],
+			/** The fields to leave out (OMITTABLE_FIELDS). */
+			omitFields: [],
 			error: null,
 			/** CXF pre-download unmapped-item report (null = not built yet). */
 			cxfReport: null,
@@ -313,16 +315,6 @@ export default {
 		},
 
 		/**
-		 * Whether an export is in flight (from the store).
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/secret-export/spec.md
-		 */
-		loading() {
-			return this.exportStore.loading
-		},
-
-		/**
 		 * The scope selector options: the whole vault plus each folder.
 		 *
 		 * @return {Array<object>}
@@ -331,11 +323,71 @@ export default {
 		scopeOptions() {
 			const opts = [
 				{ label: this.t('keepiq', 'Entire vault'), value: 'vault' },
+				{ label: this.t('keepiq', 'Chosen folders'), value: 'folders' },
+				{ label: this.t('keepiq', 'Chosen types'), value: 'types' },
 			]
-			for (const folder of this.folders) {
-				opts.push({ label: folder.name, value: folder.id })
+			if (this.selectedIds.length > 0) {
+				opts.push({
+					label: this.t('keepiq', 'Selected items ({count})', {
+						count: this.selectedIds.length,
+					}),
+					value: 'selection',
+				})
 			}
 			return opts
+		},
+
+		/**
+		 * The folders to choose from.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		folderOptions() {
+			return this.folders.map((folder) => ({
+				label: folder.name,
+				value: folder.id,
+			}))
+		},
+
+		/**
+		 * The types to choose from.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		typeOptions() {
+			return useSecretTypeStore().types.map((type) => ({
+				label: type.label || type.name,
+				value: type.id,
+			}))
+		},
+
+		/**
+		 * The fields a user can leave out.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		omitChoices() {
+			return [
+				{ label: this.t('keepiq', 'Usernames'), value: 'login' },
+				{
+					label: this.t('keepiq', 'Additional fields'),
+					value: 'additionalFields',
+				},
+				{ label: this.t('keepiq', 'Authenticator seeds'), value: 'totp' },
+			]
+		},
+
+		/**
+		 * The serializer options: the types, so the file names them, and the fields left out.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 */
+		exportOptions() {
+			return serializerOptions(useSecretTypeStore().types, this.omitFields)
 		},
 
 		/**
@@ -362,7 +414,7 @@ export default {
 		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/secret-export/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canSubmit() {
 			if (this.exportBlocked) {
@@ -399,11 +451,17 @@ export default {
 		 * @param {boolean} open Whether the dialog is open now.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		async open(open) {
 			if (open !== true) {
 				return
 			}
+			// Opened from the bulk strip, the export starts on the selection.
+			this.scopeKind =
+				this.initialScope === 'selection' && this.selectedIds.length > 0
+					? 'selection'
+					: 'vault'
 			resetPolicyCache()
 			this.exportBlocked =
 				(await fetchPolicy())?.vault_export_disabled === true
@@ -441,10 +499,12 @@ export default {
 		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		buildScope() {
-			if (this.scopeFolder === 'vault') {
-				return { mode: 'vault' }
-			}
-			return { mode: 'folders', folderIds: [this.scopeFolder] }
+			return buildScope({
+				kind: this.scopeKind,
+				folderIds: this.scopeFolderIds,
+				typeIds: this.scopeTypeIds,
+				secretIds: this.selectedIds,
+			})
 		},
 
 		/**
@@ -453,7 +513,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async onExport() {
 			this.error = null
@@ -463,68 +523,110 @@ export default {
 				return
 			}
 			try {
-				const scope = this.buildScope()
-				if (this.mode === 'encrypted-backup') {
-					await this.exportStore.exportBackup(
-						this.secrets,
-						this.folders,
-						this.passphrase,
-						scope,
-					)
-				} else {
-					// Fresh master-password re-auth (client-side proof of knowledge).
-					const ok = await verifyMasterPassword(
-						this.sessionStore.encryptedPrivateKey,
-						this.masterPassword,
-					)
-					if (!ok) {
-						this.error = this.t('keepiq', 'Incorrect master password')
-						return
-					}
-					if (this.mode === 'cxf') {
-						// First pass builds and shows the unmapped-item report
-						// BEFORE any download (cxf-import-export D4); the second
-						// pass (or a clean report) proceeds to the download.
-						if (this.cxfReport === null) {
-							const report = await this.exportStore.exportCxf(
-								this.secrets,
-								this.folders,
-								scope,
-								{ typeNamesById: this.typeNamesById, dryRun: true },
-							)
-							if (report.unmapped.length > 0) {
-								this.cxfReport = report
-								return
-							}
-						}
-						await this.exportStore.exportCxf(
-							this.secrets,
-							this.folders,
-							scope,
-							{ typeNamesById: this.typeNamesById },
-						)
-					} else {
-						await this.exportStore.exportCsv(
-							this.secrets,
-							this.folders,
-							scope,
-						)
-					}
+				if (await this.runExport(this.buildScope())) {
+					this.reset()
+					this.$emit('update:open', false)
 				}
-				this.reset()
-				this.$emit('update:open', false)
 			} catch (e) {
-				// The server refuses the report under the export ban, which
-				// aborts the download; show the policy instead of a raw error.
-				if (e?.response?.data?.code === 'export_disabled_by_policy') {
-					this.exportBlocked = true
-					return
-				}
-				this.error =
-					this.exportStore.error
-					|| (e && e.message)
-					|| this.t('keepiq', 'Export failed')
+				this.showExportFailure(e)
 			}
+		},
+
+		/**
+		 * Write the chosen export. A plaintext one first takes a fresh
+		 * master-password re-auth.
+		 *
+		 * @param {object} scope The scope selector.
+		 * @return {Promise<boolean>} Whether the file was written; false when
+		 *   the re-auth failed or the CXF report is shown first.
+		 * @spec openspec/specs/secret-export/spec.md
+		 */
+		async runExport(scope) {
+			if (this.mode === 'encrypted-backup') {
+				await this.exportStore.exportBackup(
+					this.secrets,
+					this.folders,
+					this.passphrase,
+					scope,
+					this.exportOptions,
+				)
+				return true
+			}
+			if (!(await this.masterPasswordVerified())) {
+				return false
+			}
+			if (this.mode === 'cxf') {
+				return this.exportCxf(scope)
+			}
+			await this.exportStore.exportCsv(
+				this.secrets,
+				this.folders,
+				scope,
+				this.exportOptions,
+			)
+			return true
+		},
+
+		/**
+		 * Write a CXF export. The first pass builds and shows the
+		 * unmapped-item report BEFORE any download (cxf-import-export D4); the
+		 * second pass (or a clean report) proceeds to the download.
+		 *
+		 * @param {object} scope The scope selector.
+		 * @return {Promise<boolean>} Whether the file was written.
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
+		async exportCxf(scope) {
+			if (this.cxfReport === null && (await this.showCxfReport(scope))) {
+				return false
+			}
+			await this.exportStore.exportCxf(this.secrets, this.folders, scope, {
+				...this.exportOptions,
+				typeNamesById: this.typeNamesById,
+			})
+			return true
+		},
+
+		/**
+		 * Build the CXF report without downloading, and keep it to show when
+		 * it lists items it cannot map.
+		 *
+		 * @param {object} scope The scope selector.
+		 * @return {Promise<boolean>} Whether the report is shown.
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
+		async showCxfReport(scope) {
+			const report = await this.exportStore.exportCxf(
+				this.secrets,
+				this.folders,
+				scope,
+				{ typeNamesById: this.typeNamesById, dryRun: true },
+			)
+			if (report.unmapped.length > 0) {
+				this.cxfReport = report
+				return true
+			}
+			return false
+		},
+
+		/**
+		 * Show why the export failed. The server refuses the report under the
+		 * export ban, which aborts the download; show the policy instead of a
+		 * raw error.
+		 *
+		 * @param {Error|object} e The failure.
+		 * @return {void}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
+		 */
+		showExportFailure(e) {
+			if (e?.response?.data?.code === 'export_disabled_by_policy') {
+				this.exportBlocked = true
+				return
+			}
+			this.error =
+				this.exportStore.error
+				|| (e && e.message)
+				|| this.t('keepiq', 'Export failed')
 		},
 
 		/**
@@ -540,29 +642,22 @@ export default {
 			this.masterPassword = ''
 			this.warningAcknowledged = false
 			this.skippedAcknowledged = false
-			this.scopeFolder = 'vault'
+			this.scopeKind = 'vault'
+			this.scopeFolderIds = []
+			this.scopeTypeIds = []
+			this.omitFields = []
 			this.error = null
 			this.cxfReport = null
-		},
-
-		/**
-		 * Handle open-state changes, clearing transient secrets on close.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 * @spec openspec/specs/secret-export/spec.md
-		 */
-		onUpdateOpen(value) {
-			if (!value) {
-				this.reset()
-			}
-			this.$emit('update:open', value)
 		},
 	},
 }
 </script>
 
 <style scoped>
+.export-dialog__recovery-kit {
+	margin-block-start: calc(var(--default-grid-baseline) * 4);
+}
+
 .export-dialog {
 	display: flex;
 	flex-direction: column;

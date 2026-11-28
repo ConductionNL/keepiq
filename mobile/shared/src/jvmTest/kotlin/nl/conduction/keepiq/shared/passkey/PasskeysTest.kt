@@ -7,6 +7,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
@@ -16,6 +17,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.KeepiqApiException
+import nl.conduction.keepiq.shared.api.MissingCapabilityException
 import nl.conduction.keepiq.shared.autofill.AutofillEntry
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.crypto.ClientData
@@ -26,15 +29,19 @@ import nl.conduction.keepiq.shared.crypto.RsaFields
 import nl.conduction.keepiq.shared.crypto.RsaPrivateKey
 import nl.conduction.keepiq.shared.crypto.RsaPublicKey
 import nl.conduction.keepiq.shared.crypto.WebAuthn
+import nl.conduction.keepiq.shared.vault.LoginPasskeys
 import nl.conduction.keepiq.shared.vault.RsaVaultKeys
 import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.VaultRow
 import nl.conduction.keepiq.shared.vault.VaultState
+import nl.conduction.keepiq.shared.vault.WriteProblemException
+import nl.conduction.keepiq.shared.vault.WriteProblemKind
 import nl.conduction.keepiq.shared.vectors.Vectors
 import nl.conduction.keepiq.shared.vectors.str
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -48,21 +55,108 @@ import kotlin.test.assertTrue
  * and a request that allows only RS256 is declined before anything is sent.
  */
 class PasskeysTest {
+    private companion object {
+        const val UPDATED_AT = "2026-10-05T10:00:00+00:00"
+
+        /** A write to login l1: read fresh, its write-context, then the share-save. */
+        val WRITE_L1 = listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secrets/l1/write-context", "PUT" to "/api/v1/secrets/l1/share-save")
+    }
+
     private val privatePem = Vectors.envelope.str("privateKeyPem")
     private val keys = RsaVaultKeys.fromPem(privatePem, Vectors.envelope.str("certificatePem"), "suite-9", 2)
     private val publicKey = RsaPublicKey.fromPem(Vectors.envelope.str("publicKeyPem"))
     private val privateKey = RsaPrivateKey.fromPem(privatePem)
-    private fun enc(text: String) = RsaFields.encrypt(text, publicKey)
+    private val sealed = HashMap<String, String>()
+
+    /** One ciphertext per value, so the index and the server hold the same one, as after a sync. */
+    private fun enc(text: String) = sealed.getOrPut(text) { RsaFields.encrypt(text, publicKey) }
     private fun dec(text: String) = RsaFields.decrypt(text, privateKey)
 
     private val requests = mutableListOf<Pair<String, String>>()
+
+    /** What GET /api/v1/secrets/l1 answers: the login as the server holds it now. */
+    private var freshLogin = "{}"
+
+    /** Each write's body; for a share-save, its `patch`, which is the body a plain PUT sent. */
     private val bodies = mutableListOf<JsonObject>()
+
+    /** Each share-save's whole body. */
+    private val shareSaves = mutableListOf<JsonObject>()
+    private var offline = false
+    private var capabilities = """["match","totp-field","passkeys-field"]"""
+    private var pairCalls = 0
+
+    /** PUTs still to refuse as stale (409), and what changes on the server when one is. */
+    private var staleWrites = 0
+
+    /** The server refuses every PUT, as it does on a copy the user may not change. */
+    private var refusePut = false
+    private var afterStale: () -> Unit = {}
+    /** Items write-context grades as a copy shared to view only. */
+    private var viewOnly = setOf<String>()
+
+    /** Items shared with one partner: their share-save answers `incomplete` with that share. */
+    private var partnerShared = setOf<String>()
+
+    /** What GET /api/v1/secrets/p1 answers. */
+    private var freshPasskeyItem = """{"id":"p1","name":"Example","typeId":"9","updatedAt":"$UPDATED_AT"}"""
+
+    /** What GET /api/v1/secrets/l1 answers with instead of the login, when set. */
+    private var freshStatus: HttpStatusCode? = null
+
+    /** What the manifest answers when the vault is read again: [manifestStatus], no connection, or [manifestBody]. */
+    private var manifestStatus: HttpStatusCode? = null
+    private var manifestUnreachable = false
+    private var manifestBody = """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},"secrets":[],"folders":[],"types":[],"unlockBlocked":null}"""
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
+        // The capability check before a write of `passkeys` (KeepiqApi.requireLoginFields).
+        if (path == "/api/v1/extension/pair") {
+            pairCalls++
+            return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         requests += request.method.value to path
-        (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
+        (request.body as? TextContent)?.let {
+            val sent = Json.parseToJsonElement(it.text).jsonObject
+            if (path.endsWith("/share-save")) {
+                shareSaves += sent
+                sent["patch"]?.let { patch -> bodies += patch.jsonObject }
+            } else {
+                bodies += sent
+            }
+        }
+        if (offline) throw java.io.IOException("no network")
+        if (path == "/api/v1/offline/manifest") {
+            if (manifestUnreachable) throw java.io.IOException("no network")
+            manifestStatus?.let { return@MockEngine respond("""{"message":"x"}""", it, headersOf(HttpHeaders.ContentType, "application/json")) }
+            return@MockEngine respond(manifestBody, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        if (request.method == HttpMethod.Put && refusePut) {
+            return@MockEngine respond("""{"error":"read_only","message":"You can only read this item."}""", HttpStatusCode.Forbidden, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        if (request.method == HttpMethod.Put && staleWrites > 0) {
+            staleWrites--
+            afterStale()
+            return@MockEngine respond("""{"error":"stale","message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        if (path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get) {
+            freshStatus?.let { return@MockEngine respond("""{"message":"x"}""", it, headersOf(HttpHeaders.ContentType, "application/json")) }
+        }
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"9","name":"passkey","fields":[]}]"""
+            // Every item is the user's own, with no copies.
+            path.endsWith("/write-context") -> {
+                val id = path.removePrefix("/api/v1/secrets/").removeSuffix("/write-context")
+                val grade = if (id in viewOnly) """"source-x","effectiveGrade":"read"""" else """"$id","effectiveGrade":"owner""""
+                """{"sourceSecretId":$grade,"ownerCertificate":null,"sourceUpdatedAt":"$UPDATED_AT"}"""
+            }
+            path.endsWith("/share-save") && path.removePrefix("/api/v1/secrets/").removeSuffix("/share-save") in partnerShared ->
+                return@MockEngine respond(
+                    """{"error":"incomplete","message":"m","copies":{"required":[],"skipRefused":[]},"federated":{"required":[{"shareId":"fs1","recipientCloudId":"bob@partner.example"}]}}""",
+                    HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get -> freshLogin
+            path == "/api/v1/secrets/p1" && request.method == HttpMethod.Get -> freshPasskeyItem
             request.method == HttpMethod.Post -> """{"id":"new"}"""
             else -> """{"id":"p1"}"""
         }
@@ -78,6 +172,134 @@ class PasskeysTest {
 
     private fun entry(id: String, url: String, record: PasskeyCredential) =
         AutofillEntry(id, "Example", url, AutofillEntry.PASSKEY, null, enc(record.toJson()), false)
+
+    private fun array(vararg records: PasskeyCredential) = "[" + records.joinToString(",") { it.toJson() } + "]"
+
+    private fun loginEntry(id: String, url: String, userName: String, vararg records: PasskeyCredential, readOnly: Boolean = false, useOnly: Boolean = false) =
+        AutofillEntry(
+            id, "Example", url, AutofillEntry.LOGIN, enc(userName), enc("wachtwoord"), useOnly,
+            passkeys = if (records.isEmpty()) null else enc(array(*records)), readOnly = readOnly,
+        )
+
+    private fun freshLoginWith(vararg records: PasskeyCredential, updatedAt: String = UPDATED_AT) {
+        val passkeys = if (records.isEmpty()) "" else ""","passkeys":"${enc(array(*records))}""""
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7"$passkeys,"updatedAt":"$updatedAt"}"""
+    }
+
+    private fun sentPasskeys(): List<PasskeyCredential> =
+        LoginPasskeys.credentials(dec(bodies.single()["passkeys"]!!.jsonPrimitive.content))
+
+    @Test
+    fun signsWithAPasskeyOnALogin() = runTest {
+        val (record, spki) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        assertTrue(choice.onLogin)
+        val hash = ByteArray(32) { 3 }
+        val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(hash), "login.example.nl")
+        assertEquals(5L, assertion.counter)
+        assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
+        assertEquals(WRITE_L1, requests)
+        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(UPDATED_AT, shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf(5L), sentPasskeys().map { it.counter })
+    }
+
+    @Test
+    fun aCounterWriteRefusedAsStaleSignsAgainFromTheNewRowOnce() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        staleWrites = 1
+        // Signed on another device between the read and the write.
+        afterStale = { freshLoginWith(record.copy(counter = 12), updatedAt = "2026-10-05T11:00:00+00:00") }
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl")
+        assertEquals(13L, assertion.counter)
+        assertEquals(WRITE_L1 + WRITE_L1, requests)
+        assertEquals("2026-10-05T11:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf(13L), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)).map { it.counter })
+    }
+
+    @Test
+    fun aSecondStaleRefusalFailsTheWrite() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        staleWrites = 2
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals(409, e.status)
+        assertEquals(WRITE_L1 + WRITE_L1, requests)
+    }
+
+    @Test
+    fun theCounterWriteKeepsAPasskeyAddedSinceTheIndexWasBuilt() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        val (added, _) = made("login.example.nl", 9)
+        freshLoginWith(record, added)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl")
+        assertEquals(listOf(record.credentialId to 5L, added.credentialId to 9L), sentPasskeys().map { it.credentialId to it.counter })
+    }
+
+    @Test
+    fun aLoginSignsFromItsFreshCounterNotTheIndex() = runTest {
+        val (record, spki) = made("login.example.nl", 4)
+        // Signed elsewhere since the index was built: the server holds 9.
+        freshLoginWith(record.copy(counter = 9))
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val hash = ByteArray(32) { 5 }
+        val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(hash), "login.example.nl")
+        assertEquals(10L, assertion.counter)
+        assertContentEquals(Encoding.uint32BigEndian(10), assertion.authenticatorData.copyOfRange(33, 37))
+        assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
+        assertEquals(listOf(10L), sentPasskeys().map { it.counter })
+    }
+
+    @Test
+    fun aPasskeyDeletedFromTheLoginElsewhereRefusesToSign() = runTest {
+        for (counter in listOf(4L, 0L)) {
+            requests.clear()
+            val (record, _) = made("login.example.nl", counter)
+            val (other, _) = made("login.example.nl", 2)
+            freshLoginWith(other)
+            val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+            assertFailsWith<PasskeyGoneException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+            assertEquals(listOf("GET" to "/api/v1/secrets/l1"), requests, "counter $counter")
+            assertTrue(bodies.isEmpty())
+        }
+    }
+
+    @Test
+    fun offlineALoginPasskeyWithoutACounterSignsFromTheIndex() = runTest {
+        val (record, _) = made("login.example.nl", 0)
+        val (counted, _) = made("login.example.nl", 4)
+        offline = true
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record, counted)))
+        val (zero, four) = Passkeys.candidates(index, "login.example.nl", keys)
+        assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
+        assertFailsWith<nl.conduction.keepiq.shared.vault.ServerUnreachableException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(bodies.isEmpty())
+    }
+
+    @Test
+    fun aLoginOnAnotherSiteIsNotACandidate() {
+        val (record, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://example.org", "alice@example.nl", record)))
+        assertTrue(Passkeys.candidates(index, "login.example.nl", keys).isEmpty())
+    }
+
+    @Test
+    fun aLoginWhosePasskeysCannotBeReadOffersNone() {
+        val (record, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(
+            listOf(
+                AutofillEntry("bad", "Kapot", "https://login.example.nl", AutofillEntry.LOGIN, null, null, false, passkeys = enc("{")),
+                AutofillEntry("garbled", "Onleesbaar", "https://login.example.nl", AutofillEntry.LOGIN, null, null, false, passkeys = "not ciphertext"),
+                loginEntry("l1", "https://login.example.nl", "alice@example.nl", record),
+            ),
+        )
+        assertEquals(listOf("l1"), Passkeys.candidates(index, "login.example.nl", keys).map { it.itemId })
+    }
 
     @Test
     fun theIndexKeepsPasskeysAndNeverOffersThemAsPasswords() {
@@ -122,7 +344,7 @@ class PasskeysTest {
         assertEquals(5L, assertion.counter)
         assertContentEquals(Encoding.uint32BigEndian(5), assertion.authenticatorData.copyOfRange(33, 37))
         assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
-        assertEquals(listOf("PUT" to "/api/v1/secrets/p1"), requests)
+        assertEquals(listOf("GET" to "/api/v1/secrets/p1", "GET" to "/api/v1/secrets/p1/write-context", "PUT" to "/api/v1/secrets/p1/share-save"), requests)
         assertEquals(setOf("key"), bodies.single().keys)
         assertEquals(5L, PasskeyCredential.parse(dec(bodies.single()["key"]!!.jsonPrimitive.content)) { "" }!!.counter)
     }
@@ -130,28 +352,270 @@ class PasskeysTest {
     @Test
     fun aCounterOfZeroStaysZeroAndWritesNothing() = runTest {
         val (record, _) = made("login.example.nl", 0)
-        val choice = PasskeyChoice("p1", "Example", record)
+        val choice = PasskeyChoice("p1", "Example", record, held = emptyMap())
         assertEquals(0L, Passkeys.sign(api, keys, choice, ClientData.build(ClientData.GET, ByteArray(32), "https://login.example.nl"), "login.example.nl").counter)
         assertTrue(requests.isEmpty())
     }
 
     @Test
-    fun aNewPasskeyIsSavedAsAPasskeyItemForItsRpId() = runTest {
-        val request = WebAuthnJson.creation(
-            """{"challenge":"AAEC","rp":{"id":"login.example.nl","name":"Example Login"},"user":{"id":"dTE","name":"alice@example.nl","displayName":"Alice"},
-            "pubKeyCredParams":[{"type":"public-key","alg":-8},{"type":"public-key","alg":-7}],"excludeCredentials":[]}""",
-        )!!
-        val r = Passkeys.create(api, keys, AutofillIndex.EMPTY, request, ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
+    fun aStandalonePasskeyShareSaveRefusesStillSignsWithoutItsCounter() = runTest {
+        // An old passkey item with a user name, shared with a partner: the phone can't vouch for its login, so share-save refuses.
+        freshPasskeyItem = """{"id":"p1","name":"Example","typeId":"9","login":"${enc("alice")}","updatedAt":"$UPDATED_AT"}"""
+        partnerShared = setOf("p1")
+        val (record, spki) = made("login.example.nl", 4)
+        val hash = ByteArray(32) { 5 }
+        val assertion = Passkeys.sign(api, keys, PasskeyChoice("p1", "Example", record, held = emptyMap()), ClientData.hashed(hash), "login.example.nl")
+        assertEquals(5L, assertion.counter)
+        assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
+        assertTrue(shareSaves.all { it["federated"]?.let { f -> f.toString() == "[]" } ?: true }, "nothing sealed to the partner")
+    }
+
+    @Test
+    fun aStandalonePasskeyFailsTheSignInOnAnyOtherRefusal() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        // A row the index doesn't hold as the server sent it.
+        val unheld = PasskeyChoice("p1", "Example", record, held = mapOf("totp" to enc("ANOTHERSEED")))
+        assertEquals("conflict", assertFailsWith<nl.conduction.keepiq.shared.vault.ShareSaveException> {
+            Passkeys.sign(api, keys, unheld, ClientData.hashed(ByteArray(32)), "login.example.nl")
+        }.code)
+        assertTrue(shareSaves.isEmpty())
+        // A server refusal that is not about how the item is shared.
+        refusePut = true
+        assertFails { Passkeys.sign(api, keys, PasskeyChoice("p1", "Example", record, held = emptyMap()), ClientData.hashed(ByteArray(32)), "login.example.nl") }
+    }
+
+    @Test
+    fun aLoginChangedSinceTheIndexSignsAfterItIsReadAgain() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        // Its key was set on another device after the index was built.
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("NEWSEED")}","passkeys":"${enc(array(record))}","updatedAt":"$UPDATED_AT"}"""
+        val stale = loginEntry("l1", "https://login.example.nl", "alice@example.nl", record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(stale)), "login.example.nl", keys).single()
+        val reread = AutofillIndex(listOf(stale.copy(totp = enc("NEWSEED"))))
+        assertEquals(5L, Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl", resync = { reread }).counter)
+        assertEquals(listOf(5L), sentPasskeys().map { it.counter })
+    }
+
+    @Test
+    fun aViewOnlyLoginTakesNoCounterAndNoNewPasskey() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        viewOnly = setOf("l1")
+        val entry = loginEntry("l1", "https://login.example.nl", "alice@example.nl", record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(entry)), "login.example.nl", keys).single()
+        assertFailsWith<nl.conduction.keepiq.shared.vault.ShareSaveException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
+
+        requests.clear()
+        Passkeys.create(api, keys, AutofillIndex(listOf(entry)), creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
+        assertEquals("POST" to "/api/v1/secrets", requests.last())
+    }
+
+    @Test
+    fun aLoginTheIndexDoesNotHoldAsTheServerSentItTakesNoPasskey() = runTest {
+        val (existing, _) = made("login.example.nl", 0)
+        val (swapped, _) = made("login.example.nl", 0)
+        // The server's passkeys are not the ones the index holds, also when it is read again: a new login is made.
+        freshLoginWith(swapped)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing)))
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0, resync = { index })
+        assertTrue(shareSaves.isEmpty())
+        assertEquals("POST" to "/api/v1/secrets", requests.last())
+    }
+
+    @Test
+    fun aReadAgainThatFailsMakesNoNewLoginAndIsNotAConflict() = runTest {
+        val (existing, _) = made("login.example.nl", 4)
+        val (swapped, _) = made("login.example.nl", 0)
+        val entry = loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing)
+        val siteJson = AutofillIndex(listOf(entry)).toJson()
+        val hash = Encoding.toBase64(ByteArray(32))
+        val failures = listOf(
+            WriteProblemKind.FAILED to { manifestStatus = HttpStatusCode.ServiceUnavailable },
+            WriteProblemKind.OFFLINE to { manifestUnreachable = true },
+            WriteProblemKind.LOCKED to { manifestBody = manifestBody.replace("suite-9", "suite-10") },
+        )
+        for ((kind, fail) in failures) {
+            manifestStatus = null
+            manifestUnreachable = false
+            manifestBody = manifestBody.replace("suite-10", "suite-9")
+            fail()
+            requests.clear()
+            // The index doesn't hold the server's passkeys, so iOS's provider reads the vault again, and that read fails.
+            freshLoginWith(swapped)
+            val registered = assertFailsWith<WriteProblemException> {
+                ApplePasskeys.register(api, keys, siteJson, "login.example.nl", "alice@example.nl", "", hash, listOf(-7L), 0)
+            }
+            assertEquals(kind, registered.problem.kind)
+            assertTrue(requests.none { it == "POST" to "/api/v1/secrets" }, "$requests")
+            assertTrue(requests.any { it.second == "/api/v1/offline/manifest" }, "$requests")
+
+            // A counter write on a login whose key changed since the index was built: the sign-in fails with the read's reason.
+            freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("NEWSEED")}","passkeys":"${enc(array(existing))}","updatedAt":"$UPDATED_AT"}"""
+            val choice = Passkeys.candidates(AutofillIndex(listOf(entry)), "login.example.nl", keys).single()
+            val signed = assertFailsWith<WriteProblemException> { ApplePasskeys.signIn(api, keys, choice, hash, "login.example.nl") }
+            assertEquals(kind, signed.problem.kind)
+            assertTrue(shareSaves.isEmpty())
+        }
+    }
+
+    @Test
+    fun aReadAgainShowsEachReadToItsCallerFailedOrNot() = runTest {
+        // Android's provider feeds AutofillIndexHub from this callback.
+        val seen = mutableListOf<VaultState>()
+        Passkeys.reread(api, keys) { seen += it }
+        manifestStatus = HttpStatusCode.ServiceUnavailable
+        assertFailsWith<WriteProblemException> { Passkeys.reread(api, keys) { seen += it } }
+        assertEquals(listOf(null, WriteProblemKind.FAILED), seen.map { it.readProblem?.kind })
+    }
+
+    @Test
+    fun aCounterIsNotWrittenOnALoginWhoseKeyTheIndexDoesNotHold() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("ANOTHERSEED")}","passkeys":"${enc(array(record))}","updatedAt":"$UPDATED_AT"}"""
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val e = assertFailsWith<nl.conduction.keepiq.shared.vault.ShareSaveException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals("conflict", e.code)
+        assertTrue(shareSaves.isEmpty())
+    }
+
+    private fun creation(userName: String) = WebAuthnJson.creation(
+        """{"challenge":"AAEC","rp":{"id":"login.example.nl","name":"Example Login"},"user":{"id":"dTE","name":"$userName","displayName":"Alice"},
+        "pubKeyCredParams":[{"type":"public-key","alg":-8},{"type":"public-key","alg":-7}],"excludeCredentials":[]}""",
+    )!!
+
+    @Test
+    fun aNewPasskeyGoesOntoTheOneMatchingLogin() = runTest {
+        val (existing, _) = made("login.example.nl", 0)
+        freshLoginWith(existing)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", " Alice@Example.nl", existing)))
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
+        assertEquals(WRITE_L1, requests)
+        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(UPDATED_AT, shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf(existing, r.record), sentPasskeys())
+    }
+
+    @Test
+    fun aNewPasskeyRefusedAsStaleIsAddedToTheNewRowOnce() = runTest {
+        val (existing, _) = made("login.example.nl", 0)
+        val (addedElsewhere, _) = made("login.example.nl", 0)
+        freshLoginWith(existing)
+        staleWrites = 1
+        afterStale = { freshLoginWith(existing, addedElsewhere, updatedAt = "2026-10-05T11:00:00+00:00") }
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing)))
+        // The index is read again for the new row, which it then holds.
+        var resynced = 0
+        val resync = suspend {
+            resynced++
+            AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing, addedElsewhere)))
+        }
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0, resync)
+        assertEquals(1, resynced)
+        assertEquals(WRITE_L1 + WRITE_L1, requests)
+        assertEquals("2026-10-05T11:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(listOf(existing, addedElsewhere, r.record), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)))
+    }
+
+    @Test
+    fun aServerWithoutThePasskeysFieldGetsNoNewPasskey() = runTest {
+        capabilities = """["match","totp-field"]"""
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        for (i in listOf(index, AutofillIndex.EMPTY)) {
+            val e = assertFailsWith<MissingCapabilityException> { Passkeys.create(api, keys, i, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0) }
+            assertTrue(e.message!!.contains("update Keepiq"))
+        }
+        assertTrue(requests.isEmpty(), "nothing is read or written: $requests")
+    }
+
+    @Test
+    fun aServerWithoutThePasskeysFieldTakesNoCounterOnALogin() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        capabilities = """["match"]"""
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        assertFailsWith<MissingCapabilityException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun theCapabilityIsAskedOncePerApi() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        freshLoginWith()
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(1, pairCalls)
+    }
+
+    @Test
+    fun aMatchTheServerRefusesPasskeysOnMakesANewLogin() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        for (owner in listOf(""","ownerType":"application"""", ""","readOnly":true""")) {
+            requests.clear()
+            bodies.clear()
+            freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","updatedAt":"$UPDATED_AT"$owner}"""
+            val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+            assertEquals(listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests, owner)
+            assertEquals(listOf(r.record), sentPasskeys())
+        }
+    }
+
+    @Test
+    fun aNewPasskeyWithoutAMatchMakesANewLogin() = runTest {
+        val r = Passkeys.create(api, keys, AutofillIndex.EMPTY, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
         assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
         val body = bodies.single()
         assertEquals("Example Login", body["name"]!!.jsonPrimitive.content)
         assertEquals("login.example.nl", body["url"]!!.jsonPrimitive.content)
-        assertEquals("9", body["typeId"]!!.jsonPrimitive.content)
-        assertFalse("login" in body)
-        val saved = assertNotNull(PasskeyCredential.parse(dec(body["key"]!!.jsonPrimitive.content)) { "" })
-        assertEquals(r.record, saved)
-        assertEquals("2026-10-05T10:00:00.000Z", saved.createdAt)
-        assertContentEquals(Encoding.utf8("u1"), Encoding.fromBase64Url(saved.userHandle))
+        assertEquals("7", body["typeId"]!!.jsonPrimitive.content)
+        assertEquals("alice@example.nl", dec(body["login"]!!.jsonPrimitive.content))
+        assertEquals("", dec(body["key"]!!.jsonPrimitive.content))
+        assertEquals(listOf(r.record), sentPasskeys())
+        assertEquals("2026-10-05T10:00:00.000Z", r.record.createdAt)
+        assertContentEquals(Encoding.utf8("u1"), Encoding.fromBase64Url(r.record.userHandle))
+    }
+
+    @Test
+    fun twoMatchingLoginsMakeANewLogin() = runTest {
+        val index = AutofillIndex(
+            listOf(
+                loginEntry("l1", "https://login.example.nl", "alice@example.nl"),
+                loginEntry("l2", "https://www.example.nl", "alice@example.nl"),
+            ),
+        )
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+    }
+
+    @Test
+    fun aReadOnlyOrUseOnlyLoginIsNotAMatch() = runTest {
+        for (entry in listOf(
+            loginEntry("l1", "https://login.example.nl", "alice@example.nl", readOnly = true),
+            loginEntry("l1", "https://login.example.nl", "alice@example.nl", useOnly = true),
+        )) {
+            requests.clear()
+            Passkeys.create(api, keys, AutofillIndex(listOf(entry)), creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+            assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+        }
+    }
+
+    @Test
+    fun aBlankUserNameNeverMatches() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "")))
+        Passkeys.create(api, keys, index, creation(" "), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+    }
+
+    @Test
+    fun anExcludedCredentialOnALoginRefuses() = runTest {
+        val (record, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record)))
+        val excluded = WebAuthnJson.creation(
+            """{"challenge":"AA","rp":{"id":"login.example.nl"},"user":{"id":"dTE","name":"a"},"excludeCredentials":[{"type":"public-key","id":"${record.credentialId}"}]}""",
+        )!!
+        assertFailsWith<ExcludedCredentialException> { Passkeys.create(api, keys, index, excluded, ClientData.hashed(ByteArray(32)), 0) }
+        assertTrue(requests.isEmpty())
     }
 
     @Test
@@ -203,5 +667,132 @@ class PasskeysTest {
         assertFalse(Passkeys.rpIdAllowed("login.example.nl", "http://login.example.nl"))
         assertTrue(Passkeys.rpIdAllowed("localhost", "http://localhost:8080"))
         assertFalse(Passkeys.rpIdAllowed("", "https://login.example.nl"))
+    }
+
+    @Test
+    fun twoPasskeysOnALoginAreTwoChoicesEachWithItsOwnId() {
+        val (first, _) = made("login.example.nl", 0)
+        val (second, _) = made("login.example.nl", 0)
+        val choices = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", first, second))), "login.example.nl", keys)
+        assertEquals(2, choices.map { it.id }.toSet().size)
+        assertEquals(second, choices.single { it.id == choices[1].id }.credential)
+    }
+
+    @Test
+    fun aLoginWhosePasskeysAreNotAnArrayIsNeverOverwritten() = runTest {
+        val unreadable = AutofillEntry("l1", "Example", "https://login.example.nl", AutofillEntry.LOGIN, enc("alice@example.nl"), enc("pw"), false, passkeys = enc("""{"credentialId":"x"}"""))
+        Passkeys.create(api, keys, AutofillIndex(listOf(unreadable)), creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+    }
+
+    @Test
+    fun identitiesListEveryPasskeyOnALogin() {
+        val (standalone, _) = made("login.example.nl", 0)
+        val (first, _) = made("login.example.nl", 0)
+        val (second, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(listOf(entry("p1", "login.example.nl", standalone), loginEntry("l1", "https://login.example.nl", "alice@example.nl", first, second)))
+        val ids = ApplePasskeys.identities("acc", index, keys).map { it.credentialId }
+        assertEquals(3, ids.toSet().size)
+    }
+
+    @Test
+    fun identitiesLeaveOutALoginsPasskeyTheSheetCannotOffer() {
+        val (here, _) = made("login.example.nl", 0)
+        val (elsewhere, _) = made("login.example.nl", 0)
+        val (noAddress, _) = made("login.example.nl", 0)
+        val (appLinked, _) = made("login.example.nl", 0)
+        val index = AutofillIndex(
+            listOf(
+                loginEntry("l1", "https://login.example.nl", "alice@example.nl", here),
+                loginEntry("l2", "https://example.org", "alice@example.nl", elsewhere),
+                AutofillEntry("l3", "Example", null, AutofillEntry.LOGIN, enc("alice"), enc("pw"), false, passkeys = enc(array(noAddress))),
+                loginEntry("l4", "androidapp://nl.example.login", "alice@example.nl", appLinked),
+            ),
+        )
+        val listed = ApplePasskeys.identities("acc", index, keys).map { it.credentialId }
+        assertEquals(listOf(Encoding.toBase64(Encoding.fromBase64Url(here.credentialId))), listed)
+        // Each listed identity resolves to a choice in the sheet.
+        assertEquals(listOf("l1"), Passkeys.candidates(index, "login.example.nl", keys).map { it.itemId })
+    }
+
+    private fun freshLoginNotAnArray(record: PasskeyCredential) {
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"${enc(record.toJson())}","updatedAt":"$UPDATED_AT"}"""
+    }
+
+    @Test
+    fun aFreshValueThatIsNotAnArrayIsNeverRewritten() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        // The index holds an array; the server now holds one object.
+        freshLoginNotAnArray(record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        assertFailsWith<PasskeyGoneException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        assertFailsWith<nl.conduction.keepiq.shared.vault.UnreadablePasskeysException> {
+            Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        }
+        assertTrue(requests.none { it.first == "PUT" || it.first == "POST" }, "$requests")
+    }
+
+    @Test
+    fun aFreshReadThatFailsFailsTheSignIn() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        for (status in listOf(HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)) {
+            freshStatus = status
+            val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+            assertEquals(status.value, e.status)
+        }
+        // A counter of zero fails too when the server answered: only an unreachable server signs from the index.
+        val (zero, _) = made("login.example.nl", 0)
+        val zeroChoice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", zero))), "login.example.nl", keys).single()
+        assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, zeroChoice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aReadOnlyLoginsCountedPasskeyIsRefusedAndAnUncountedOneSigns() = runTest {
+        refusePut = true
+        val (counted, _) = made("login.example.nl", 4)
+        val (uncounted, _) = made("login.example.nl", 0)
+        freshLoginWith(counted, uncounted)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", counted, uncounted, readOnly = true)))
+        val (four, zero) = Passkeys.candidates(index, "login.example.nl", keys)
+        // Offered in the sheet, as the spec says; the counter cannot be written back, so the sign-in fails.
+        val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals(403, e.status)
+        assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
+    }
+
+    @Test
+    fun aFreshValueThatCannotBeDecryptedFailsTheSignInAtCounterZero() = runTest {
+        val (record, _) = made("login.example.nl", 0)
+        // The server answered; its `passkeys` is not ciphertext this phone can open.
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"not ciphertext","updatedAt":"$UPDATED_AT"}"""
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val e = assertFails { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertFalse(e is nl.conduction.keepiq.shared.vault.ServerUnreachableException)
+        assertEquals(listOf("GET" to "/api/v1/secrets/l1"), requests)
+    }
+
+    @Test
+    fun aMatchDeletedElsewhereMakesANewLogin() = runTest {
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
+        freshStatus = HttpStatusCode.NotFound
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertEquals(listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secret-types", "POST" to "/api/v1/secrets"), requests)
+        assertEquals(listOf(r.record), sentPasskeys())
+    }
+
+    @Test
+    fun aUseOnlyLoginsCountedPasskeyIsRefusedAndAnUncountedOneSigns() = runTest {
+        refusePut = true
+        val (counted, _) = made("login.example.nl", 4)
+        val (uncounted, _) = made("login.example.nl", 0)
+        freshLoginWith(counted, uncounted)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", counted, uncounted, useOnly = true)))
+        val (four, zero) = Passkeys.candidates(index, "login.example.nl", keys)
+        val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, four, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals(403, e.status)
+        assertEquals(0L, Passkeys.sign(api, keys, zero, ClientData.hashed(ByteArray(32)), "login.example.nl").counter)
     }
 }

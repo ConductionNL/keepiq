@@ -33,7 +33,7 @@ The share dialog and the team-folder dialog MUST state, next to the use-only opt
 
 ### Requirement: Keepiq's clients never reveal a use-only value
 
-For a use-only copy, the web app MUST NOT show or copy the value or additional fields, MUST NOT offer editing or version reveal, and MUST leave the value out of every export and bulk share, while it MAY show the name, URL, login name and a current TOTP code. The browser extension MUST fill it only on a site whose registrable domain matches the copy's URL and only into a password field, MUST NOT show or copy it, MUST NOT offer to save or update it, and MUST report each fill. The CLI MUST refuse `show`, `get key` and `copy key` for it.
+For a use-only copy, the web app MUST NOT show or copy the value or additional fields, MUST NOT offer editing or version reveal, and MUST leave the value out of every export and bulk share, while it MAY show the name, URL, login name and a current TOTP code, and MAY list the metadata of a login's passkeys (relying party, user name and created date). The current code MAY come from an Authenticator item or from the login's own `totp` field and MAY be copied; the web app MUST NOT show or copy the seed itself, and MUST NOT show or copy any passkey private key, nor offer to delete a passkey. The browser extension MUST fill it only on a site whose registrable domain matches the copy's URL and only into a password field, MUST NOT show or copy it, MUST NOT offer to save or update it, and MUST report each fill. The CLI MUST refuse `show`, `get key` and `copy key` for it.
 
 #### Scenario: Web app hides the password
 
@@ -41,6 +41,14 @@ For a use-only copy, the web app MUST NOT show or copy the value or additional f
 - **WHEN** he opens it in the secret list at /secrets
 - **THEN** there MUST be no reveal toggle and no copy action for the password
 - **AND** the name, URL and login name MUST be shown
+
+#### Scenario: Web app shows the code but not the seed
+
+- **GIVEN** Bob with a use-only copy of "Supplier portal", whose login holds a seed in its `totp` field and one passkey
+- **WHEN** he opens it in the secret list at /secrets
+- **THEN** the current code and its copy action MUST be shown
+- **AND** the passkey MUST be listed by relying party, user name and created date only
+- **AND** the seed and the passkey's private key MUST NOT be shown or copyable anywhere on the page
 
 #### Scenario: The extension signs Bob in
 
@@ -63,7 +71,7 @@ For a use-only copy, the web app MUST NOT show or copy the value or additional f
 
 ### Requirement: The server refuses what it can enforce
 
-The system MUST refuse any share whose source is a use-only copy (direct, batch, group, team-folder fan-out, link share, delegation and handover), MUST refuse recipient updates and sync of a use-only copy, MUST refuse the recipient's version history ciphertext for it, and MUST leave its value ciphertext out of the recipient's GDPR export.
+The system MUST refuse any share whose source is a use-only copy (direct, batch, group, team-folder fan-out, link share, delegation and handover), MUST refuse recipient updates and share-saves of a use-only copy, MUST refuse the recipient's version history ciphertext for it, and MUST leave its value ciphertext out of the recipient's GDPR export.
 
 #### Scenario: A modified client cannot share it onward
 
@@ -74,7 +82,7 @@ The system MUST refuse any share whose source is a use-only copy (direct, batch,
 #### Scenario: Bob cannot overwrite it
 
 - **GIVEN** Bob with a use-only copy
-- **WHEN** Bob calls `PUT /api/v1/secrets/{id}/sync` for it
+- **WHEN** Bob calls `PUT /api/v1/secrets/{id}/share-save` for it
 - **THEN** the system MUST refuse the request
 
 ### Requirement: Each use is recorded

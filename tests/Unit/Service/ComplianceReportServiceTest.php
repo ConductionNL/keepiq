@@ -19,9 +19,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\ComplianceReport;
 use OCA\Keepiq\Db\ComplianceReportMapper;
 use OCA\Keepiq\Service\ComplianceReportService;
+use OCA\Keepiq\Tests\Support\ShareTargetDatabase;
 use OCP\App\IAppManager;
 use OCP\DB\IResult;
 use OCP\IAppConfig;
@@ -33,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  * Tests for ComplianceReportService.
  */
 class ComplianceReportServiceTest extends TestCase {
+	use ShareTargetDatabase;
+
 	private ComplianceReportService $service;
 
 	private ComplianceReportMapper&MockObject $mapper;
@@ -166,4 +170,58 @@ class ComplianceReportServiceTest extends TestCase {
 		$aggregate = $service->aggregate();
 		$this->assertFalse($aggregate['rotationPosture']['available']);
 	}//end testRotationPostureDegradesGracefully()
+
+	/**
+	 * The user-share count leaves out quarantined rows (GHSA-m5p9-6pw7-pf3g):
+	 * its query, run on the real database, counts a live row and not a
+	 * quarantined one.
+	 *
+	 * @return void
+	 */
+	public function testUserSharesLeaveOutQuarantinedRows(): void {
+		$queries = [];
+		$result  = $this->createMock(originalClassName: IResult::class);
+		$result->method('fetchOne')->willReturn(0);
+		$result->method('fetch')->willReturn(false);
+		$db = $this->createMock(originalClassName: IDBConnection::class);
+		$db->method('executeQuery')->willReturnCallback(
+			static function (string $sql) use (&$queries, $result) {
+				$queries[] = $sql;
+				return $result;
+			}
+		);
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueInt')->willReturn(365);
+		(new ComplianceReportService(
+			mapper: $this->mapper,
+			db: $db,
+			appConfig: $appConfig,
+			appManager: $this->createMock(originalClassName: IAppManager::class),
+		))->aggregate();
+		$shareQueries = array_values(array_filter($queries, static fn (string $sql): bool => str_contains($sql, 'keepiq_share_targets')));
+		$this->assertCount(1, $shareQueries);
+
+		$this->openDatabase();
+		try {
+			$count  = fn (): int => (int)$this->db->executeQuery($shareQueries[0])->fetchOne();
+			$before = $count();
+			$owner  = $this->user('owner');
+			$source = $this->insertSecret(ownerId: $owner, createdAt: new DateTime())->getId();
+			foreach ([false, true] as $quarantined) {
+				$recipient = $this->user('recipient');
+				$this->insertShareTarget(
+					sourceSecretId: $source,
+					targetUserId: $recipient,
+					secretId: $this->insertSecret(ownerId: $recipient, createdAt: new DateTime())->getId(),
+					createdBy: $owner,
+					createdAt: new DateTime(),
+					quarantined: $quarantined,
+				);
+			}
+
+			$this->assertSame($before + 1, $count());
+		} finally {
+			$this->closeDatabase();
+		}
+	}//end testUserSharesLeaveOutQuarantinedRows()
 }//end class

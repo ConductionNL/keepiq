@@ -63,6 +63,81 @@ describe('useHealthStore', () => {
 		expect(typeof store.score).toBe('number')
 	})
 
+	it('groups duplicate logins in the same pass, and locking the vault drops the groups (vault-duplicate-finder)', async () => {
+		const session = useSessionStore()
+		session.cryptoKey = { fake: true }
+		const login = {
+			url: 'https://github.com',
+			login: 'enc:anna',
+			blocked: false,
+		}
+		vi.spyOn(axios, 'get').mockImplementation(async (url) =>
+			url.endsWith('/offline/manifest')
+				? {
+						data: {
+							secrets: [
+								{
+									id: 'copy',
+									sourceUpdatedAt: '2026-01-01T00:00:00+00:00',
+								},
+							],
+						},
+					}
+				: {
+						data: {
+							items: [
+								{
+									id: 'a',
+									name: 'GitHub',
+									key: 'enc:same',
+									...login,
+								},
+								{
+									id: 'b',
+									name: 'github.com',
+									key: 'enc:same',
+									...login,
+								},
+								{
+									id: 'copy',
+									name: 'GitHub',
+									key: 'enc:same',
+									...login,
+								},
+							],
+						},
+					},
+		)
+
+		const post = vi.spyOn(axios, 'post')
+		const put = vi.spyOn(axios, 'put')
+		const store = useHealthStore()
+		store.registerLockReset()
+		await store.analyseVault({
+			stalenessThreshold: 'never',
+			breachEnabled: false,
+		})
+
+		expect(store.duplicatesAvailable).toBe(true)
+		expect(store.duplicates.exact.map((g) => g.items.map((i) => i.id))).toEqual([
+			['a', 'b'],
+		])
+		expect(store.duplicates.likely).toEqual([])
+		// Only whole-vault reads went out: nothing about the groups was sent.
+		expect(axios.get.mock.calls.map(([u]) => u.split('/api/v1/')[1])).toEqual([
+			'secret-types',
+			'secrets',
+			'offline/manifest',
+			'site-directory',
+		])
+		expect(post).not.toHaveBeenCalled()
+		expect(put).not.toHaveBeenCalled()
+
+		session.lock()
+		expect(store.duplicates).toEqual({ exact: [], likely: [] })
+		expect(store.duplicatesAvailable).toBe(false)
+	})
+
 	it('does NOT write any health data to localStorage or sessionStorage', async () => {
 		const session = useSessionStore()
 		session.cryptoKey = { fake: true }
@@ -172,6 +247,37 @@ describe('useHealthStore', () => {
 		// Only the login secret is analysed; the totp seed is never scored.
 		expect(store.summary.analysedCount).toBe(1)
 		expect(store.findings.some((f) => f.id === 't')).toBe(false)
+	})
+
+	it("never decrypts a login's totp seed or passkeys, only its key (keepiq#1326)", async () => {
+		const session = useSessionStore()
+		session.cryptoKey = { fake: true }
+		const { rsaDecrypt } = await import('../../src/crypto/index.js')
+		rsaDecrypt.mockClear()
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				items: [
+					{
+						id: 'a',
+						name: 'Bank',
+						key: 'enc:password',
+						totp: 'enc:JBSWY3DPEHPK3PXP',
+						passkeys: 'enc:[{"credentialId":"c1"}]',
+						blocked: false,
+					},
+				],
+			},
+		})
+
+		const rows = await useHealthStore().loadDecryptedRows(session)
+
+		expect(rsaDecrypt.mock.calls.map(([cipher]) => cipher)).toEqual([
+			'enc:password',
+		])
+		expect(rows).toHaveLength(1)
+		expect(rows[0].value).toBe('password')
+		expect(JSON.stringify(rows)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(rows)).not.toContain('credentialId')
 	})
 
 	it('analyses every secret, not only the first page of 100 (keepiq#745)', async () => {

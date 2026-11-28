@@ -27,6 +27,9 @@ concurrency:
   group: release-${{ github.ref_name }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 # `previous-app-id` is the App Store id this app shipped under before the
 # rename. The store keys everything on the id, so `keepiq` is a brand new
 # entry starting from nothing -- without this the version line restarts
@@ -46,6 +49,8 @@ jobs:
       release-type: unstable
       app-name: keepiq
       previous-app-id: doriath
+      # Dev-only tool installs (vendor-bin/psalm) are not part of the app.
+      extra-rsync-excludes: --exclude='/vendor-bin'
     secrets: inherit
 
   beta:
@@ -60,6 +65,8 @@ jobs:
       release-type: beta
       app-name: keepiq
       previous-app-id: doriath
+      # Dev-only tool installs (vendor-bin/psalm) are not part of the app.
+      extra-rsync-excludes: --exclude='/vendor-bin'
     secrets: inherit
 
   stable:
@@ -74,4 +81,6 @@ jobs:
       release-type: stable
       app-name: keepiq
       previous-app-id: doriath
+      # Dev-only tool installs (vendor-bin/psalm) are not part of the app.
+      extra-rsync-excludes: --exclude='/vendor-bin'
     secrets: inherit

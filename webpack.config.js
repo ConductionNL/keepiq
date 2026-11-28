@@ -271,6 +271,9 @@ webpackConfig.resolve = {
 	},
 }
 
+// css-loader without source maps: see the .css rule below.
+const cssLoader = { loader: 'css-loader', options: { sourceMap: false } }
+
 webpackConfig.module = {
 	rules: [
 		{
@@ -278,15 +281,19 @@ webpackConfig.module = {
 			loader: 'vue-loader',
 		},
 		{
+			// css-loader follows `devtool` and would write a source map of every
+			// stylesheet into the JavaScript, so the whole library sheet ships a
+			// second time inside the bundle (the fleet's lean-bundle fix,
+			// nextcloud-vue `withLeanBundles`). Off in every mode.
 			test: /\.css$/,
-			use: ['style-loader', 'css-loader'],
+			use: ['style-loader', cssLoader],
 		},
 		{
 			// SCSS used by the aliased @conduction/nextcloud-vue components
 			// (CnCard, CnDataTable, CnAppRoot internals, …) when building
 			// against the monorepo-dev source tree.
 			test: /\.scss$/,
-			use: ['style-loader', 'css-loader', 'sass-loader'],
+			use: ['style-loader', cssLoader, 'sass-loader'],
 		},
 		{
 			// Image assets referenced by library components (e.g. Leaflet
@@ -364,6 +371,19 @@ webpackConfig.resolve.fallback = {
 // them the webpack runtime sits forever in `chunkOnLoad` and the app
 // renders blank with no console error (same gotcha that bit
 // docudesk#242).
+/**
+ * Which chunks the shared cache groups may take modules from: initial chunks
+ * only, and never the service worker.
+ *
+ * Speed budget: hydra ADR-124.
+ *
+ * @param {import('webpack').Chunk} chunk The chunk webpack asks about.
+ * @return {boolean} Whether its modules may move into a shared chunk.
+ */
+function sharedChunkFilter(chunk) {
+	return chunk.name !== 'serviceWorker' && chunk.canBeInitial()
+}
+
 webpackConfig.optimization = {
 	...webpackConfig.optimization,
 	splitChunks: {
@@ -371,7 +391,12 @@ webpackConfig.optimization = {
 		// The service worker must stay a self-contained script — exclude it
 		// from shared-chunk extraction so it never references a chunk it
 		// cannot import at the SW scope (offline-readonly-cache §3).
-		chunks: (chunk) => chunk.name !== 'serviceWorker',
+		//
+		// Only initial chunks go into the shared groups: a chunk the app or the
+		// library loads on demand (an editor, a dialog, a worker) stays its own
+		// lazy file instead of being pulled into the shared chunk every page
+		// loads (the fleet's lean-bundle fix, nextcloud-vue `withLeanBundles`).
+		chunks: sharedChunkFilter,
 		cacheGroups: {
 			default: false,
 			defaultVendors: false,
@@ -416,5 +441,10 @@ webpackConfig.module.rules.push({
 	type: 'asset/resource',
 	generator: { filename: '[name][ext]' },
 })
+
+// nextcloud-vue's stylesheet is linked by templates/index.php as css/nextcloud-vue.css
+// (LibraryStylesheetCopy) instead of inserted from the bundle as text.
+const { LibraryStylesheetCopy } = require('@conduction/nextcloud-vue/webpack')
+webpackConfig.plugins.push(new LibraryStylesheetCopy())
 
 module.exports = webpackConfig

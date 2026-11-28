@@ -18,6 +18,7 @@ import {
 	GDPR_PACKAGE_FORMAT,
 	VAULT_UNAVAILABLE_REASON,
 } from '../../src/export/gdprPackage.js'
+import { serializeVault } from '../../src/export/serializer.js'
 
 const metadata = {
 	format: 'keepiq-gdpr-metadata',
@@ -38,6 +39,27 @@ describe('assembleGdprPackage', () => {
 		expect(pkg.vault.available).toBe(true)
 		expect(pkg.vault.secrets).toHaveLength(1)
 		expect(pkg.vault.folders).toHaveLength(1)
+	})
+
+	it("carries a login's code and passkeys from the vault serializer (keepiq#1327)", () => {
+		const passkeys = '[{"credentialId":"C","rpId":"a.test","privateKey":"K"}]'
+		const pkg = assembleGdprPackage(
+			metadata,
+			serializeVault(
+				[
+					{
+						name: 'Bank',
+						key: 'pw',
+						totp: 'JBSWY3DPEHPK3PXP',
+						passkeys,
+						folderId: null,
+					},
+				],
+				[],
+			),
+		)
+		expect(pkg.vault.secrets[0].totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(pkg.vault.secrets[0].passkeys).toBe(passkeys)
 	})
 
 	it('produces a metadata-only variant with the limitation section when locked', () => {

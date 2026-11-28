@@ -29,7 +29,7 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -37,11 +37,12 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * Authorization decisions for the SecretDelegation lifecycle.
  */
 class DelegationAuthorizer {
+
 	/**
 	 * Constructor for DelegationAuthorizer.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)
-	 * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param AdminAreaAuthorizer|null $areas The People area check (admin path)
 	 *
 	 * @return void
@@ -50,9 +51,10 @@ class DelegationAuthorizer {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ?ShareTargetMapper $shareTargetMapper = null,
+		private ShareRowJudge $rowJudge,
 		private ?AdminAreaAuthorizer $areas = null,
 	) {
+
 	}//end __construct()
 
 	/**
@@ -97,6 +99,30 @@ class DelegationAuthorizer {
 
 		return $secret;
 	}//end requireDelegableSecret()
+
+	/**
+	 * Refuse a received copy: its recipient owns it, but only the source's
+	 * owner delegates (user-sharing: recipients do not share directly).
+	 *
+	 * @param Secret $secret The Secret to delegate
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the Secret is a received copy
+	 * @throws ShareScanPendingException When the row naming it waits for the share quarantine scan
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
+	public function requireOriginal(Secret $secret): void {
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		if ($verdict->awaitsTheScan() === true) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be delegated yet');
+		}
+
+		if ($verdict->countsAsCopy() === true) {
+			throw new InvalidArgumentException(message: 'A received copy cannot be delegated');
+		}
+	}//end requireOriginal()
 
 	/**
 	 * Assert that $userId may use the admin handover path: an instance admin
@@ -151,32 +177,28 @@ class DelegationAuthorizer {
 	}//end canHandover()
 
 	/**
-	 * Assert that $userId already holds a share of $secretId. No-op when
-	 * the share-target mapper is not wired (preserves backward compat with
-	 * existing constructors that pre-date the §17.1 hardening).
+	 * Assert that $userId already holds a share of $secretId through a
+	 * trusted share row (ShareRowJudge): a row the pending quarantine scan
+	 * holds back is no share.
 	 *
 	 * @param string $secretId The source Secret ID
 	 * @param string $userId The candidate recipient
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When the share-target mapper is
-	 *                                  wired but no share row exists for
-	 *                                  (sourceSecret, user).
+	 * @throws InvalidArgumentException When no trusted share row exists for (sourceSecret, user).
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge that row
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function requirePreExistingShare(string $secretId, string $userId): void {
-		if ($this->shareTargetMapper === null) {
-			return;
+		$verdict = $this->rowJudge->forPair(sourceId: $secretId, targetUserId: $userId);
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->rowJudge->scanPending(refusal: 'This share waits for the share quarantine scan, so it cannot be delegated yet');
 		}
 
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $secretId,
-				targetUserId: $userId,
-			);
-		} catch (DoesNotExistException) {
+		if ($verdict->trustedRow() === null) {
 			throw new InvalidArgumentException(
 				message: 'Delegation requires the recipient to already hold a share of the secret'
 			);

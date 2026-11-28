@@ -29,6 +29,8 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -82,7 +84,7 @@ class SecretPendingFieldsTest extends TestCase {
 		$this->secret->setOwnerType('user');
 		$this->secret->setOwnerId('alice');
 		$this->secret->setAdditionalFields('OWN_BLOB');
-		$this->secret->setPendingAdditionalFieldList(['FILL_1', 'FILL_2']);
+		$this->secret->setPendingAdditionalFields('["FILL_1","FILL_2"]');
 
 		$this->mapper = $this->createMock(SecretMapper::class);
 		$this->mapper->method('findById')->willReturn($this->secret);
@@ -99,6 +101,9 @@ class SecretPendingFieldsTest extends TestCase {
 			$migration,
 			$this->createMock(LinkShareService::class),
 			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IDBConnection::class),
+			$this->createStub(ViewOnlyCopyGuard::class),
+			$this->createStub(ShareSaveRequiredGuard::class),
 			null,
 			null,
 			null,

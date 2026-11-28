@@ -65,7 +65,58 @@ describe('GroupShareList', () => {
 			group: 'Finance',
 			received: 3,
 			skipped: 1,
+			refused: 0,
 		})
+		expect(wrapper.find('[data-testid="group-share-refused"]').exists()).toBe(
+			false,
+		)
+	})
+
+	it('says why members were refused a login with a one-time code or passkeys, not that they lack encryption', async () => {
+		const wrapper = mount(GroupShareList, { props: { secretId: 's-1' } })
+		await flushPromises()
+		vi.spyOn(useGroupShareStore(), 'shareWithGroup').mockResolvedValue({
+			received: 0,
+			skipped: 0,
+			refused: 2,
+		})
+
+		await wrapper.find('[data-testid="group-share-open-form"]').trigger('click')
+		const form = wrapper.findComponent({ name: 'GroupShareForm' })
+		form.vm.selected = { id: 'finance', label: 'Finance' }
+		await form.find('form').trigger('submit')
+		await flushPromises()
+
+		expect(wrapper.find('[data-testid="group-share-refused"]').text()).toContain(
+			'one-time code or passkeys',
+		)
+		expect(wrapper.find('[data-testid="group-share-result"]').exists()).toBe(
+			false,
+		)
+	})
+
+	it("lists a delegate's source and shares from their copy", async () => {
+		const fetch = vi
+			.spyOn(useGroupShareStore(), 'fetchGroupShares')
+			.mockResolvedValue()
+		const wrapper = mount(GroupShareList, {
+			props: { secretId: 'copy-1', sourceSecretId: 'src-1' },
+		})
+		await flushPromises()
+		expect(fetch).toHaveBeenCalledWith('src-1')
+
+		// The form shares from the copy, the one the delegate can decrypt.
+		await wrapper.find('[data-testid="group-share-open-form"]').trigger('click')
+		expect(
+			wrapper.findComponent({ name: 'GroupShareForm' }).props('secretId'),
+		).toBe('copy-1')
+
+		await wrapper.setProps({ secretId: 'copy-2', sourceSecretId: 'src-2' })
+		await flushPromises()
+		expect(fetch).toHaveBeenLastCalledWith('src-2')
+		expect(wrapper.findComponent({ name: 'GroupShareForm' }).exists()).toBe(
+			false,
+		)
 	})
 
 	it('revokes a group share', async () => {

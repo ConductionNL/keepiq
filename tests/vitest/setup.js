@@ -26,6 +26,10 @@
  */
 
 import { config } from '@vue/test-utils'
+import { monotonic } from './monotonicNow.js'
+
+// Vue drops an event stamped no later than its listener's attach, and test-utils stamps a trigger with Date.now() + 1 (see monotonicNow.js).
+Date.now = monotonic(Date.now.bind(Date))
 
 const tStub = (_app, key, _vars) => key
 const nStub = (_app, singular, plural, count) => (count === 1 ? singular : plural)

@@ -111,6 +111,17 @@ class SendServiceTest {
         assertEquals(OpenSendResult.Opened("Username: alice\nPassword: geheim", "text", true), opener.open(parsed, "lang wachtwoord"))
     }
 
+    /** @spec openspec/changes/clients-mobile-apps/tasks.md#3.6 */
+    @Test
+    fun thisDeviceCanProtectASendWithAPassword() = runTest {
+        assertTrue(sends.passwordAvailable)
+        val made = assertIs<SendResult.Done<CreatedSend>>(
+            sends.create(SendPayloadType.TEXT, "deurcode 2468", "1", SendExpiry.HOUR, null, "pw", sends.passwordAvailable),
+        ).value
+        assertTrue(made.hasPassword)
+        assertFalse(made.link.contains("#"))
+    }
+
     @Test
     fun theFormRefusesWhatTheExtensionRefuses() = runTest {
         fun problem(r: SendResult<*>) = assertIs<SendResult.Problem>(r).form

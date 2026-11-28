@@ -6,7 +6,8 @@
  * One-open-flag-per-secret rotation marker (rotation-expiry-policies
  * §1.1). `key_updated_at_at_flag` freezes the ciphertext age at flag
  * time so mark-rotated can prove a REAL rotation happened (the head's
- * `key_updated_at` must have advanced past it). IDs and timestamps only —
+ * `key_updated_at`, or for a `suite_compromise` flag its latest credential
+ * change, must have advanced past it). IDs and timestamps only —
  * never a breach verdict, score, or digest.
  *
  * @category Db
@@ -48,6 +49,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setKeyUpdatedAtAtFlag(?DateTime $keyUpdatedAtAtFlag)
  */
 class RotationFlag extends Entity implements JsonSerializable {
+
+	use StringPrimaryKey;
 
 	/**
 	 * The flagged secret.
@@ -93,7 +96,9 @@ class RotationFlag extends Entity implements JsonSerializable {
 	protected ?DateTime $resolvedAt = null;
 
 	/**
-	 * The head's key_updated_at frozen at flag time (rotation proof).
+	 * The head's rotation proof time frozen at flag time: its key_updated_at,
+	 * or for a `suite_compromise` flag the latest of that, totp_updated_at
+	 * and passkeys_updated_at.
 	 *
 	 * @var DateTime|null
 	 */
@@ -105,26 +110,6 @@ class RotationFlag extends Entity implements JsonSerializable {
 	 * @var string
 	 */
 	public $id = '';
-
-	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
 
 	/**
 	 * Constructor for RotationFlag.

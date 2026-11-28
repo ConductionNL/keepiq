@@ -26,6 +26,8 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PreconditionFailedException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCA\Keepiq\Service\MachineSecretResponseService;
 use OCA\Keepiq\Service\SecretService;
@@ -322,6 +324,30 @@ class ApplicationSecretsControllerTest extends TestCase {
 	}//end testCreateReturns201()
 
 	/**
+	 * A machine write that carries totp or passkeys hands them to the service,
+	 * whose refusal answers 400 instead of a 2xx that dropped them.
+	 *
+	 * @return void
+	 */
+	public function testAWriteWithTotpOrPasskeysReachesTheServiceAndIsRefused(): void {
+		$this->params = ['name' => 'new-token', 'key' => 'CIPHER', 'totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'];
+		$refuse = static function (...$args): never {
+			$data = $args['data'] ?? $args[0];
+			if (($data['totp'] ?? null) !== 'TOTP-CIPHER' || ($data['passkeys'] ?? null) !== 'PASSKEYS-CIPHER') {
+				throw new \LogicException('the value fields did not reach the service');
+			}
+
+			throw new \InvalidArgumentException('totp and passkeys are not supported on an application-owned secret');
+		};
+		$this->secretService->expects($this->once())->method('createByApplication')->willReturnCallback($refuse);
+		$this->secretService->expects($this->once())->method('updateByApplication')
+			->willReturnCallback(static fn (string $id, array $data) => $refuse($data));
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->controller->create()->getStatus());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->controller->update('s9')->getStatus());
+	}//end testAWriteWithTotpOrPasskeysReachesTheServiceAndIsRefused()
+
+	/**
 	 * Write-back update advances the secret and returns the new envelope;
 	 * a cross-vault id surfaces as 404.
 	 *
@@ -344,14 +370,13 @@ class ApplicationSecretsControllerTest extends TestCase {
 	 */
 	public function testUpdateWithMatchingIfMatchWrites(): void {
 		$current = $this->secret('s1', 'pg-app-password');
-		$this->secretMapper->method('findById')->willReturn($current);
 		$this->headers['If-Match'] = $this->envelopeService->etag($current);
 		$this->params['key'] = 'NEW-CIPHER';
 
 		$updated = $this->secret('s1', 'pg-app-password');
 		$updated->setKey('NEW-CIPHER');
 		$updated->setUpdatedAt(new DateTime('2026-01-03T00:00:00+00:00'));
-		$this->secretService->expects($this->once())->method('updateByApplication')->willReturn($updated);
+		$this->serviceReads(row: $current, written: $updated);
 
 		$response = $this->controller->update('s1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
@@ -359,11 +384,13 @@ class ApplicationSecretsControllerTest extends TestCase {
 	}//end testUpdateWithMatchingIfMatchWrites()
 
 	/**
-	 * PUT with a stale ETag answers 412 and writes nothing.
+	 * PUT with a stale ETag answers 412 with the current ETag; the
+	 * precondition is checked by the service on the row it reads for the
+	 * write, and the controller reads no row of its own.
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-conditional-machine-write-back
 	 */
 	public function testUpdateWithStaleIfMatchReturns412(): void {
 		$read = $this->secret('s1', 'pg-app-password');
@@ -371,28 +398,26 @@ class ApplicationSecretsControllerTest extends TestCase {
 		$current = $this->secret('s1', 'pg-app-password');
 		$current->setKey('CIPHER-B');
 		$current->setUpdatedAt(new DateTime('2026-01-05T00:00:00+00:00'));
-		$this->secretMapper->method('findById')->willReturn($current);
+		$this->secretMapper->expects($this->never())->method('findById');
 		$this->headers['If-Match'] = $staleEtag;
 		$this->params['key'] = 'NEW-CIPHER';
-
-		$this->secretService->expects($this->never())->method('updateByApplication');
+		$this->serviceReads(row: $current);
 
 		$response = $this->controller->update('s1');
 		$this->assertSame(Http::STATUS_PRECONDITION_FAILED, $response->getStatus());
-		// Response::getHeaders() merges CSP defaults that need a booted server,
-		// so read the headers this response set directly.
-		$headers = (new \ReflectionProperty(\OCP\AppFramework\Http\Response::class, 'headers'))->getValue($response);
-		$this->assertSame($this->envelopeService->etag($current), $headers['ETag']);
+		$this->assertSame($this->envelopeService->etag($current), $this->setHeaders($response)['ETag']);
 	}//end testUpdateWithStaleIfMatchReturns412()
 
 	/**
-	 * PUT without If-Match behaves as before: no precondition, the write runs.
+	 * PUT without If-Match passes no precondition, and the controller reads
+	 * no row of its own.
 	 *
 	 * @return void
 	 */
 	public function testUpdateWithoutIfMatchWritesAsBefore(): void {
 		$this->secretMapper->expects($this->never())->method('findById');
 		$this->secretService->expects($this->once())->method('updateByApplication')
+			->with('s1', [], 'app-1', null)
 			->willReturn($this->secret('s1', 'pg-app-password'));
 
 		$response = $this->controller->update('s1');
@@ -401,30 +426,30 @@ class ApplicationSecretsControllerTest extends TestCase {
 
 	/**
 	 * If-Match on a secret of another vault is the same 404 as without it:
-	 * the precondition is no existence oracle.
+	 * the service refuses it before any precondition is checked.
 	 *
 	 * @return void
 	 */
 	public function testUpdateIfMatchOnAnotherVaultReturns404(): void {
-		$this->secretMapper->method('findById')->willReturn($this->secret('s1', 'x', 'app-other'));
 		$this->headers['If-Match'] = '"whatever"';
-		$this->secretService->expects($this->never())->method('updateByApplication');
+		$this->secretService->expects($this->once())->method('updateByApplication')
+			->willThrowException(new NotFoundException('Secret not found'));
 
 		$response = $this->controller->update('s1');
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('ETag', $this->setHeaders($response));
 	}//end testUpdateIfMatchOnAnotherVaultReturns404()
 
 	/**
-	 * If-Match takes a list and "*"; a weak tag never matches (strong
-	 * comparison, RFC 9110 13.1.1).
+	 * If-Match takes a list and "*"; a weak tag or garbage never matches
+	 * (strong comparison, RFC 9110 13.1.1).
 	 *
 	 * @return void
 	 */
 	public function testIfMatchListStarAndWeakTags(): void {
 		$current = $this->secret('s1', 'pg-app-password');
-		$this->secretMapper->method('findById')->willReturn($current);
 		$etag = $this->envelopeService->etag($current);
-		$this->secretService->method('updateByApplication')->willReturn($current);
+		$this->serviceReads(row: $current);
 
 		$this->headers['If-Match'] = '"other", ' . $etag;
 		$this->assertSame(Http::STATUS_OK, $this->controller->update('s1')->getStatus());
@@ -432,7 +457,60 @@ class ApplicationSecretsControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $this->controller->update('s1')->getStatus());
 		$this->headers['If-Match'] = 'W/' . $etag;
 		$this->assertSame(Http::STATUS_PRECONDITION_FAILED, $this->controller->update('s1')->getStatus());
+		$this->headers['If-Match'] = ', ,garbage';
+		$this->assertSame(Http::STATUS_PRECONDITION_FAILED, $this->controller->update('s1')->getStatus());
 	}//end testIfMatchListStarAndWeakTags()
+
+	/**
+	 * A write-back that loses its version lock twice is a 409 with a plain
+	 * message, not a 500, and carries no secret value.
+	 *
+	 * @return void
+	 */
+	public function testUpdateThatMovedTwiceReturns409(): void {
+		$current = $this->secret('s1', 'pg-app-password');
+		$this->secretService->method('updateByApplication')
+			->willThrowException(new StaleWriteException(current: $current));
+
+		$response = $this->controller->update('s1');
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['message'], array_keys($response->getData()));
+		$this->assertStringNotContainsString('CIPHER', json_encode($response->getData()));
+	}//end testUpdateThatMovedTwiceReturns409()
+
+	/**
+	 * Stand in for the service's read: the precondition the controller
+	 * passes is checked on `$row`, as the service checks it on the row it
+	 * reads for the write.
+	 *
+	 * @param Secret      $row     The row the service reads
+	 * @param Secret|null $written The row it returns after the write; `$row` when null
+	 *
+	 * @return void
+	 */
+	private function serviceReads(Secret $row, ?Secret $written = null): void {
+		$this->secretService->method('updateByApplication')->willReturnCallback(
+			static function (string $id, array $data, string $applicationId, ?\Closure $precondition = null) use ($row, $written): Secret {
+				if ($precondition !== null && $precondition($row) === false) {
+					throw new PreconditionFailedException(current: $row);
+				}
+
+				return $written ?? $row;
+			}
+		);
+	}//end serviceReads()
+
+	/**
+	 * The headers a response set itself. Response::getHeaders() merges CSP
+	 * defaults that need a booted server.
+	 *
+	 * @param \OCP\AppFramework\Http\Response $response The response
+	 *
+	 * @return array<string,string>
+	 */
+	private function setHeaders(\OCP\AppFramework\Http\Response $response): array {
+		return (new \ReflectionProperty(\OCP\AppFramework\Http\Response::class, 'headers'))->getValue($response);
+	}//end setHeaders()
 
 	/**
 	 * The machine surface exposes no delete handler — the controller class

@@ -44,7 +44,29 @@ open class KeepiqApiException(
     message: String,
     val code: String? = null,
     val body: String = "",
-) : Exception(message)
+    cause: Throwable? = null,
+) : Exception(message, cause)
+
+/**
+ * The server does not store a login's own code and passkeys: a write of
+ * `totp` or `passkeys` would be dropped while the server answers 2xx
+ * (mobile-login-totp-passkeys D1). Refused before the write is sent (the
+ * fresh read and the pair call may go out first), with the message pairing
+ * gives, as a 426 whose body carries it, so WriteProblem
+ * shows that message.
+ */
+class MissingCapabilityException :
+    KeepiqApiException(STATUS, MESSAGE, body = JsonObject(mapOf("message" to JsonPrimitive(MESSAGE))).toString()) {
+    companion object {
+        /** HTTP 426 Upgrade Required: the server needs a newer Keepiq. */
+        const val STATUS = 426
+
+        const val MESSAGE = "This server runs a Keepiq version without one-time codes and passkeys on a login. Ask your administrator to update Keepiq."
+
+        /** The pair response's capabilities a login's code and passkeys need. */
+        val LOGIN_FIELDS: Set<String> = setOf("totp-field", "passkeys-field")
+    }
+}
 
 /** The server address is not https, so the app password is never sent. */
 class InsecureServerException(server: String) :
@@ -60,6 +82,9 @@ class InsecureServerException(server: String) :
  */
 class KeepiqApi(private val client: HttpClient, private val account: Account) {
     private val base: String = account.server.trimEnd('/')
+
+    /** Whether the server lists the login fields; null until [requireLoginFields] asked. */
+    private var loginFields: Boolean? = null
 
     init {
         val url = runCatching { Url(base) }.getOrNull()
@@ -133,15 +158,53 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
     /** POST /api/v1/secrets with an already-encrypted body. */
     suspend fun createSecret(body: JsonObject): JsonObject? = request(HttpMethod.Post, "/api/v1/secrets", body) as? JsonObject
 
-    /** PUT /api/v1/secrets/{id} with an already-encrypted body. */
+    /** PUT /api/v1/secrets/{id} with an already-encrypted body. A value change goes through [shareSave] instead. */
     suspend fun updateSecret(id: String, body: JsonObject): JsonObject? =
         request(HttpMethod.Put, "/api/v1/secrets/" + encodePath(id), body) as? JsonObject
+
+    /** GET /api/v1/secrets/{id}/write-context: the source a save goes to, and the caller's grade on it. */
+    suspend fun writeContext(id: String): JsonObject? =
+        request(HttpMethod.Get, "/api/v1/secrets/" + encodePath(id) + "/write-context") as? JsonObject
+
+    /** PUT /api/v1/secrets/{id}/share-save: the row and every copy and partner share in one transaction (ShareSaveService). */
+    suspend fun shareSave(id: String, body: JsonObject): JsonObject? =
+        request(HttpMethod.Put, "/api/v1/secrets/" + encodePath(id) + "/share-save", body) as? JsonObject
+
+    /** POST /api/v1/shares/recipient-certificates: the vault certificates of these users. */
+    suspend fun recipientCertificates(userIds: List<String>): JsonObject? = request(
+        HttpMethod.Post,
+        "/api/v1/shares/recipient-certificates",
+        JsonObject(mapOf("userIds" to JsonArray(userIds.map { JsonPrimitive(it) }))),
+    ) as? JsonObject
+
+    /** POST /api/v1/federation/recipient-certificate: a partner recipient's certificate, chain and pin. */
+    suspend fun federatedRecipientCertificate(cloudId: String): JsonObject? = request(
+        HttpMethod.Post,
+        "/api/v1/federation/recipient-certificate",
+        JsonObject(mapOf("cloudId" to JsonPrimitive(cloudId))),
+    ) as? JsonObject
+
+    /** The paired account's id, which keeps one account's verified partners apart from another's. */
+    val accountId: String get() = account.id
 
     /**
      * POST /api/v1/extension/pair: proves the app password works and reports
      * the server's `apiVersion` (lib/Controller/ExtensionController::pair).
      */
     suspend fun pair(): PairResponse = PairResponse.from(request(HttpMethod.Post, "/api/v1/extension/pair") as? JsonObject ?: JsonObject(emptyMap()))
+
+    /**
+     * Refuses with [MissingCapabilityException] when the server does not list
+     * `totp-field` and `passkeys-field`. Pairing checks them too, but an
+     * account paired before that check was added is checked here, before
+     * every write of a login's `totp` or `passkeys`: the server is asked
+     * once per [KeepiqApi] (POST /api/v1/extension/pair, which pairing calls
+     * and which changes nothing), and the answer is kept for the next write.
+     */
+    suspend fun requireLoginFields() {
+        val supported = loginFields ?: pair().capabilities.containsAll(MissingCapabilityException.LOGIN_FIELDS).also { loginFields = it }
+        if (!supported) throw MissingCapabilityException()
+    }
 
     /** POST /api/v1/extension/unpair: the acknowledgement before the revoke. */
     suspend fun unpair() {
@@ -260,13 +323,21 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
 }
 
 /** The answer of POST /api/v1/extension/pair. */
-data class PairResponse(val ok: Boolean, val user: String?, val apiVersion: Int?, val serverVersion: String?) {
+data class PairResponse(
+    val ok: Boolean,
+    val user: String?,
+    val apiVersion: Int?,
+    val serverVersion: String?,
+    /** What the server can do (ExtensionController::pair), such as `totp-field`. */
+    val capabilities: List<String> = emptyList(),
+) {
     companion object {
         fun from(obj: JsonObject): PairResponse = PairResponse(
             ok = (obj["ok"] as? JsonPrimitive)?.contentOrNull == "true",
             user = obj.string("user"),
             apiVersion = (obj["apiVersion"] as? JsonPrimitive)?.intOrNull,
             serverVersion = obj.string("serverVersion"),
+            capabilities = (obj["capabilities"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull } ?: emptyList(),
         )
     }
 }

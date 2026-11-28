@@ -30,6 +30,8 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Exception\PrivilegedAccessRequiredException;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -42,6 +44,7 @@ class SecretVersionAccessGuard {
 	 * @param SecretVersionMapper $mapper The version mapper
 	 * @param SecretMapper $secretMapper The secret mapper (ownership)
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (read gating)
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 *
@@ -51,6 +54,7 @@ class SecretVersionAccessGuard {
 		private SecretVersionMapper $mapper,
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 	}//end __construct()
 
@@ -86,18 +90,26 @@ class SecretVersionAccessGuard {
 	 * @return SecretVersion
 	 *
 	 * @throws InvalidArgumentException On not found / not owned / suite blocked
+	 * @throws PrivilegedAccessRequiredException When it is a version of a privileged copy outside its approved window
 	 *
 	 * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function requireReadableVersion(string $versionId, string $userId): SecretVersion {
 		$version = $this->loadOwnedVersion(versionId: $versionId, userId: $userId);
 
 		// The holder of a use-only copy never gets a version's ciphertext
 		// (sharing-use-only-and-expiring-shares D4).
-		if ($this->secretMapper->findById($version->getSecretId())->getUseOnly() === true) {
+		$secret = $this->secretMapper->findById($version->getSecretId());
+		if ($secret->getUseOnly() === true) {
 			throw new InvalidArgumentException('Versions of a use-only copy are not available');
 		}
+
+		// A version of a privileged copy carries the same kind of ciphertext
+		// as its head, so it is served only inside an approved window and
+		// address range (capability-requirements-from-the-matrix 3.1).
+		$this->privilegedGate?->assertServable(secret: $secret, userId: $userId, channel: 'web');
 
 		if ($this->isSuiteBlocked(suiteId: $version->getEncryptionSuiteId()) === true) {
 			throw new InvalidArgumentException(

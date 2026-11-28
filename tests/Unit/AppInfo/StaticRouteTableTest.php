@@ -54,6 +54,10 @@ class StaticRouteTableTest extends TestCase {
 		}
 
 		$this->assertNotContains('settings#load', $names);
+		// Retired by sharing-atomic-share-save 3.3: share-save replaces both.
+		$this->assertNotContains(needle: 'share#sync', haystack: $names);
+		$this->assertNotContains(needle: 'federatedShare#update', haystack: $names);
+		$this->assertContains(needle: 'shareSave#save', haystack: $names);
 		$this->assertSame([], array_values(array_filter($names, static fn (string $name): bool => str_starts_with($name, 'store#'))));
 	}//end testTheShellRoutesArePresentAndTheRemovedOnesAreNot()
 

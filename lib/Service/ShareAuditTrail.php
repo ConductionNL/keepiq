@@ -87,40 +87,6 @@ class ShareAuditTrail {
 	}//end recordBulkShareGranted()
 
 	/**
-	 * Record a single share grant, where the audited object is the
-	 * SHARE TARGET row.
-	 *
-	 * @param string $userId The sharing owner or delegate
-	 * @param string $shareId The persisted share-target row ID
-	 * @param string $secretName The source secret's name
-	 * @param string $recipientId The recipient Nextcloud user ID
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 */
-	public function recordShareGranted(
-		string $userId,
-		string $shareId,
-		string $secretName,
-		string $recipientId,
-	): void {
-		$this->dispatch(
-			event: $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SHARE_GRANTED,
-				objectType: 'share',
-				objectId: $shareId,
-				objectName: $secretName,
-				metadata: [
-					'recipientType' => 'user',
-					'recipientId' => $recipientId,
-				],
-			)
-		);
-	}//end recordShareGranted()
-
-	/**
 	 * Record a share revocation.
 	 *
 	 * @param string $userId The revoking owner or delegate
@@ -154,19 +120,32 @@ class ShareAuditTrail {
 	}//end recordShareRevoked()
 
 	/**
-	 * Record a non-owner (team write-grade) sync of a secret, attributed
-	 * to the writer (folder-permission-grades §3.3) — identifiers only,
-	 * never key material.
+	 * Record a non-owner (team write-grade, group member or delegate) sync of
+	 * a secret, attributed to the writer (folder-permission-grades §3.3) —
+	 * identifiers only, never key material.
 	 *
-	 * @param string $userId The writing team member
+	 * @param string $userId The writing team member, group member or delegate
 	 * @param string $secretId The source secret ID
 	 * @param string $secretName The source secret's name
+	 * @param string $changedFields How the writer wrote: `team-write sync`, `group-write sync` or `delegate sync`
+	 * @param list<string> $skippedUserIds The holders of the copies the sync left out
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 	 */
-	public function recordTeamWriteSync(string $userId, string $secretId, string $secretName): void {
+	public function recordTeamWriteSync(
+		string $userId,
+		string $secretId,
+		string $secretName,
+		string $changedFields,
+		array $skippedUserIds = [],
+	): void {
+		$metadata = ['changedFields' => $changedFields];
+		if ($skippedUserIds !== []) {
+			$metadata['skippedUserIds'] = $skippedUserIds;
+		}
+
 		$this->dispatch(
 			event: $this->auditEvents->forUser(
 				actorId: $userId,
@@ -174,7 +153,7 @@ class ShareAuditTrail {
 				objectType: 'secret',
 				objectId: $secretId,
 				objectName: $secretName,
-				metadata: ['changedFields' => 'team-write sync'],
+				metadata: $metadata,
 			)
 		);
 	}//end recordTeamWriteSync()
