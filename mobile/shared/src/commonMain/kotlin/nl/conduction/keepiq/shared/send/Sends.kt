@@ -12,6 +12,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.longOrNull
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.crypto.SendCrypto
+import nl.conduction.keepiq.shared.crypto.argon2idAvailable
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteProblemKind
 
@@ -95,8 +96,19 @@ object SendForm {
 /** Create, list and delete the account's sends. */
 class SendService(private val api: KeepiqApi) {
     /**
-     * Creates a Send. A password needs Argon2id, which iOS does not have yet
-     * (task 1.3.1); [passwordAvailable] says whether this device can wrap.
+     * Whether this device can protect a Send with a password: the wrap needs
+     * Argon2id, which every target has since task 1.3.1. The forms read this
+     * instead of a flag of their own.
+     *
+     * @spec openspec/changes/clients-mobile-apps/tasks.md#3.6
+     */
+    val passwordAvailable: Boolean get() = argon2idAvailable
+
+    /**
+     * Creates a Send. A password needs Argon2id; [passwordAvailable] says
+     * whether this device can wrap (pass [SendService.passwordAvailable]).
+     *
+     * @spec openspec/changes/clients-mobile-apps/tasks.md#3.6
      */
     suspend fun create(
         payloadType: SendPayloadType,
