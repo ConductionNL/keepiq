@@ -303,7 +303,7 @@ function idsOf(list, key) {
  * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
  * @spec openspec/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  * @spec openspec/specs/secret-version-history/spec.md#requirement-a-restore-is-one-share-save-of-the-version
- * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
  */
 export async function saveShared({
 	id,
@@ -839,7 +839,7 @@ async function encryptWhole(value, recipient) {
  * @param {object} result A share-save answer.
  * @return {Promise<void>}
  * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
- * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
  */
 export async function notifyPartnerNotes(result) {
 	const notReached = result?.federated?.notReached ?? 0
@@ -867,7 +867,7 @@ export async function notifyPartnerNotes(result) {
  *
  * @param {number} count How many partner shares hang off a copy the save wrote.
  * @return {string}
- * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
  */
 export function notReachedText(count) {
 	return n(
@@ -954,7 +954,7 @@ function viewOnlyText() {
  * The text for the `partner_share_owner_mismatch` share save refusal.
  *
  * @return {string}
- * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
  */
 function partnerOwnerMismatchText() {
 	return t(

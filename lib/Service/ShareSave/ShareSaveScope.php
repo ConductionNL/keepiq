@@ -234,7 +234,7 @@ class ShareSaveScope {
 	 * @throws IncompleteShareSaveException When a caller who does not own the source names partner entries
 	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function assertMayNamePartners(ShareSavePath $path, ShareSaveEntries $entries, string $userId): void {
 		if ($entries->federatedCount() === 0 || $path->ownsSource(userId: $userId) === true) {
@@ -263,7 +263,7 @@ class ShareSaveScope {
 	 *   `partner_share_owner_mismatch` when a partner share to write is not the source owner's
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertComplete(ShareSavePath $path, ShareSaveEntries $entries, string $userId): array {
 		$required = $this->requirement(path: $path, userId: $userId);
@@ -360,7 +360,7 @@ class ShareSaveScope {
 	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row,
 	 *   `partner_share_owner_mismatch` when a partner share to write is not the source owner's
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
@@ -396,7 +396,7 @@ class ShareSaveScope {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
 	public function partnersNotReached(ShareSavePath $path, array $copyIds, string $userId): int {
 		if ($path->ownsSource(userId: $userId) === false) {

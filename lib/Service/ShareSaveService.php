@@ -149,7 +149,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
 	public function save(string $id, ShareSaveRequest $request, string $userId): array {
 		$fields = array_keys((array)$request->patch);

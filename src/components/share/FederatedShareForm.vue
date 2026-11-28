@@ -324,7 +324,7 @@ export default {
 		 * @param {Error|object} e The failure.
 		 * @return {string}
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
-		 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 		 */
 		explain(e) {
 			const tooOld = partnerUpgradeText(e)

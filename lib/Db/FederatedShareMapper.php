@@ -117,7 +117,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
 	public function countActiveBySourceSecrets(array $sourceSecretIds): int {
 		$count = 0;

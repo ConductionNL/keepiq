@@ -498,7 +498,7 @@ class FederatedShareSendTest extends TestCase {
 	 *
 	 * @dataProvider receivedCopies
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
 	public function testAReceivedCopyIsNotSharedWithAPartner(array $rows, ?string $verdict, int $status, string $code, bool $delegated = false): void {
 		foreach ($rows as [$holder, $groupShareId, $teamFolderId]) {
@@ -547,7 +547,7 @@ class FederatedShareSendTest extends TestCase {
 	 * Alice owns `orig` and works through her own copy `src`, as after a transfer the new owner does: the partner share
 	 * is made on the source.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function testTheSourcesOwnerSharesTheirOwnCopy(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
@@ -568,7 +568,7 @@ class FederatedShareSendTest extends TestCase {
 	 * The share the owner made through their copy shows in the list of that copy, next to one made from the copy
 	 * before such shares were refused, and the owner revokes it from there.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function testTheSourcesOwnerListsAndRevokesThroughTheirOwnCopy(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
@@ -592,7 +592,7 @@ class FederatedShareSendTest extends TestCase {
 	/**
 	 * A copy holder who does not own the source sees only the partner shares of their own copy.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function testACopyHolderListsOnlyTheirOwnCopysShares(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'olivia');
@@ -612,7 +612,7 @@ class FederatedShareSendTest extends TestCase {
 	/**
 	 * The same request from a copy holder who does not own the source is refused as before.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function testACopyOfASourceTheHolderDoesNotOwnIsStillRefused(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'olivia');
@@ -629,7 +629,7 @@ class FederatedShareSendTest extends TestCase {
 	 * A source an organisation owns is not the caller's, even when the organisation's id equals the caller's user id:
 	 * the copy is refused and its list does not reach the source.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function testASourceAnOrganisationOwnsUnderTheCallersIdIsNotTheirs(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice', ownerType: 'organisation');
@@ -653,7 +653,7 @@ class FederatedShareSendTest extends TestCase {
 	 * A partner share made from the owner's copy before such shares were refused still counts: sharing with the same
 	 * recipient again is refused until the owner revokes that share, and then made on the source.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function testTheOwnersCopyShareToTheSameRecipientRefusesASecond(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
@@ -684,7 +684,7 @@ class FederatedShareSendTest extends TestCase {
 	 * A copy of a secret the holder owns waits for the pending scan like any copy: nothing leads to the source
 	 * until the scan has judged the row.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
 	public function testTheOwnersCopyTheScanCannotJudgeWaits(): void {
 		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
@@ -717,7 +717,7 @@ class FederatedShareSendTest extends TestCase {
 	 *
 	 * @dataProvider originals
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-original-is-still-shared
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owners-original-is-still-shared
 	 */
 	public function testTheOwnersOriginalIsStillShared(bool $quarantined): void {
 		if ($quarantined === true) {

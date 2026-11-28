@@ -142,8 +142,8 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @throws RuntimeException `federation_unavailable`, or `delivery_failed` when the partner refused it
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function create(
 		string $secretId,
@@ -505,7 +505,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 *
 	 * @throws InvalidArgumentException `already_shared`
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	private function assertNotSharedWith(array $secretIds, string $recipientCloudId): void {
 		$shares = array_map(fn (string $id): array => $this->shareMapper->findBySourceSecret(sourceSecretId: $id), $secretIds);
@@ -531,7 +531,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @throws NotFoundException When the secret is not the user's own
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function listForSecret(string $secretId, string $userId): array {
 		$secret = $this->ownedSecret(secretId: $secretId, userId: $userId);

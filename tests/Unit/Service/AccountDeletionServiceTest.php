@@ -806,7 +806,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#scenario-the-delegate-keeps-their-linked-copy
+	 * @spec openspec/specs/gdpr-compliance/spec.md#scenario-the-delegate-keeps-their-linked-copy
 	 */
 	public function testTheDelegateKeepsTheirLinkedCopy(): void {
 		$service = $this->sharedWithTheDelegate();
@@ -826,7 +826,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testTheDelegatesRowFromAGroupShareStaysTheirLink(): void {
 		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
@@ -863,7 +863,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @dataProvider untrustedDelegateRows
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testAnUntrustedDelegateRowIsDetached(string $how): void {
 		$service = $this->sharedWithTheDelegate();
@@ -1063,7 +1063,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @dataProvider limitedDelegateCopies
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testALimitedDelegateCopyIsDetached(string $case): void {
 		$service = $this->limitedDelegateCopy(case: $case);
@@ -1104,7 +1104,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @dataProvider fullBesideLimitedGrants
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testAFullGrantBesideALimitedOneDetachesTheCopyAsItWas(bool $rowLimited): void {
 		$service = $this->sharedWithTheDelegate();
@@ -1134,7 +1134,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#scenario-the-delegate-keeps-their-linked-copy
+	 * @spec openspec/specs/gdpr-compliance/spec.md#scenario-the-delegate-keeps-their-linked-copy
 	 */
 	public function testAFullTeamFolderRowOfTheDelegateIsKept(): void {
 		$service = $this->sharedWithTheDelegate();
@@ -1175,7 +1175,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @dataProvider laterTeamFolderDepartures
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testALaterTeamFolderDepartureKeepsTheKeptCopy(string $how): void {
 		$service = $this->sharedWithTheDelegate();
@@ -1228,7 +1228,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testAKeptRowNamesTheDeletedAccountAsItsMaker(): void {
 		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
@@ -1270,7 +1270,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 *
 	 * @dataProvider expiringOrFullGroupCopies
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function testAnExpiryRunAfterTheEndDateNeverLiftsTheDelegatesCopy(bool $expiring): void {
 		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
