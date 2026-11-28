@@ -62,7 +62,7 @@ final class ShareSavePath {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function ownsSource(string $userId): bool {
 		return $this->current->getOwnerType() === 'user' && $this->current->getOwnerId() === $userId;
@@ -73,7 +73,7 @@ final class ShareSavePath {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
 	 */
 	public function sourceOwnerId(): string {
 		return (string)$this->current->getOwnerId();

@@ -311,7 +311,7 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
+	 * @spec openspec/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
 	 */
 	public function testTheOwnerSavingThroughTheirCopyNamesThePartnerShares(): void {
 		$this->federated->method('findBySourceSecret')->willReturn([$this->partnerShare('f-1', 'bob')]);
@@ -361,7 +361,7 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
 	 */
 	public function testAPartnerShareTheOwnerDoesNotOwnStopsEverySaveThatWritesPartners(): void {
 		$this->federated->method('findBySourceSecret')->willReturn(

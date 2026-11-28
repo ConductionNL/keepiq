@@ -79,7 +79,7 @@ class FederatedShareSources {
 	 *
 	 * @return Secret|null
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function ownedSourceOf(Secret $copy, string $userId): ?Secret {
 		$row = $this->rowJudge->forCopy(copy: $copy)->trustedRow();
@@ -111,7 +111,7 @@ class FederatedShareSources {
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row that may name it a copy
 	 * @throws \InvalidArgumentException `not_shareable` when it is a received copy
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
 	public function assertNotReceivedCopy(Secret $source): void {
 		$this->rowJudge->assertNotReceivedCopy(

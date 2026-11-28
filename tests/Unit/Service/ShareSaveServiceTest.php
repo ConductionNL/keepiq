@@ -1685,7 +1685,7 @@ class ShareSaveServiceTest extends TestCase {
 	/**
 	 * The successor after team offboarding and the delegate after account deletion both own the secret and save it through their own copy.
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
 	 */
 	public function testTheOwnerSavingThroughTheirCopyWritesThePartnerShares(): void {
 		$this->bobOwnsTheSecret();
@@ -1795,7 +1795,7 @@ class ShareSaveServiceTest extends TestCase {
 	 *
 	 * @dataProvider copyEditorsWhoDoNotOwnTheSource
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
+	 * @spec openspec/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
 	 */
 	public function testACopyEditorWhoDoesNotOwnTheSourceNamingPartnerSharesGetsTheIncompleteAnswer(string $caller): void {
 		$this->bobDoesNotOwnTheSource(caller: $caller);
@@ -1830,7 +1830,7 @@ class ShareSaveServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function testAStageAPartnerShareWentIntoBeforeATransferIsAnsweredIncomplete(): void {
 		$this->bobOwnsTheSecret();
@@ -1897,7 +1897,7 @@ class ShareSaveServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function testAFormerOwnerGetsTheSameIncompleteAnswerBeforeTheLockAsUnderIt(): void {
 		$this->bobOwnsTheSecret();
@@ -1962,7 +1962,7 @@ class ShareSaveServiceTest extends TestCase {
 	 *
 	 * @dataProvider savesThatWritePartners
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-a-partner-share-left-with-the-previous-owner
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-partner-share-left-with-the-previous-owner
 	 */
 	public function testAPartnerShareThePreviousOwnerKeptStopsTheSave(string $path): void {
 		$this->delivery->expects($this->never())->method('deliver');
@@ -2021,7 +2021,7 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-a-partner-share-hanging-off-bobs-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-partner-share-hanging-off-bobs-copy
 	 */
 	public function testTheOwnersSaveCountsThePartnerSharesOfTheCopiesItWrites(): void {
 		$this->partnerSharesOfTheCopies();
@@ -2046,7 +2046,7 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-a-copy-editor-is-told-only-about-their-own-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-copy-editor-is-told-only-about-their-own-copy
 	 */
 	public function testACopyEditorsSaveCountsOnlyThePartnerSharesOfTheirOwnRow(): void {
 		$this->bobWritesOnAGrade();

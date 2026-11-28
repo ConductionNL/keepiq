@@ -119,7 +119,7 @@ class AccountShareCleanupService {
 	 * @return void
 	 *
 	 * @spec openspec/specs/gdpr-compliance/spec.md
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function detachGrantedShares(string $userId, array $ownedSecrets, DeletionReport $report, array $handedTo): void {
 		foreach ($ownedSecrets as $secret) {

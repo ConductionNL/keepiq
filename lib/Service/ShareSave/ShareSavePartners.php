@@ -75,7 +75,7 @@ class ShareSavePartners {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
 	public function countActive(array $sourceSecretIds): int {
 		return $this->federatedShares->countActiveBySourceSecrets(sourceSecretIds: $sourceSecretIds);
@@ -92,7 +92,7 @@ class ShareSavePartners {
 	 *
 	 * @throws ShareSaveRefusal `partner_share_owner_mismatch`
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
 	 */
 	public function assertOwnedBySourceOwner(ShareSavePath $path, array $federated): void {
 		$ownerId = $path->sourceOwnerId();

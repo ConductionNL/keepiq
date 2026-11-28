@@ -30,7 +30,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 /**
  * Keeps the delegate's share row of a secret handed over on account deletion, only when nothing limits it.
  *
- * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+ * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
  */
 class DelegateCopyKeeper {
 
@@ -70,7 +70,7 @@ class DelegateCopyKeeper {
 	 *
 	 * @return ShareTarget|null
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function keptRow(string $secretId, string $fromUserId, ?string $newOwnerId): ?ShareTarget {
 		if ($newOwnerId === null) {

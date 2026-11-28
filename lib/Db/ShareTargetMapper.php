@@ -153,7 +153,7 @@ class ShareTargetMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
 	public function deleteBySourceSecretExcept(string $sourceSecretId, string $keepId): void {
 		$qb = $this->db->getQueryBuilder();

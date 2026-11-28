@@ -91,7 +91,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(binds: ['secretId', 'recipientCloudId'], purpose: VaultKeyProofServiceInterface::PURPOSE_SHARE_NEW_RECIPIENT)]
