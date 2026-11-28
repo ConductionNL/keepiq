@@ -253,7 +253,7 @@ fun NewSendScreen(
             scope.launch {
                 val plaintext = if (type == SendPayloadType.CREDENTIAL) SendForm.credentialPayload(username, password) else text
                 val result = io {
-                    session.sends.create(type, plaintext, views, expiry, hours, sendPassword, passwordAvailable = true)
+                    session.sends.create(type, plaintext, views, expiry, hours, sendPassword, passwordAvailable = session.sends.passwordAvailable)
                 }
                 busy = false
                 when (result) {

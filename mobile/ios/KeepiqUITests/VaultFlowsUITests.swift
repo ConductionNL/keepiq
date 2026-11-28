@@ -10,7 +10,7 @@ import XCTest
 /// behaves as on the real server: after unlock the vault list, search, an
 /// item with its password revealed and copied, the authenticator code, a new
 /// login with a generated password, its edit and trash, the generator, a Send
-/// with its link, the settings route, and the lock.
+/// with its link, a Send with a password, the settings route, and the lock.
 final class VaultFlowsUITests: XCTestCase {
     private var app: XCUIApplication!
     private let env = ProcessInfo.processInfo.environment
@@ -300,6 +300,18 @@ final class VaultFlowsUITests: XCTestCase {
         shot("40-send-link")
         tap(app.buttons["Close"])
         shot("41-send-list")
+
+        // A Send with a password (task 3.6, Argon2id on iOS since 1.3.1):
+        // the link carries no key, the password travels another way.
+        tap(app.buttons["New Send"])
+        type("The demo alarm code is 1357.", into: sendText)
+        type("lang wachtwoord", into: scrolledTo(app.secureTextFields["Password (optional)"]))
+        tap(scrolledTo(app.buttons["Create link"]))
+        XCTAssertTrue(link.waitForExistence(timeout: 60))
+        XCTAssertTrue(link.label.hasPrefix(server) && !link.label.contains("#"), "password link: \(link.label)")
+        XCTAssertTrue(text("Your link is ready. Share the password another way.").exists)
+        shot("41b-send-password-link")
+        tap(app.buttons["Close"])
 
         // The settings route from inside the vault, and back. Every tab has
         // the account and lock buttons; the one on screen is the one to tap.

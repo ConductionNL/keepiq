@@ -283,8 +283,8 @@ private struct SendRow: View {
     }
 }
 
-/// Create a Send (task 3.6). A password needs Argon2id, which this device
-/// gets with task 1.3.1; until then the password field says so.
+/// Create a Send (task 3.6). A password needs Argon2id, which the core has on
+/// iOS since task 1.3.1; the core says whether this device can wrap.
 struct NewSendView: View {
     @ObservedObject var model: VaultModel
     let onDone: () -> Void
@@ -306,8 +306,9 @@ struct NewSendView: View {
     @State private var problem: String?
     @State private var created: CreatedSend?
 
-    /// Argon2id is not on iOS yet (task 1.3.1), so a password send cannot be made here.
-    private let passwordAvailable = false
+    /// Whether a password can protect the Send: the core answers (Argon2id, task 1.3.1).
+    /// @spec openspec/changes/clients-mobile-apps/tasks.md#3.6
+    private var passwordAvailable: Bool { model.session.sends.passwordAvailable }
 
     private let expiries: [(SendExpiry, String)] = [
         (.hour, "expiry_1h"), (.day, "expiry_1d"), (.twoDays, "expiry_2d"), (.threeDays, "expiry_3d"),
