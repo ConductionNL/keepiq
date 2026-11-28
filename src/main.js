@@ -50,8 +50,9 @@ import registry from './registry.js'
 import { createVaultGuard, manifestForLockState } from './router/guards.js'
 import { useSessionStore } from './store/modules/session.js'
 
-// Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
-import '@conduction/nextcloud-vue/css/index.css'
+// Library CSS: templates/index.php links css/nextcloud-vue.css (LibraryStylesheetCopy in
+// webpack.config.js), so the sheet stays parsed between page loads instead of being
+// inserted from this bundle as text.
 // Global (unscoped) app styles
 import './assets/app.css'
 

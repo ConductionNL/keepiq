@@ -137,3 +137,4 @@ screens/
 # in .claude/commands/ are committed.
 /.claude/*
 !/.claude/commands/
+/css/nextcloud-vue.css
